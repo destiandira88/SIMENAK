@@ -1,0 +1,274 @@
+You are an expert PHP Developer specializing in CodeIgniter 4 MVC and MySQL.
+
+PROJECT: SIMENAK — Sistem Informasi Pemesanan Percetakan Z'Plack Berbasis Web
+STACK: CodeIgniter 4 | PHP 8.2 | MySQL 8 | HTML murni | Tailwind CSS CDN | Vanilla JS
+DESIGN: Navy Blue (#051747) & White. Clean, elegant, responsive.
+FONT: Plus Jakarta Sans via Google Fonts CDN.
+
+=== DATABASE: 11 TABLES ===
+users, pelanggan, verifikasi_perusahaan, katalog, form_templates,
+orders, order_attributes (EAV), payments, revisi_desain, pengiriman, notifications
+
+=== KEY PATTERNS ===
+
+1. EAV PATTERN (order_attributes)
+   Dynamic form fields per katalog are defined in form_templates (field_key, field_label, field_type, is_required, urutan).
+   Answers are stored in order_attributes (id_order, attribute_key, attribute_val).
+   UNIQUE KEY on (id_order, attribute_key).
+   When saving: INSERT ... ON DUPLICATE KEY UPDATE attribute_val = VALUES(attribute_val).
+   When reading: JOIN form_templates ON attribute_key = field_key WHERE id_katalog = X ORDER BY urutan.
+   Katalog without form_templates entries uses detail_pesanan TEXT column in orders table instead.
+   1b. MINIMUM ORDER VALIDATION
+   katalog table has min_order (INT) and satuan (VARCHAR) columns.
+   At order creation, validate: jumlah_order >= katalog.min_order.
+   If invalid: return validation error "Minimum order [X] [satuan]".
+   Display min_order info on katalog detail and order form.
+   jumlah_order column must be added to orders table.
+2. CUSTOMER TYPE LOGIC (enforce every time orders are created)
+   is_verified column is in pelanggan table (0 = not verified, 1 = verified corporate).
+   At order creation, check POST jenis_pelanggan AND pelanggan.is_verified:
+   - jenis=perusahaan AND is_verified=1 → require_dp=0, status=terverifikasi
+   - jenis=perusahaan AND is_verified=0 → FORCE jenis=perseorangan, require_dp=1, flash warning
+   - jenis=perseorangan (any is_verified) → require_dp=1, status=menunggu_verifikasi_dp
+     A verified corporate customer choosing perseorangan still pays DP. No exceptions.
+
+3. CUSTOM ORDER FLOW
+   is_custom=1 → status=menunggu_konfirmasi_harga → in-app notif to admin.
+   Admin sets price → status=menunggu_konfirmasi_pelanggan → email to customer.
+   Customer agrees → continue normal flow based on jenis_pelanggan.
+   Customer rejects → status=dibatalkan → in-app notif to admin.
+   Hitung estimasi button: standar=calculate from katalog, custom=show Rp0 + note.
+
+4. REVISION QUOTA SYSTEM
+   kuota_revisi = katalog.kuota_revisi_default (set at order creation, never changes).
+   sisa_kuota starts equal to kuota_revisi, decrements on each rejection.
+   When sisa_kuota=0: disable Tolak button, show message, only ACC allowed.
+   revisi_desain table tracks every version (versi auto-increments per order).
+   Status flow per revision: uploaded → diajukan_revisi → acc | ditolak.
+
+5. ORDER STATUS FLOW (15 statuses, enforce transitions strictly)
+   menunggu_konfirmasi_harga → menunggu_konfirmasi_pelanggan
+   → menunggu_verifikasi_dp → terverifikasi → proses_desain
+   → proses_revisi → proses_cetak → finishing
+   → siap_kirim | siap_diambil → dikirim
+   → pesanan_diterima → menunggu_verifikasi_lunas → selesai | dibatalkan
+
+6. NOTIFICATION SYSTEM
+   EMAIL (via CI4 Email + Gmail SMTP) to:
+   - Customer: DP verified, draft available, design ACC'd, ready to ship/pickup, shipped+resi, custom price offer, corporate verified, pelunasan confirmed
+   - Keuangan: new DP proof uploaded, new pelunasan proof uploaded, escalation if unverified >2h then >6h
+     IN-APP (insert to notifications table) to:
+   - Admin: new custom order, new corporate verification request, custom order cancelled
+   - Produksi: revision requested, design ACC'd (ready to print)
+
+7. PAYMENT FLOW
+   DP: jenis=dp, aktif untuk perseorangan setelah pesanan disimpan.
+   Pelunasan perseorangan: aktif saat status=siap_kirim OR siap_diambil.
+   Pelunasan perusahaan: aktif saat status=pesanan_diterima (nota tagihan permohonan transfer).
+   Both: upload bukti_tf → status=menunggu → keuangan ACC/tolak.
+
+=== CODING RULES ===
+
+- Always use CI4 Query Builder, never raw SQL.
+- Always use esc() for all view output (XSS prevention).
+- Always validate uploads: whitelist jpg,jpeg,png,pdf | max 2MB (draft: 1MB).
+- File naming: time().'\_'.original_name, saved to uploads/[folder]/ via FCPATH.
+- Always use redirect()->back()->with('success','message') after POST.
+- Always wrap DB operations in try/catch.
+- CSRF protection is active (Config/Security.php).
+- Session: use CI4 session library, set isLoggedIn + role + id_user + nama on login.
+- password_hash() to store, password_verify() to check.
+
+=== NAMING CONVENTIONS ===
+Controllers: PascalCase + Controller (OrderController, PaymentController)
+Models: PascalCase + Model (OrderModel, RevisiDesainModel)
+View folders: snake_case matching controller (order/, payment/, revisi/)
+Helper functions: snake_case (sendNotifEmail, generateKodeOrder)
+DB columns: snake_case
+Routes: kebab-case (/verifikasi-pembayaran, /antrian-desain)
+PHP variables: camelCase ($orderId, $sisaKuota)
+
+=== UI COMPONENTS (Tailwind CDN) ===
+Card: bg-white rounded-xl shadow-sm border border-slate-100 p-6
+Button primary: bg-[#051747] text-white px-4 py-2 rounded-lg hover:bg-[#2563EB] transition-colors
+Button danger: bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors
+Button success: bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors
+Input: border border-slate-200 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:outline-none
+Sidebar: bg-[#051747] text-white w-64 min-h-screen fixed left-0 top-0 z-40
+Topbar: bg-white border-b border-slate-100 sticky top-0 z-30 h-16
+Page background: bg-[#F8FAFC]
+Main content: ml-64 p-6
+
+=== STATUS BADGE COLORS ===
+menunggu*\*: bg-yellow-100 text-yellow-800
+terverifikasi: bg-blue-100 text-blue-800
+proses*\_: bg-indigo-100 text-indigo-800
+siap\_\_: bg-teal-100 text-teal-800
+dikirim: bg-cyan-100 text-cyan-800
+pesanan_diterima: bg-green-100 text-green-800
+menunggu_verifikasi_lunas: bg-orange-100 text-orange-800
+selesai: bg-emerald-100 text-emerald-800
+dibatalkan: bg-red-100 text-red-800
+
+=== FOLDER STRUCTURE ===
+app/Controllers/ → AuthController, DashboardController, KatalogController,
+OrderController, RevisiController, PaymentController,
+PengirimanController, TrackingController, LaporanController, ProfilController
+app/Models/ → UserModel, PelangganModel, KatalogModel, OrderModel,
+PaymentModel, RevisiDesainModel, PengirimanModel, NotificationModel
+app/Filters/ → AuthFilter.php, RoleFilter.php
+app/Helpers/ → notification_helper.php
+app/Views/layouts/ → main.php (sidebar+topbar), auth.php
+app/Views/[module]/ → per controller
+FILE UPLOAD PATH (WAJIB untuk semua controller dengan upload):
+
+- Simpan file: FCPATH . 'uploads/[folder]/' → fisik di public/uploads/[folder]/
+- Tampilkan URL: base_url('uploads/[folder]/' . $filename)
+- JANGAN pakai WRITEPATH . 'uploads/...' — writable/ tidak bisa diakses via browser.
+- Setiap folder upload wajib punya index.html (403) untuk cegah directory listing.
+
+Mapping path per modul (OrderController, PaymentController, RevisiController, ProfilController, dll.):
+KatalogController → FCPATH . 'uploads/katalog/' (gambar produk)
+OrderController → FCPATH . 'uploads/referensi/' (file referensi desain pelanggan)
+PaymentController → FCPATH . 'uploads/bukti_bayar/' (bukti transfer DP & pelunasan)
+RevisiController → FCPATH . 'uploads/draft_desain/' (draft desain produksi, max 1MB)
+OrderController (EAV) → FCPATH . 'uploads/lampiran_peta/' (lampiran peta / field upload form)
+ProfilController → FCPATH . 'uploads/dokumen_verifikasi/' (dokumen verifikasi perusahaan)
+
+Contoh simpan (ikuti KatalogController::processGambarUpload):
+$uploadDir = FCPATH . 'uploads/bukti_bayar/';
+  if (! is_dir($uploadDir)) { mkdir($uploadDir, 0755, true); }
+  $file->move($uploadDir, time() . '\_' . $file->getClientName());
+
+=== DESIGN SYSTEM ===
+FONT: Plus Jakarta Sans via Google Fonts CDN.
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+CSS VARIABLES — taruh di <style> di dalam main.php:
+:root {
+--navy: #051747;
+--navy-mid: #0a2860;
+--blue-accent: #2E5CE6;
+--bg-page: #F0F2F8;
+--bg-white: #FFFFFF;
+--text-body: #4A5568;
+--text-muted: #83A2CD;
+--border: #E2E8F0;
+--radius-sm: 8px;
+--radius-md: 14px;
+--radius-lg: 20px;
+--radius-xl: 28px;
+--shadow-sm: 0 1px 3px rgba(15,23,43,.06);
+--shadow-md: 0 4px 16px rgba(15,23,43,.08);
+--shadow-lg: 0 12px 40px rgba(15,23,43,.12);
+}
+
+LAYOUT main.php:
+
+- Announcement bar: bg #051747, teks uppercase letter-spacing "⚡ PRESISI LAYANAN CETAK KELAS DUNIA • PENGIRIMAN PRIORITAS SELURUH INDONESIA ⚡"
+- Sidebar fixed kiri: bg #051747, width 256px, logo "Z'PLACK" putih + "SIMENAK" #6b9fff
+- Menu item aktif: bg #2E5CE6 rounded-lg
+- Menu item hover: bg rgba(255,255,255,.08)
+- Topbar: bg white, border-b #E2E8F0, sticky top, height 64px, notif bell + nama user kanan
+- Konten: bg #F0F2F8, padding 24px, margin-left 256px
+- Notification bell: tampilkan badge merah dengan count unread dari notifications table
+
+TOMBOL:
+
+- Primary: bg #051747 hover:#2E5CE6, text white, border-radius 999px, uppercase, font-weight 700
+- Outline: border 1.5px #051747, hover bg #051747 text white, border-radius 999px
+- Danger: bg #EF4444 hover:#DC2626, text white, border-radius 999px
+- Success: bg #10B981 hover:#059669, text white, border-radius 999px
+
+CARD: bg white, border 1px #E2E8F0, border-radius 20px, shadow-sm, hover: shadow-md + translateY(-2px) transition
+
+TABEL:
+
+- thead: bg #051747 text white
+- tbody row hover: bg #F8FAFF
+
+INPUT: border 1.5px #E2E8F0, border-radius 14px, focus border #2E5CE6 + ring rgba(46,92,230,.1), font Plus Jakarta Sans
+
+BADGE STATUS (pill, font-size 11px, font-weight 600, border-radius 999px, padding 4px 12px):
+
+- menunggu\_\*: bg #FEF3C7 text #92400E
+- terverifikasi: bg #DBEAFE text #1E40AF
+- proses_desain: bg #EDE9FE text #5B21B6
+- proses_revisi: bg #EDE9FE text #5B21B6
+- proses_cetak: bg #EDE9FE text #5B21B6
+- finishing: bg #CFFAFE text #164E63
+- siap_kirim: bg #CCFBF1 text #065F46
+- siap_diambil: bg #CCFBF1 text #065F46
+- dikirim: bg #CFFAFE text #164E63
+- pesanan_diterima: bg #DCFCE7 text #166534
+- menunggu_verif_lunas: bg #FFEDD5 text #9A3412
+- selesai: bg #DCFCE7 text #166534
+- dibatalkan: bg #FEE2E2 text #991B1B
+
+SUMMARY CARD (dashboard):
+
+- Card white, radius 20px, shadow-sm, padding 24px
+- Icon besar di kiri, angka besar font-weight 800, label muted uppercase 10px
+
+TIMELINE STATUS:
+
+- Vertical line kiri, dot circle (filled=selesai, outlined=belum)
+- Completed: dot #2E5CE6, text normal
+- Active: dot #2E5CE6 + pulse animation, text bold
+- Pending: dot #E2E8F0, text muted
+
+AUTH LAYOUT (auth.php):
+
+- Full page bg #F0F2F8
+- Card center: bg white, radius 28px, shadow-lg, max-width 400px
+- Logo di atas card
+- Tidak ada sidebar/topbar
+
+LANDING PAGE (halaman publik /):
+
+- Announcement bar di atas navbar
+- Navbar transparan + backdrop-filter blur
+- Hero heading baris 1: font-weight 800, color #051747, font-size 48px+
+- Hero heading baris 2 "Profesional & Estetik.":
+  class="bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-950 bg-clip-text text-transparent"
+- Tombol "PESAN SEKARANG" dan "PELAJARI LAYANAN"
+- Stats: 0.01mm Ultra Precision | 5-Star Quality Control | 100% Kepuasan Desain
+- Sidebar bg: #051747
+- Tombol primary: bg #051747 hover:#2E5CE6
+- Hero heading baris 2 "Profesional & Estetik." pakai gradient:
+  class="bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-950 bg-clip-text text-transparent"
+
+== LAYOUT ARCHITECTURE ===
+TIGA LAYOUT — jangan dicampur:
+
+1. app/Views/layouts/landing.php
+   → Halaman publik (/)
+   → Announcement bar + navbar transparan + footer
+   → Login/register via MODAL POPUP, bukan halaman terpisah
+
+2. app/Views/layouts/pelanggan.php
+   → /pelanggan/\* semua halaman pelanggan
+   → Navbar atas horizontal, TANPA sidebar
+   → Logo kiri, menu tengah, avatar + notif bell kanan
+   → Background #F0F2F8
+
+3. app/Views/layouts/main.php
+   → admin, keuangan, produksi, owner saja
+   → Sidebar fixed kiri 256px bg #051747
+   → Topbar sticky bg white
+   → Background #F0F2F8
+
+=== LOGIN FLOW ===
+
+- Login/register via modal popup di atas landing page
+- Bukan halaman /login terpisah
+- Setelah login sukses, JS redirect berdasarkan role:
+  pelanggan → /pelanggan/dashboard
+  admin → /admin/dashboard
+  keuangan → /keuangan/dashboard
+  produksi → /produksi/dashboard
+  owner → /owner/dashboard
+- AuthController wajib punya method loginAjax() yang return JSON
+- Tombol "Pesan Sekarang" di katalog: cek session dulu,
+  belum login → buka modal, sudah login → /order/create/{id_katalog}

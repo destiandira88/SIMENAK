@@ -1,0 +1,98 @@
+<?php
+/**
+ * @var string                       $title
+ * @var string                       $page_title
+ * @var list<array<string, mixed>>   $payments
+ */
+?>
+<?= $this->extend('layouts/main') ?>
+
+<?= $this->section('title') ?><?= esc($title ?? 'Verifikasi DP') ?><?= $this->endSection() ?>
+<?= $this->section('page_title') ?><?= esc($page_title ?? 'Verifikasi Pembayaran DP') ?><?= $this->endSection() ?>
+
+<?= $this->section('content') ?>
+
+<div class="mb-6">
+    <h2 class="text-xl font-extrabold text-[#051747]">Verifikasi Pembayaran DP</h2>
+    <p class="text-sm text-slate-500 mt-1">Daftar bukti DP yang menunggu verifikasi</p>
+</div>
+
+<?php if (empty($payments)): ?>
+    <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-8 text-center">
+        <p class="text-slate-500 text-sm">Tidak ada DP yang perlu diverifikasi</p>
+    </div>
+<?php else: ?>
+    <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-[#051747] text-white text-xs uppercase">
+                        <th class="px-4 py-3 text-left font-semibold">Kode Order</th>
+                        <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
+                        <th class="px-4 py-3 text-left font-semibold">Nominal DP</th>
+                        <th class="px-4 py-3 text-left font-semibold">Tgl Upload</th>
+                        <th class="px-4 py-3 text-left font-semibold">Bukti</th>
+                        <th class="px-4 py-3 text-left font-semibold">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($payments as $p): ?>
+                        <?php
+                        $idPayment = (int) ($p['id_payment'] ?? 0);
+                        $buktiFile = (string) ($p['bukti_tf'] ?? '');
+                        ?>
+                        <tr class="border-b border-slate-100 hover:bg-[#F8FAFF]">
+                            <td class="px-4 py-3 font-mono font-semibold text-[#051747]">
+                                <?= esc((string) ($p['kode_order'] ?? '-')) ?>
+                            </td>
+                            <td class="px-4 py-3"><?= esc((string) ($p['nama_pelanggan'] ?? '-')) ?></td>
+                            <td class="px-4 py-3 font-semibold">
+                                Rp <?= esc(number_format((float) ($p['nominal'] ?? 0), 0, ',', '.')) ?>
+                            </td>
+                            <td class="px-4 py-3 text-slate-600">
+                                <?= !empty($p['tgl_upload'])
+                                    ? esc(date('d M Y H:i', strtotime((string) $p['tgl_upload'])))
+                                    : '-' ?>
+                            </td>
+                            <td class="px-4 py-3">
+                                <?php if ($buktiFile !== ''): ?>
+                                    <a href="<?= esc(base_url('uploads/bukti_bayar/' . $buktiFile)) ?>"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="text-blue-600 underline text-xs">
+                                        Lihat Bukti
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-slate-400 text-xs">—</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex flex-col gap-2 min-w-[200px]">
+                                    <form method="post" action="<?= esc(site_url('verifikasi-dp/' . $idPayment . '/acc')) ?>" class="inline">
+                                        <?= csrf_field() ?>
+                                        <button type="submit"
+                                            class="bg-emerald-500 text-white rounded-full text-xs font-bold px-3 py-1 hover:bg-emerald-600 transition-colors">
+                                            ACC
+                                        </button>
+                                    </form>
+                                    <form method="post" action="<?= esc(site_url('verifikasi-dp/' . $idPayment . '/tolak')) ?>" class="flex flex-wrap items-center gap-2">
+                                        <?= csrf_field() ?>
+                                        <input type="text" name="catatan_tolak" required
+                                            placeholder="Alasan penolakan..."
+                                            class="border border-slate-200 rounded-lg px-2 py-1 text-xs flex-1 min-w-[120px] focus:border-[#2E5CE6] focus:outline-none">
+                                        <button type="submit"
+                                            class="bg-red-500 text-white rounded-full text-xs font-bold px-3 py-1 hover:bg-red-600 transition-colors shrink-0">
+                                            Tolak
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<?php endif; ?>
+
+<?= $this->endSection() ?>

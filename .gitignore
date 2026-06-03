@@ -1,0 +1,24 @@
+# Environment
+.env
+
+# CI4 writable (cache, logs, session)
+writable/
+
+# CI4 system folder (framework core — install via Composer)
+system/
+
+# Vendor (Composer dependencies)
+vendor/
+
+# Uploaded files
+public/uploads/
+
+# OS & editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# PHP temp
+*.log
+*.cache

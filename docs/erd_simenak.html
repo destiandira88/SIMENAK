@@ -1,0 +1,200 @@
+
+<style>
+#erd svg { width: 100%; height: auto; }
+#erd svg.erDiagram .divider path { stroke-opacity: 0.4; }
+#erd svg.erDiagram .row-rect-odd path,
+#erd svg.erDiagram .row-rect-odd rect,
+#erd svg.erDiagram .row-rect-even path,
+#erd svg.erDiagram .row-rect-even rect { stroke: none !important; }
+</style>
+<div id="erd"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '12px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+    primaryColor: dark ? '#1a2744' : '#e6f1fb',
+    primaryBorderColor: dark ? '#2563eb' : '#185fa5',
+    primaryTextColor: dark ? '#b5d4f4' : '#042c53',
+    secondaryColor: dark ? '#1a3035' : '#e1f5ee',
+    tertiaryColor: dark ? '#2a1e44' : '#eeedfe',
+  },
+});
+
+const diagram = `erDiagram
+  users {
+    int id_user PK
+    varchar nama
+    varchar email
+    varchar password
+    enum role
+    datetime created_at
+  }
+  pelanggan {
+    int id_pelanggan PK
+    int id_user FK
+    varchar no_telp
+    varchar alamat
+    enum jenis
+    varchar nama_perusahaan
+    tinyint is_verified
+  }
+  verifikasi_perusahaan {
+    int id_verify PK
+    int id_pelanggan FK
+    varchar nama_perusahaan
+    varchar no_npwp
+    varchar dokumen_npwp
+    varchar dokumen_ktp_pic
+    enum status
+    text catatan_admin
+    datetime tgl_pengajuan
+    datetime tgl_verifikasi
+    int id_admin FK
+  }
+  katalog {
+    int id_katalog PK
+    varchar nama_produk
+    enum kategori
+    decimal harga_dasar
+    int kuota_revisi_default
+    int min_order
+    varchar satuan
+    varchar estimasi_hari
+    text deskripsi
+    varchar gambar
+    tinyint is_active
+  }
+  form_templates {
+    int id_template PK
+    int id_katalog FK
+    varchar field_key
+    varchar field_label
+    enum field_type
+    varchar placeholder
+    tinyint is_required
+    int urutan
+  }
+  orders {
+    int id_order PK
+    varchar kode_order
+    int id_pelanggan FK
+    int id_katalog FK
+    enum jenis_pelanggan
+    int jumlah_order
+    tinyint is_custom
+    text catatan_custom
+    decimal harga_custom
+    varchar referensi_desain
+    text detail_pesanan
+    date deadline
+    enum metode_pengiriman
+    text alamat_kirim
+    int kuota_revisi
+    int sisa_kuota
+    decimal total_harga
+    tinyint require_dp
+    enum status
+    datetime created_at
+  }
+  order_attributes {
+    int id_attr PK
+    int id_order FK
+    varchar attribute_key
+    text attribute_val
+  }
+  payments {
+    int id_payment PK
+    varchar kode_payment
+    int id_order FK
+    enum jenis
+    decimal nominal
+    varchar bukti_tf
+    enum status
+    text catatan_tolak
+    int id_verifikator FK
+    datetime tgl_upload
+    datetime tgl_verifikasi
+  }
+  revisi_desain {
+    int id_revisi PK
+    int id_order FK
+    int id_produksi FK
+    int versi
+    varchar file_draft
+    text catatan_prod
+    text catatan_revisi
+    enum status
+    datetime created_at
+  }
+  pengiriman {
+    int id_kirim PK
+    int id_order FK
+    varchar no_resi
+    varchar nama_ekspedisi
+    enum status_kirim
+    datetime tgl_kirim
+    datetime tgl_diterima
+  }
+  notifications {
+    int id_notif PK
+    int id_user FK
+    int id_order FK
+    varchar judul
+    text pesan
+    tinyint is_read
+    datetime created_at
+  }
+
+  users ||--|| pelanggan : "memiliki"
+  users ||--o{ verifikasi_perusahaan : "memproses"
+  users ||--o{ payments : "memverifikasi"
+  users ||--o{ revisi_desain : "mengupload"
+  users ||--o{ notifications : "menerima"
+  pelanggan ||--o| verifikasi_perusahaan : "mengajukan"
+  pelanggan ||--o{ orders : "membuat"
+  katalog ||--o{ orders : "dirujuk"
+  katalog ||--o{ form_templates : "mendefinisikan"
+  orders ||--o{ order_attributes : "memiliki EAV"
+  orders ||--o{ payments : "memiliki"
+  orders ||--o{ revisi_desain : "memiliki"
+  orders ||--o| pengiriman : "memiliki"
+  orders ||--o{ notifications : "memicu"
+`;
+
+const { svg } = await mermaid.render('erd-svg', diagram);
+document.getElementById('erd').innerHTML = svg;
+
+document.querySelectorAll('#erd svg.erDiagram .node').forEach(node => {
+  const firstPath = node.querySelector('path[d]');
+  if (!firstPath) return;
+  const d = firstPath.getAttribute('d');
+  const nums = d.match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs = [nums[0], nums[2], nums[4], nums[6]];
+  const ys = [nums[1], nums[3], nums[5], nums[7]];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x); rect.setAttribute('y', y);
+  rect.setAttribute('width', w); rect.setAttribute('height', h);
+  rect.setAttribute('rx', '8');
+  for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
+    if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+  }
+  firstPath.replaceWith(rect);
+});
+
+document.querySelectorAll('#erd svg.erDiagram .row-rect-odd path, #erd svg.erDiagram .row-rect-even path').forEach(p => {
+  p.setAttribute('stroke', 'none');
+});
+</script>
