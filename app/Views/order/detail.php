@@ -37,6 +37,7 @@ $kategoriBadgeClass = match ($kategoriKey) {
 
 $jenisPelanggan = (string) ($order['jenis_pelanggan'] ?? 'perseorangan');
 $metodeKirim    = (string) ($order['metode_pengiriman'] ?? 'kurir');
+$alamatKirim    = trim((string) ($order['alamat_kirim'] ?? ''));
 
 $dpRecord    = null;
 $lunasRecord = null;
@@ -49,17 +50,18 @@ foreach ($payments as $pay) {
     }
 }
 
-$hasBuktiDp = false;
-foreach ($payments as $p) {
-    if (($p['jenis'] ?? '') === 'dp') {
-        $hasBuktiDp = true;
-        break;
-    }
-}
+$orderStatusRow = array_merge($order, [
+    'dp_status'          => $dpRecord['status'] ?? null,
+    'dp_bukti_tf'        => $dpRecord['bukti_tf'] ?? null,
+    'pelunasan_status'   => $lunasRecord['status'] ?? null,
+    'pelunasan_bukti_tf' => $lunasRecord['bukti_tf'] ?? null,
+]);
+$hasBuktiDp = orderHasPendingDpBukti($orderStatusRow);
 
+$dpDitolakStatus = $dpRecord !== null && ($dpRecord['status'] ?? '') === 'ditolak';
 $tampilCountdown = ($order['status'] === 'menunggu_verifikasi_dp')
     && ((int) ($order['require_dp'] ?? 0) === 1)
-    && !$hasBuktiDp
+    && (!$hasBuktiDp || $dpDitolakStatus)
     && !empty($order['batas_upload_dp']);
 
 $batasUploadDp = $order['batas_upload_dp'] ?? null;
@@ -76,28 +78,66 @@ $deadlineTampil = $batasUploadDp
     : '';
 
 $canUploadDp = $status === 'menunggu_verifikasi_dp'
+    && $requireDp
     && ($dpRecord === null || ($dpRecord['status'] ?? '') === 'ditolak');
 
-$canUploadLunas = in_array($status, ['siap_kirim', 'siap_diambil', 'pesanan_diterima'], true)
+helper('notification');
+$tierPerusahaan       = (string) ($order['tier_perusahaan'] ?? 'pemula');
+$pelangganCtx         = ['tier_perusahaan' => $tierPerusahaan];
+$pelunasanSebelumKirim = isPelunasanSebelumKirim($order, $pelangganCtx);
+$canUploadLunas       = canUploadPelunasan($order, $pelangganCtx)
     && ($lunasRecord === null || ($lunasRecord['status'] ?? '') === 'ditolak');
+$canViewNota          = canViewNotaTagihan($order, $pelangganCtx);
+$canViewBuktiPelunasan = canViewBuktiPembayaranPelunasan($lunasRecord);
+$metodePengiriman     = (string) ($order['metode_pengiriman'] ?? 'kurir');
+$lunasMenungguVerif   = ($lunasRecord['status'] ?? '') === 'menunggu';
+$labelMenungguLunas   = $status === 'menunggu_verifikasi_lunas' && $lunasMenungguVerif
+    ? 'Bukti Pelunasan-Menunggu Verifikasi'
+    : ($pelunasanSebelumKirim ? 'Menunggu Pembayaran Pelunasan' : 'Nota Tagihan-Menunggu Pembayaran');
 
-$statusList = [
-    'menunggu_verifikasi_dp'    => 'Menunggu Verifikasi DP',
-    'terverifikasi'             => 'DP Terverifikasi',
-    'proses_desain'             => 'Proses Desain',
-    'proses_revisi'             => 'Proses Revisi',
-    'proses_cetak'              => 'Proses Cetak',
-    'finishing'                 => 'Finishing',
-    'siap_kirim'                => 'Siap Dikirim',
-    'dikirim'                   => 'Dikirim',
-    'pesanan_diterima'          => 'Pesanan Diterima',
-    'menunggu_verifikasi_lunas' => 'Menunggu Pelunasan',
-    'selesai'                   => 'Selesai',
-];
+if ($jenisPelanggan === 'perusahaan' && !$pelunasanSebelumKirim) {
+    $statusList = [
+        'terverifikasi'             => $requireDp ? 'DP Terverifikasi' : 'Masuk Antrian Produksi',
+        'proses_desain'             => 'Proses Desain',
+        'proses_revisi'             => 'Proses Revisi',
+        'proses_cetak'              => 'Proses Cetak',
+        'finishing'                 => 'Finishing',
+        'siap_kirim'                => 'Siap Dikirim',
+        'siap_diambil'              => 'Siap Diambil',
+        'dikirim'                   => 'Dalam Pengiriman',
+        'menunggu_verifikasi_lunas' => $requireDp ? 'Nota Tagihan (Sisa 50%)' : 'Nota Tagihan-Pelunasan',
+        'selesai'                   => 'Selesai',
+    ];
+    if ($requireDp) {
+        $statusList = array_merge([
+            'menunggu_verifikasi_dp' => getOrderStatusLabel($orderStatusRow),
+        ], $statusList);
+    }
+} else {
+    $statusList = [
+        'menunggu_verifikasi_dp'    => getOrderStatusLabel($orderStatusRow),
+        'terverifikasi'             => 'DP Terverifikasi',
+        'proses_desain'             => 'Proses Desain',
+        'proses_revisi'             => 'Proses Revisi',
+        'proses_cetak'              => 'Proses Cetak',
+        'finishing'                 => 'Finishing',
+        'siap_kirim'                => 'Siap Dikirim',
+        'siap_diambil'              => 'Siap Diambil',
+        'menunggu_verifikasi_lunas' => $labelMenungguLunas,
+        'pelunasan_terverifikasi'   => 'Pelunasan Terverifikasi',
+        'dikirim'                   => 'Dalam Pengiriman',
+        'selesai'                   => 'Selesai',
+    ];
+    if ($metodePengiriman === 'ambil_sendiri') {
+        unset($statusList['dikirim']);
+    }
+}
 if ($isCustom) {
     $statusList = array_merge([
         'menunggu_konfirmasi_harga'     => 'Menunggu Konfirmasi Harga',
-        'menunggu_konfirmasi_pelanggan' => 'Menunggu Konfirmasimu',
+        'menunggu_konfirmasi_pelanggan' => $role === 'pelanggan'
+            ? 'Menunggu Konfirmasi Anda'
+            : 'Menunggu Konfirmasi Pelanggan',
     ], $statusList);
 }
 $statusKeys  = array_keys($statusList);
@@ -113,6 +153,30 @@ $revisiStatusBadges = [
 $latestRevis    = $revisList !== [] ? $revisList[array_key_last($revisList)] : null;
 $idRevisiTerbaru = $latestRevis !== null ? (int) ($latestRevis['id_revisi'] ?? 0) : 0;
 $revisCount     = count($revisList);
+
+$adaDraftAcc = false;
+$draftUntukPilih = [];
+foreach ($revisList as $r) {
+    $st = (string) ($r['status'] ?? '');
+    if ($st === 'acc') {
+        $adaDraftAcc = true;
+    }
+    if (in_array($st, ['uploaded', 'diajukan_revisi'], true)) {
+        $draftUntukPilih[] = $r;
+    }
+}
+
+$canAccDraftTerbaru = $role === 'pelanggan'
+    && $sisaKuota > 0
+    && $latestRevis !== null
+    && ($latestRevis['status'] ?? '') === 'uploaded'
+    && in_array($status, ['proses_desain', 'proses_revisi'], true);
+
+$pilihDraftUntukCetak = $role === 'pelanggan'
+    && $sisaKuota <= 0
+    && !$adaDraftAcc
+    && $draftUntukPilih !== []
+    && in_array($status, ['proses_desain', 'proses_revisi'], true);
 ?>
 <?= $this->extend('layouts/main') ?>
 
@@ -128,6 +192,8 @@ $revisCount     = count($revisList);
                 <a href="<?= site_url('order') ?>" class="hover:text-[#051747]">Pesanan Saya</a>
             <?php elseif ($role === 'admin'): ?>
                 <a href="<?= site_url('list-pemesanan') ?>" class="hover:text-[#051747]">List Pemesanan</a>
+            <?php elseif ($role === 'owner'): ?>
+                <a href="<?= site_url('list-pemesanan') ?>" class="hover:text-[#051747]">Pesanan</a>
             <?php elseif ($role === 'keuangan'): ?>
                 <a href="<?= site_url('verifikasi-dp') ?>" class="hover:text-[#051747]">Verifikasi Pembayaran</a>
             <?php elseif ($role === 'produksi'): ?>
@@ -140,7 +206,7 @@ $revisCount     = count($revisList);
         </p>
         <h1 class="font-mono font-extrabold text-2xl text-[#051747]"><?= esc($kodeOrder) ?></h1>
         <span class="inline-flex mt-2 px-4 py-1.5 rounded-full text-sm font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
-            <?= esc(getStatusLabel($status, $hasBuktiDp)) ?>
+            <?= esc(getOrderStatusLabel($orderStatusRow, $role)) ?>
         </span>
     </div>
     <?php if ($role === 'pelanggan'): ?>
@@ -152,6 +218,11 @@ $revisCount     = count($revisList);
         <a href="<?= site_url('list-pemesanan') ?>"
            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
             ← List Pemesanan
+        </a>
+    <?php elseif ($role === 'owner'): ?>
+        <a href="<?= site_url('list-pemesanan') ?>"
+           class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
+            ← Pesanan
         </a>
     <?php elseif ($role === 'keuangan'): ?>
         <a href="<?= site_url('verifikasi-dp') ?>"
@@ -202,11 +273,32 @@ $revisCount     = count($revisList);
                         <?= $metodeKirim === 'kurir' ? 'Kurir' : 'Ambil Sendiri' ?>
                     </span>
                 </div>
+                <?php if ($metodeKirim === 'kurir'): ?>
+                    <div class="sm:col-span-2">
+                        <p class="text-xs font-semibold uppercase text-slate-400 mb-1">Alamat Pengiriman</p>
+                        <?php if ($alamatKirim !== ''): ?>
+                            <p class="text-sm text-slate-700 whitespace-pre-line leading-relaxed"><?= esc($alamatKirim) ?></p>
+                            <p class="text-[11px] text-slate-400 mt-1">
+                                Tercatat saat pesanan dibuat. Hubungi admin jika perlu perubahan alamat.
+                            </p>
+                        <?php else: ?>
+                            <p class="text-sm text-amber-700">Belum tercatat</p>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
                 <div>
-                    <p class="text-xs font-semibold uppercase text-slate-400 mb-1">Deadline</p>
+                    <p class="text-xs font-semibold uppercase text-slate-400 mb-1">Deadline Produksi</p>
                     <p class="text-slate-700">
                         <?= !empty($order['deadline']) ? esc(date('d M Y', strtotime((string) $order['deadline']))) : '-' ?>
                     </p>
+                    <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                        Barang selesai dikerjakan (belum termasuk pengiriman).
+                    </p>
+                    <?php if ($metodeKirim === 'kurir'): ?>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-snug">
+                            Pengiriman ke alamat Anda membutuhkan waktu tambahan di luar deadline produksi.
+                        </p>
+                    <?php endif; ?>
                 </div>
                 <div>
                     <p class="text-xs font-semibold uppercase text-slate-400 mb-1">Total Harga</p>
@@ -278,7 +370,7 @@ $revisCount     = count($revisList);
         <?php endif; ?>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-            <div class="flex flex-wrap justify-between items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+            <div class="flex flex-wrap justify-between items-center gap-2 mb-2 pb-3 border-b border-slate-100">
                 <h2 class="font-bold text-[#051747]">🎨 Revisi Desain</h2>
                 <p class="text-sm text-slate-600">
                     Sisa Kuota:
@@ -287,6 +379,65 @@ $revisCount     = count($revisList);
                     </span>
                 </p>
             </div>
+            <?php if ($revisList !== []): ?>
+                <a href="<?= esc(site_url('revisi/history/' . $kodeOrder)) ?>"
+                   class="inline-block text-xs text-[#2E5CE6] hover:underline mb-4">
+                    Lihat riwayat lengkap →
+                </a>
+            <?php endif; ?>
+            <?php if ($role === 'pelanggan' && $sisaKuota > 0 && $sisaKuota <= 1): ?>
+                <p class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">
+                    ⚠ Sisa kuota revisi: <?= esc((string) $sisaKuota) ?>. Gunakan dengan bijak.
+                </p>
+            <?php endif; ?>
+
+            <?php if ($pilihDraftUntukCetak): ?>
+                <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+                    <p class="font-bold text-red-800 text-sm mb-1">Kuota revisi habis</p>
+                    <p class="text-xs text-red-700 mb-4">
+                        Pilih salah satu versi draft di bawah yang akan diproses cetak oleh produksi.
+                    </p>
+                    <form method="post" action="<?= esc(site_url('revisi/acc')) ?>" class="space-y-3">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
+                        <?php foreach ($draftUntukPilih as $i => $d): ?>
+                            <?php
+                            $idRevPick = (int) ($d['id_revisi'] ?? 0);
+                            $versiPick = (int) ($d['versi'] ?? 0);
+                            $filePick  = (string) ($d['file_draft'] ?? '');
+                            $stPick    = (string) ($d['status'] ?? '');
+                            ?>
+                            <label class="flex gap-3 items-start p-3 rounded-xl border-2 border-slate-200 bg-white cursor-pointer hover:border-[#2E5CE6] has-[:checked]:border-[#051747] has-[:checked]:bg-blue-50/40 transition-colors">
+                                <input type="radio" name="id_revisi" value="<?= esc((string) $idRevPick) ?>"
+                                    class="mt-1 shrink-0 accent-[#051747]"
+                                    <?= $i === count($draftUntukPilih) - 1 ? 'checked' : '' ?> required>
+                                <div class="w-16 h-14 bg-slate-100 rounded-lg overflow-hidden shrink-0">
+                                    <?php if ($filePick !== ''): ?>
+                                        <img src="<?= esc(base_url('uploads/draft_desain/' . $filePick)) ?>"
+                                            alt="v<?= esc((string) $versiPick) ?>"
+                                            class="w-full h-full object-cover">
+                                    <?php else: ?>
+                                        <span class="flex items-center justify-center h-full text-lg">🖼</span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="flex-1 min-w-0 text-sm">
+                                    <p class="font-bold text-[#051747]">Draft v<?= esc((string) $versiPick) ?></p>
+                                    <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold <?= esc($revisiStatusBadges[$stPick]['class'] ?? 'bg-slate-100') ?>">
+                                        <?= esc($revisiStatusBadges[$stPick]['label'] ?? $stPick) ?>
+                                    </span>
+                                    <?php if (!empty($d['catatan_prod'])): ?>
+                                        <p class="text-xs text-slate-500 mt-1 line-clamp-2"><?= esc((string) $d['catatan_prod']) ?></p>
+                                    <?php endif; ?>
+                                </div>
+                            </label>
+                        <?php endforeach; ?>
+                        <button type="submit"
+                            class="w-full bg-emerald-500 text-white py-2.5 rounded-full text-sm font-bold hover:bg-emerald-600 transition-colors">
+                            ✓ ACC Draft Terpilih untuk Cetak
+                        </button>
+                    </form>
+                </div>
+            <?php endif; ?>
 
             <?php if ($revisList === []): ?>
                 <div class="text-center py-8 text-slate-400 text-sm">
@@ -301,8 +452,17 @@ $revisCount     = count($revisList);
                     $revCode     = 'REV-' . str_pad((string) $idOrder, 4, '0', STR_PAD_LEFT)
                         . '-' . str_pad((string) ($r['versi'] ?? 0), 2, '0', STR_PAD_LEFT);
                     $fileDraft   = (string) ($r['file_draft'] ?? '');
+                    $isAccDraft  = $revisStatus === 'acc';
+                    $cardClass   = $isAccDraft
+                        ? 'revisi-card revisi-card-acc border-2 border-emerald-500 bg-white shadow-sm'
+                        : 'revisi-card border border-slate-200 bg-white';
                     ?>
-                    <div class="border border-slate-200 rounded-xl p-4 mb-3 last:mb-0">
+                    <div class="<?= esc($cardClass) ?> rounded-xl p-4 mb-3 last:mb-0">
+                        <?php if ($isAccDraft): ?>
+                            <p class="text-[10px] font-bold uppercase tracking-wide text-emerald-700 mb-2 flex items-center gap-1">
+                                <span aria-hidden="true">✓</span> Draft dipilih untuk cetak
+                            </p>
+                        <?php endif; ?>
                         <div class="flex gap-4 items-start">
                             <div class="w-20 h-16 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
                                 <?php if ($fileDraft !== ''): ?>
@@ -321,7 +481,7 @@ $revisCount     = count($revisList);
                             <div class="flex-1 min-w-0">
                                 <div class="flex flex-wrap justify-between gap-2 items-start">
                                     <p class="text-sm font-bold text-[#051747]">
-                                        Draft v<?= esc((string) ($r['versi'] ?? '')) ?> — <?= esc($revCode) ?>
+                                        Draft v<?= esc((string) ($r['versi'] ?? '')) ?>-<?= esc($revCode) ?>
                                     </p>
                                     <span class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-semibold <?= esc($revBadge['class']) ?>">
                                         <?= esc($revBadge['label']) ?>
@@ -332,7 +492,7 @@ $revisCount     = count($revisList);
                                 <?php endif; ?>
                                 <?php if (!empty($r['catatan_revisi'])): ?>
                                     <p class="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 mt-1">
-                                        Catatanmu: <?= esc((string) $r['catatan_revisi']) ?>
+                                        Catatan Anda: <?= esc((string) $r['catatan_revisi']) ?>
                                     </p>
                                 <?php endif; ?>
                                 <?php if (!empty($r['created_at'])): ?>
@@ -343,30 +503,51 @@ $revisCount     = count($revisList);
                             </div>
                         </div>
 
-                        <?php if ($isLatest && $role === 'pelanggan' && $revisStatus === 'uploaded'): ?>
-                            <div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100">
-                                <button
-                                    type="button"
-                                    onclick="document.getElementById('modalAcc').classList.remove('hidden')"
-                                    class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-600 transition-colors">
-                                    ✓ ACC Desain
-                                </button>
-                                <?php if ($sisaKuota > 0): ?>
+                        <?php if ($isLatest && $canAccDraftTerbaru): ?>
+                            <div class="mt-3 pt-3 border-t border-slate-100">
+                                <div id="revisiActionBtns" class="flex flex-wrap gap-2">
                                     <button
                                         type="button"
-                                        onclick="document.getElementById('modalRevisi').classList.remove('hidden')"
+                                        onclick="document.getElementById('modalAcc').classList.remove('hidden')"
+                                        class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-600 transition-colors">
+                                        ✓ ACC Desain
+                                    </button>
+                                    <button
+                                        type="button"
+                                        id="btnShowRevisiInline"
+                                        onclick="document.getElementById('revisiInlineForm').classList.remove('hidden'); document.getElementById('revisiActionBtns').classList.add('hidden');"
                                         class="bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-amber-600 transition-colors">
                                         ↺ Ajukan Revisi
                                     </button>
-                                <?php else: ?>
-                                    <button
-                                        type="button"
-                                        disabled
-                                        class="bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-bold opacity-50 cursor-not-allowed">
-                                        ↺ Ajukan Revisi
-                                    </button>
-                                    <p class="text-xs text-red-500 w-full">Kuota revisi habis. Hanya bisa ACC.</p>
-                                <?php endif; ?>
+                                </div>
+                                <div id="revisiInlineForm" class="hidden">
+                                    <p class="text-sm font-semibold text-[#051747] mb-1">Catatan Revisi <span class="text-red-500">*</span></p>
+                                    <p class="text-xs text-amber-600 mb-3">Sisa kuota: <?= esc((string) $sisaKuota) ?> revisi</p>
+                                    <form method="post" action="<?= esc(site_url('revisi/ajukan')) ?>">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
+                                        <input type="hidden" name="id_revisi" value="<?= esc((string) $idRevisiTerbaru) ?>">
+                                        <textarea
+                                            name="catatan_revisi"
+                                            rows="4"
+                                            required
+                                            placeholder="Jelaskan apa yang perlu diubah secara detail..."
+                                            class="border border-slate-200 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"></textarea>
+                                        <div class="flex flex-wrap gap-2 justify-end mt-3">
+                                            <button
+                                                type="button"
+                                                onclick="document.getElementById('revisiInlineForm').classList.add('hidden'); document.getElementById('revisiActionBtns').classList.remove('hidden'); this.closest('form').querySelector('[name=catatan_revisi]').value='';"
+                                                class="px-4 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+                                                Batal
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                class="bg-amber-500 text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-amber-600 transition-colors">
+                                                Kirim Revisi
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -376,11 +557,46 @@ $revisCount     = count($revisList);
     </div>
 
     <div class="lg:col-span-2 space-y-5">
+        <?php if ($role !== 'pelanggan'): ?>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+                <h2 class="font-bold text-[#051747] mb-4 pb-3 border-b border-slate-100">Data Pelanggan</h2>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <p class="text-xs font-semibold uppercase text-slate-400 mb-1">Nama</p>
+                        <p class="font-semibold text-[#051747]"><?= esc((string) ($order['nama_pelanggan'] ?? '-')) ?></p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase text-slate-400 mb-1">Email</p>
+                        <p class="text-slate-700"><?= esc((string) ($order['email_pelanggan'] ?? '-')) ?></p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase text-slate-400 mb-1">No. Telepon</p>
+                        <?php $noTelp = trim((string) ($order['no_telp'] ?? '')); ?>
+                        <?php if ($noTelp !== ''): ?>
+                            <a href="tel:<?= esc(preg_replace('/\D+/', '', $noTelp) ?: $noTelp) ?>"
+                               class="text-[#2E5CE6] font-semibold hover:underline">
+                                <?= esc($noTelp) ?>
+                            </a>
+                        <?php else: ?>
+                            <p class="text-slate-400">—</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <?php if ($isCustom && $status === 'menunggu_konfirmasi_harga' && $role === 'admin'): ?>
+            <?php
+            helper('deadline');
+            $deadlinePelanggan = (string) ($order['deadline'] ?? '');
+            $deadlinePelangganLabel = $deadlinePelanggan !== ''
+                ? formatTanggalId($deadlinePelanggan)
+                : '-';
+            ?>
             <div class="bg-white border border-slate-200 rounded-xl p-5 mb-5 shadow-sm">
                 <p class="font-bold text-[#051747] mb-1">⭐ Set Penawaran Harga Custom</p>
                 <p class="text-sm text-slate-500 mb-4">
-                    Tetapkan harga dan estimasi untuk pesanan ini, lalu kirim ke pelanggan.
+                    Tetapkan harga, estimasi, dan deadline produksi. Tinjau ajuan deadline pelanggan — sesuaikan jika tidak sanggup.
                 </p>
                 <?php if (!empty($order['catatan_custom'])): ?>
                     <div class="bg-slate-50 rounded-xl p-3 mb-4 text-sm text-slate-700">
@@ -388,26 +604,45 @@ $revisCount     = count($revisList);
                         <?= esc((string) $order['catatan_custom']) ?>
                     </div>
                 <?php endif; ?>
-                <form method="post" action="<?= esc(site_url('list-pemesanan/set-harga')) ?>" class="space-y-3">
+                <form method="post"
+                    action="<?= esc(site_url('list-pemesanan/set-harga')) ?>"
+                    class="space-y-3 js-action-confirm-form"
+                    data-confirm-variant="offer"
+                    data-confirm-kode="<?= esc($kodeOrder) ?>">
                     <?= csrf_field() ?>
                     <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Harga Ditawarkan (Rp)</label>
-                        <input type="number" name="harga_custom" min="1" required
+                        <input type="number" name="harga_custom" min="1" step="1" required
+                            onwheel="this.blur()"
                             class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"
                             placeholder="Contoh: 350000">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Estimasi Pengerjaan</label>
-                        <input type="text" name="estimasi_custom" required
+                        <input type="text" name="estimasi_custom" id="estimasiCustomAdmin" required
                             class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"
-                            placeholder="Contoh: 5-7 hari kerja">
+                            placeholder="Contoh: 5-7 hari kerja (setelah ACC desain)">
+                        <p class="text-xs text-slate-400 mt-1">Dihitung setelah pelanggan menyetujui desain.</p>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                        <p class="text-xs text-slate-500 mb-2">
+                            Diajukan pelanggan: <strong class="text-slate-700"><?= esc($deadlinePelangganLabel) ?></strong>
+                        </p>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Deadline Produksi Penawaran</label>
+                        <input type="date" name="deadline" id="deadlinePenawaranAdmin" required
+                            min="<?= esc(date('Y-m-d')) ?>"
+                            value="<?= esc($deadlinePelanggan !== '' ? $deadlinePelanggan : date('Y-m-d')) ?>"
+                            class="w-full max-w-xs border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
+                        <p class="text-xs text-slate-400 mt-1.5">
+                            Barang selesai dikerjakan — belum termasuk pengiriman kurir.
+                        </p>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Catatan untuk Pelanggan</label>
                         <textarea name="catatan_admin_custom" rows="3"
                             class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"
-                            placeholder="Rincian material, finishing, dll."></textarea>
+                            placeholder="Rincian material, finishing, alasan perubahan deadline, dll."></textarea>
                     </div>
                     <button type="submit"
                         class="bg-[#051747] text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-[#2E5CE6] transition-colors">
@@ -419,15 +654,16 @@ $revisCount     = count($revisList);
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-5">
                 <p class="font-bold text-amber-800">⏳ Menunggu Konfirmasi Harga</p>
                 <p class="text-sm text-amber-700 mt-1">
-                    Admin sedang meninjau spesifikasi custom kamu.
-                    Kamu akan mendapat notifikasi saat harga sudah ditetapkan.
+                    Admin sedang meninjau spesifikasi custom Anda.
+                    Anda akan mendapat notifikasi saat harga sudah ditetapkan.
                 </p>
             </div>
         <?php elseif ($isCustom && $status === 'menunggu_konfirmasi_pelanggan' && $role === 'pelanggan'): ?>
+            <?php helper('deadline'); ?>
             <div class="bg-blue-50 border border-blue-300 rounded-xl p-5 mb-5">
-                <p class="font-bold text-[#051747] mb-3">💰 Penawaran Harga dari Admin</p>
+                <p class="font-bold text-[#051747] mb-3">💰 Penawaran dari Admin</p>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                     <div>
                         <p class="text-xs font-bold uppercase text-slate-500">Harga Ditawarkan</p>
                         <p class="text-2xl font-bold text-[#051747]">
@@ -439,8 +675,22 @@ $revisCount     = count($revisList);
                         <p class="text-lg font-semibold text-[#051747]">
                             <?= esc((string) ($order['estimasi_custom'] ?? '-')) ?>
                         </p>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Setelah desain disetujui (ACC)</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold uppercase text-slate-500">Deadline Produksi</p>
+                        <p class="text-lg font-semibold text-[#051747]">
+                            <?= !empty($order['deadline']) ? esc(formatTanggalId((string) $order['deadline'])) : '-' ?>
+                        </p>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Barang selesai, belum termasuk pengiriman</p>
                     </div>
                 </div>
+
+                <?php if ($metodeKirim === 'kurir'): ?>
+                    <p class="text-xs text-slate-600 mb-4 bg-white/70 border border-blue-200 rounded-lg px-3 py-2">
+                        Pengiriman ke alamat Anda membutuhkan waktu tambahan di luar deadline produksi.
+                    </p>
+                <?php endif; ?>
 
                 <?php if (!empty($order['catatan_admin_custom'])): ?>
                     <div class="bg-white border border-slate-200 rounded-lg p-3 mb-4">
@@ -450,7 +700,14 @@ $revisCount     = count($revisList);
                 <?php endif; ?>
 
                 <div class="flex flex-wrap gap-3">
-                    <form method="post" action="<?= esc(site_url('custom-order/setuju')) ?>">
+                    <form method="post"
+                        action="<?= esc(site_url('custom-order/setuju')) ?>"
+                        class="js-action-confirm-form"
+                        data-confirm-variant="accept"
+                        data-confirm-kode="<?= esc($kodeOrder) ?>"
+                        data-confirm-harga="<?= esc((string) (int) ($order['harga_custom'] ?? 0)) ?>"
+                        data-confirm-estimasi="<?= esc((string) ($order['estimasi_custom'] ?? '-')) ?>"
+                        data-confirm-deadline="<?= esc(!empty($order['deadline']) ? formatTanggalId((string) $order['deadline']) : '-') ?>">
                         <?= csrf_field() ?>
                         <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
                         <button
@@ -460,12 +717,15 @@ $revisCount     = count($revisList);
                         </button>
                     </form>
 
-                    <form method="post" action="<?= esc(site_url('custom-order/tolak')) ?>">
+                    <form method="post"
+                        action="<?= esc(site_url('custom-order/tolak')) ?>"
+                        class="js-action-confirm-form"
+                        data-confirm-variant="reject"
+                        data-confirm-kode="<?= esc($kodeOrder) ?>">
                         <?= csrf_field() ?>
                         <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
                         <button
                             type="submit"
-                            onclick="return confirm('Yakin menolak penawaran ini? Pesanan akan dibatalkan.')"
                             class="bg-red-100 text-red-700 px-5 py-2.5 rounded-full font-bold text-sm hover:bg-red-200 transition-colors">
                             ✗ Tolak Penawaran
                         </button>
@@ -473,11 +733,13 @@ $revisCount     = count($revisList);
                 </div>
             </div>
         <?php elseif ($isCustom && $status === 'menunggu_konfirmasi_pelanggan' && $role === 'admin'): ?>
+            <?php helper('deadline'); ?>
             <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-5">
-                <p class="font-bold text-[#051747]">Penawaran terkirim — menunggu konfirmasi pelanggan</p>
+                <p class="font-bold text-[#051747]">Penawaran terkirim-menunggu konfirmasi pelanggan</p>
                 <p class="text-sm text-slate-600 mt-2">
                     Harga: <strong>Rp <?= esc(number_format((float) ($order['harga_custom'] ?? 0), 0, ',', '.')) ?></strong>
-                    · Estimasi: <strong><?= esc((string) ($order['estimasi_custom'] ?? '-')) ?></strong>
+                    · Estimasi: <strong><?= esc((string) ($order['estimasi_custom'] ?? '-')) ?></strong> (setelah ACC desain)
+                    · Deadline produksi: <strong><?= !empty($order['deadline']) ? esc(formatTanggalId((string) $order['deadline'])) : '-' ?></strong>
                 </p>
             </div>
         <?php endif; ?>
@@ -526,6 +788,12 @@ $revisCount     = count($revisList);
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
             <h2 class="font-bold text-[#051747] mb-4 pb-3 border-b border-slate-100">💳 Pembayaran</h2>
 
+            <?php
+            $nominalSetengah  = nominalDpFromTotal((float) $totalHarga);
+            $nominalPelunasan = nominalPelunasanFromOrder((float) $totalHarga, $requireDp ? 1 : 0);
+            $labelPelunasan   = $requireDp ? 'Pelunasan (50%)' : 'Pelunasan / Nota Tagihan';
+            ?>
+
             <?php if ($requireDp): ?>
                 <?php
                 $dpStatus = $dpRecord['status'] ?? null;
@@ -544,7 +812,7 @@ $revisCount     = count($revisList);
                         </span>
                     </div>
                     <p class="text-xl font-bold text-[#051747]">
-                        Rp <?= esc(number_format($totalHarga > 0 ? $totalHarga * 0.5 : 0, 0, ',', '.')) ?>
+                        Rp <?= esc(number_format($nominalSetengah, 0, ',', '.')) ?>
                     </p>
 
                     <?php if ($tampilCountdown): ?>
@@ -571,12 +839,11 @@ $revisCount     = count($revisList);
                     <?php endif; ?>
 
                     <?php
-                    $dpDitolak         = $dpRecord !== null && ($dpRecord['status'] ?? '') === 'ditolak';
-                    $dpMenungguVerif   = $hasBuktiDp && $dpRecord !== null && ($dpRecord['status'] ?? '') === 'menunggu';
+                    $dpDitolak         = $dpDitolakStatus;
+                    $dpMenungguVerif   = $hasBuktiDp;
                     $showDpUploadForm  = $role === 'pelanggan'
                         && $status === 'menunggu_verifikasi_dp'
                         && ($tampilCountdown || $dpDitolak);
-                    $nominalDpTampil   = $totalHarga > 0 ? $totalHarga * 0.5 : 0;
                     ?>
 
                     <?php if ($dpMenungguVerif): ?>
@@ -618,7 +885,7 @@ $revisCount     = count($revisList);
                                 <h3 class="font-bold text-[#051747] mb-4">Upload Bukti Transfer DP</h3>
                                 <div class="bg-slate-50 rounded-lg p-3 mb-4">
                                     <p class="text-sm font-semibold text-[#051747]">
-                                        Nominal DP (50%): Rp <?= esc(number_format($nominalDpTampil, 0, ',', '.')) ?>
+                                        Nominal DP (50%): Rp <?= esc(number_format($nominalSetengah, 0, ',', '.')) ?>
                                     </p>
                                     <p class="text-xs text-slate-500 mt-1">
                                         Transfer ke rekening Z'Plack: BCA 1234567890 a/n Z'Plack Percetakan
@@ -667,19 +934,27 @@ $revisCount     = count($revisList);
             ?>
             <div class="border border-slate-200 rounded-xl p-4">
                 <div class="flex justify-between items-center mb-2">
-                    <span class="font-semibold text-sm text-slate-700">Pelunasan (50%)</span>
+                    <span class="font-semibold text-sm text-slate-700"><?= esc($labelPelunasan) ?></span>
                     <span class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-semibold <?= esc($lunasBadge['class']) ?>">
                         <?= esc($lunasBadge['label']) ?>
                     </span>
                 </div>
                 <p class="text-xl font-bold text-[#051747]">
-                    Rp <?= esc(number_format($totalHarga > 0 ? $totalHarga * 0.5 : 0, 0, ',', '.')) ?>
+                    Rp <?= esc(number_format($nominalPelunasan, 0, ',', '.')) ?>
                 </p>
+
+                <?php if ($canViewNota): ?>
+                    <a href="<?= esc(site_url('order/' . $kodeOrder . '/nota-tagihan')) ?>"
+                        target="_blank"
+                        class="inline-flex items-center gap-2 mt-3 text-xs font-bold text-[#2E5CE6] hover:underline">
+                        📄 Lihat / Cetak Nota Tagihan
+                    </a>
+                <?php endif; ?>
 
                 <?php if ($canUploadLunas && $role === 'pelanggan'): ?>
                     <form
                         method="post"
-                        action="<?= esc(site_url('payment/upload-pelunasan')) ?>"
+                        action="<?= esc(site_url('order/' . $kodeOrder . '/upload-pelunasan')) ?>"
                         enctype="multipart/form-data"
                         class="mt-3">
                         <?= csrf_field() ?>
@@ -691,7 +966,7 @@ $revisCount     = count($revisList);
                             accept=".jpg,.jpeg,.png,.pdf"
                             required
                             class="block w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#051747] file:text-white hover:file:bg-[#2E5CE6]">
-                        <p class="text-xs text-slate-400 mt-1">JPG, PNG, PDF — Maks 2MB</p>
+                        <p class="text-xs text-slate-400 mt-1">JPG, PNG, PDF-Maks 2MB</p>
                         <button
                             type="submit"
                             class="mt-3 bg-[#051747] text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#2E5CE6] transition-colors">
@@ -699,7 +974,26 @@ $revisCount     = count($revisList);
                         </button>
                     </form>
                 <?php elseif (!$canUploadLunas && $lunasRecord === null): ?>
-                    <p class="text-xs text-slate-400 mt-2">Aktif setelah pesanan siap kirim atau diterima.</p>
+                    <p class="text-xs text-slate-400 mt-2">
+                        <?php if ($pelunasanSebelumKirim): ?>
+                            Aktif setelah pesanan siap dikirim/diambil.
+                        <?php else: ?>
+                            Aktif setelah pesanan diterima/diambil. Unduh nota tagihan untuk transfer.
+                        <?php endif; ?>
+                    </p>
+                <?php elseif ($status === 'menunggu_verifikasi_lunas' && $lunasMenungguVerif): ?>
+                    <p class="text-xs text-amber-700 mt-2">Bukti pelunasan sedang diverifikasi keuangan.</p>
+                <?php elseif ($canViewBuktiPelunasan): ?>
+                    <?php if (!empty($lunasRecord['tgl_verifikasi'])): ?>
+                        <p class="text-xs text-green-600 mt-2">
+                            ✓ Diverifikasi <?= esc(date('d M Y H:i', strtotime((string) $lunasRecord['tgl_verifikasi']))) ?>
+                        </p>
+                    <?php endif; ?>
+                    <a href="<?= esc(site_url('order/' . $kodeOrder . '/bukti-pembayaran-pelunasan')) ?>"
+                        target="_blank"
+                        class="inline-flex items-center gap-2 mt-3 text-xs font-bold text-emerald-700 hover:underline">
+                        🧾 Lihat / Cetak Bukti Pembayaran Resmi
+                    </a>
                 <?php endif; ?>
             </div>
         </div>
@@ -708,17 +1002,31 @@ $revisCount     = count($revisList);
             <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
                 <div class="border border-slate-200 rounded-xl p-4">
                     <p class="font-semibold text-sm text-[#051747] mb-2">🚚 Info Pengiriman</p>
+                    <?php if ($metodeKirim === 'kurir' && $alamatKirim !== ''): ?>
+                        <div class="mb-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                            <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Alamat Tujuan</p>
+                            <p class="text-xs text-slate-700 whitespace-pre-line leading-relaxed"><?= esc($alamatKirim) ?></p>
+                        </div>
+                    <?php endif; ?>
+                    <?php
+                        $statusKirimLabels = [
+                            'dikirim'  => ['label' => 'Dalam Pengiriman', 'class' => 'bg-blue-100 text-blue-800'],
+                            'diterima' => ['label' => 'Diterima',         'class' => 'bg-emerald-100 text-emerald-800'],
+                            'diambil'  => ['label' => 'Diambil',          'class' => 'bg-emerald-100 text-emerald-800'],
+                        ];
+                        $skInfo = $statusKirimLabels[$pengiriman['status_kirim'] ?? ''] ?? null;
+                    ?>
                     <?php if (!empty($pengiriman['no_resi'])): ?>
                         <p class="text-sm text-slate-700">
-                            Resi: <?= esc((string) $pengiriman['no_resi']) ?>
+                            Resi: <strong><?= esc((string) $pengiriman['no_resi']) ?></strong>
                             <?php if (!empty($pengiriman['nama_ekspedisi'])): ?>
-                                via <?= esc((string) $pengiriman['nama_ekspedisi']) ?>
+                                <span class="text-slate-500">via <?= esc((string) $pengiriman['nama_ekspedisi']) ?></span>
                             <?php endif; ?>
                         </p>
                     <?php endif; ?>
-                    <?php if (!empty($pengiriman['status_kirim'])): ?>
-                        <span class="inline-flex mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-100 text-cyan-800">
-                            <?= esc(str_replace('_', ' ', (string) $pengiriman['status_kirim'])) ?>
+                    <?php if ($skInfo): ?>
+                        <span class="inline-flex mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-semibold <?= $skInfo['class'] ?>">
+                            <?= $skInfo['label'] ?>
                         </span>
                     <?php endif; ?>
                     <?php if (!empty($pengiriman['tgl_kirim'])): ?>
@@ -726,14 +1034,20 @@ $revisCount     = count($revisList);
                             Dikirim: <?= esc(date('d M Y', strtotime((string) $pengiriman['tgl_kirim']))) ?>
                         </p>
                     <?php endif; ?>
+                    <?php if (!empty($pengiriman['tgl_diterima'])): ?>
+                        <p class="text-xs text-slate-500">
+                            <?= ($pengiriman['status_kirim'] ?? '') === 'diambil' ? 'Diambil' : 'Diterima' ?>:
+                            <?= esc(date('d M Y', strtotime((string) $pengiriman['tgl_diterima']))) ?>
+                        </p>
+                    <?php endif; ?>
 
-                    <?php if (($pengiriman['status_kirim'] ?? '') === 'dikirim' && $role === 'pelanggan'): ?>
-                        <form method="post" action="<?= esc(site_url('pengiriman/konfirmasi')) ?>" class="mt-3">
+                    <?php if ($status === 'dikirim' && $role === 'pelanggan' && $metodePengiriman !== 'ambil_sendiri'): ?>
+                        <form method="post" action="<?= esc(site_url('pesanan/konfirmasi-diterima')) ?>" class="mt-3">
                             <?= csrf_field() ?>
                             <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
                             <button
                                 type="submit"
-                                class="bg-green-500 text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-green-600 transition-colors">
+                                class="bg-emerald-600 text-white rounded-full px-5 py-2 text-sm font-bold uppercase hover:bg-emerald-700 transition-colors">
                                 ✓ Konfirmasi Pesanan Diterima
                             </button>
                         </form>
@@ -744,8 +1058,8 @@ $revisCount     = count($revisList);
     </div>
 </div>
 
-<?php if ($idRevisiTerbaru > 0): ?>
-    <div id="modalAcc" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+<?php if ($canAccDraftTerbaru && $idRevisiTerbaru > 0): ?>
+    <div id="modalAcc" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
         <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
             <h3 class="font-bold text-lg text-[#051747] mb-2">Konfirmasi ACC Desain</h3>
             <p class="text-sm text-slate-500 mb-4">Desain akan di-ACC dan pesanan lanjut ke proses cetak.</p>
@@ -764,37 +1078,6 @@ $revisCount     = count($revisList);
                         type="submit"
                         class="bg-green-500 text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-green-600">
                         ✓ Ya, ACC Desain
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="modalRevisi" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
-            <h3 class="font-bold text-lg text-[#051747] mb-1">Ajukan Revisi</h3>
-            <p class="text-xs text-amber-600 mb-4">Sisa kuota: <?= esc((string) $sisaKuota) ?> revisi</p>
-            <form method="post" action="<?= esc(site_url('revisi/ajukan')) ?>">
-                <?= csrf_field() ?>
-                <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
-                <input type="hidden" name="id_revisi" value="<?= esc((string) $idRevisiTerbaru) ?>">
-                <textarea
-                    name="catatan_revisi"
-                    rows="4"
-                    required
-                    placeholder="Jelaskan apa yang perlu diubah secara detail..."
-                    class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"></textarea>
-                <div class="flex gap-3 justify-end mt-4">
-                    <button
-                        type="button"
-                        onclick="document.getElementById('modalRevisi').classList.add('hidden')"
-                        class="px-4 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">
-                        Batal
-                    </button>
-                    <button
-                        type="submit"
-                        class="bg-amber-500 text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-amber-600">
-                        Kirim Revisi
                     </button>
                 </div>
             </form>

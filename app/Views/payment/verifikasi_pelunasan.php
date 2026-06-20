@@ -23,7 +23,7 @@
     </div>
 <?php else: ?>
     <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
+        <div class="table-responsive">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-[#051747] text-white text-xs uppercase">
@@ -40,12 +40,19 @@
                         <?php
                         $idPayment = (int) ($p['id_payment'] ?? 0);
                         $buktiFile = (string) ($p['bukti_tf'] ?? '');
+                        $kodeOrder = (string) ($p['kode_order'] ?? '-');
+                        $nominal   = (int) ($p['nominal'] ?? 0);
                         ?>
                         <tr class="border-b border-slate-100 hover:bg-[#F8FAFF]">
                             <td class="px-4 py-3 font-mono font-semibold text-[#051747]">
-                                <?= esc((string) ($p['kode_order'] ?? '-')) ?>
+                                <?= esc($kodeOrder) ?>
                             </td>
-                            <td class="px-4 py-3"><?= esc((string) ($p['nama_pelanggan'] ?? '-')) ?></td>
+                            <td class="px-4 py-3">
+                                <?= view('partials/pelanggan_kontak_cell', [
+                                    'nama'   => (string) ($p['nama_pelanggan'] ?? '-'),
+                                    'noTelp' => (string) ($p['no_telp'] ?? ''),
+                                ]) ?>
+                            </td>
                             <td class="px-4 py-3 font-semibold">
                                 Rp <?= esc(number_format((float) ($p['nominal'] ?? 0), 0, ',', '.')) ?>
                             </td>
@@ -68,14 +75,25 @@
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex flex-col gap-2 min-w-[200px]">
-                                    <form method="post" action="<?= esc(site_url('verifikasi-pelunasan/' . $idPayment . '/acc')) ?>" class="inline">
+                                    <form method="post"
+                                        action="<?= esc(site_url('verifikasi-pelunasan/' . $idPayment . '/acc')) ?>"
+                                        class="inline js-action-confirm-form"
+                                        data-confirm-variant="payment-accept"
+                                        data-confirm-kode="<?= esc($kodeOrder) ?>"
+                                        data-confirm-nominal="<?= esc((string) $nominal) ?>"
+                                        data-confirm-jenis="Pelunasan">
                                         <?= csrf_field() ?>
                                         <button type="submit"
                                             class="bg-emerald-500 text-white rounded-full text-xs font-bold px-3 py-1 hover:bg-emerald-600 transition-colors">
                                             ACC
                                         </button>
                                     </form>
-                                    <form method="post" action="<?= esc(site_url('verifikasi-pelunasan/' . $idPayment . '/tolak')) ?>" class="flex flex-wrap items-center gap-2">
+                                    <form method="post"
+                                        action="<?= esc(site_url('verifikasi-pelunasan/' . $idPayment . '/tolak')) ?>"
+                                        class="flex flex-wrap items-center gap-2 js-action-confirm-form"
+                                        data-confirm-variant="payment-reject"
+                                        data-confirm-kode="<?= esc($kodeOrder) ?>"
+                                        data-confirm-jenis="Pelunasan">
                                         <?= csrf_field() ?>
                                         <input type="text" name="catatan_tolak" required
                                             placeholder="Alasan penolakan..."

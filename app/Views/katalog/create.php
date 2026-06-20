@@ -132,7 +132,7 @@ $kategoriOptions = [
                         placeholder="Contoh: Hardcover linen, bahan isian jasmine 21gr, ukuran 12x17cm, 4 halaman, laminasi doff, ribbon pita, "
                         class="input-field w-full px-3 py-2.5 resize-none"><?= esc(old('deskripsi')) ?></textarea>
                     <p class="mt-1.5 text-xs text-slate-400">
-                        *Isi Deskripsi sedetail mungkin, ini ditampilkan di katalog public dan form pemesanan agar pelanggan tahu spesifikasi.
+                        *Isi Deskripsi sedetail mungkin, ini ditampilkan di katalog public dan form pesanan agar pelanggan tahu spesifikasi.
                     </p>
                 </div>
             </div>
@@ -154,7 +154,7 @@ $kategoriOptions = [
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <p class="text-sm text-slate-400">Klik untuk upload gambar produk</p>
-                    <p class="text-xs text-slate-300 mt-1">JPG, PNG, WEBP — Maks 2MB</p>
+                    <p class="text-xs text-slate-300 mt-1">JPG, PNG, WEBP-Maks 2MB</p>
                 </div>
                 <span id="fileName" class="hidden text-sm text-slate-500 mt-2 block"></span>
             </div>

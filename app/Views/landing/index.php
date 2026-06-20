@@ -23,7 +23,7 @@ $tabLabels = [
                 Layanan Cetak
                 <span class="block bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-950 bg-clip-text text-transparent">Profesional &amp; Estetik.</span>
             </h1>
-            <p class="mt-5 text-sm md:text-base text-slate-600 max-w-xl">Gunakan sistem pemesanan pintar <strong>SIMENAK Z'Plack</strong> untuk melayani cetak kemasan eksklusif, digital printing, offset printing, hingga undangan mewah dengan material premium.</p>
+            <p class="mt-5 text-sm md:text-base text-slate-600 max-w-xl">Gunakan sistem pesanan pintar <strong>SIMENAK Z'Plack</strong> untuk melayani cetak kemasan eksklusif, digital printing, offset printing, hingga undangan mewah dengan material premium.</p>
             <div class="mt-8 flex flex-wrap gap-3">
                 <button type="button" data-open-modal="<?= $isLoggedIn ? '' : 'loginModal' ?>" onclick="<?= $isLoggedIn ? "window.location.href='" . site_url('katalog') . "'" : '' ?>" class="btn-primary px-6 py-3 text-xs">Pesan Sekarang</button>
                 <a href="#services" class="btn-outline px-6 py-3 text-xs">Pelajari Layanan</a>
@@ -108,8 +108,8 @@ $tabLabels = [
 
                 <p class="mt-5 text-[14px] text-[#4A5568] leading-relaxed">
                     Z'Plack melayani percetakan digital, offset, desain grafis, dan
-                    media promosi dalam satu platform pemesanan yang terstruktur.
-                    Setiap pesanan dikelola dari awal hingga selesai — terpusat,
+                    media promosi dalam satu platform pesanan yang terstruktur.
+                    Setiap pesanan dikelola dari awal hingga selesai-terpusat,
                     terdokumentasi, dan dapat dipantau secara langsung oleh pelanggan.
                 </p>
                 <!-- 2x2 GRID HIGHLIGHT CARDS -->
@@ -118,7 +118,7 @@ $tabLabels = [
                     <div class="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-4 flex flex-col h-full">
                         <div class="flex items-center gap-2 mb-1">
                             <span class="text-[#2E5CE6] text-lg font-bold leading-none">✦</span>
-                            <span class="text-[15px] font-bold" style="color:#051747;">Pemesanan Terpusat</span>
+                            <span class="text-[15px] font-bold" style="color:#051747;">Pesanan Terpusat</span>
                         </div>
                         <p class="text-[13px] text-slate-500 mt-1">
                             Semua pesanan masuk dalam satu platform, tidak lagi tersebar di WhatsApp atau email.
@@ -522,7 +522,7 @@ $tabLabels = [
                 <div>
                     <p class="text-xs uppercase tracking-[0.2em] text-white/70 font-bold">Premium Printing Experience</p>
                     <h3 class="mt-2 text-3xl md:text-4xl font-extrabold">Wujudkan Kebutuhan Cetak Anda Bersama Kami</h3>
-                    <p class="mt-3 text-sm text-white/80 max-w-2xl">Diskusikan kebutuhan detail desain, material, dan estimasi pemesanan. Tim kami siap membantu dari konsep sampai produk jadi.</p>
+                    <p class="mt-3 text-sm text-white/80 max-w-2xl">Diskusikan kebutuhan detail desain, material, dan estimasi pesanan. Tim kami siap membantu dari konsep sampai produk jadi.</p>
                 </div>
                 <div class="flex gap-3 shrink-0">
                     <button type="button" data-open-modal="<?= $isLoggedIn ? '' : 'loginModal' ?>" onclick="<?= $isLoggedIn ? "window.location.href='" . site_url('katalog') . "'" : '' ?>" class="btn-primary px-6 py-3 text-xs bg-white !text-[#051747] hover:!bg-slate-200">Pesan Sekarang</button>

@@ -33,7 +33,12 @@
                             <td class="px-6 py-3.5 font-semibold" style="color:var(--navy);">
                                 <?= esc($payment['kode_order'] ?? '-') ?>
                             </td>
-                            <td class="px-6 py-3.5"><?= esc($payment['nama_pelanggan'] ?? '-') ?></td>
+                            <td class="px-6 py-3.5">
+                                <?= view('partials/pelanggan_kontak_cell', [
+                                    'nama'   => (string) ($payment['nama_pelanggan'] ?? '-'),
+                                    'noTelp' => (string) ($payment['no_telp'] ?? ''),
+                                ]) ?>
+                            </td>
                             <td class="px-6 py-3.5 uppercase text-xs font-semibold">
                                 <?= esc($payment['jenis'] ?? '-') ?>
                             </td>
@@ -41,8 +46,15 @@
                                 Rp <?= esc(number_format((float) ($payment['jumlah'] ?? 0), 0, ',', '.')) ?>
                             </td>
                             <td class="px-6 py-3.5">
-                                <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($orderStatus)) ?>">
-                                    <?= esc(getStatusLabel($orderStatus)) ?>
+                        <?php
+                        $orderStatusRow = [
+                            'status'         => $orderStatus,
+                            'jenis'          => $payment['jenis'] ?? '',
+                            'payment_status' => $payment['payment_status'] ?? '',
+                        ];
+                        ?>
+                        <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($orderStatus)) ?>">
+                            <?= esc(getOrderStatusLabel($orderStatusRow)) ?>
                                 </span>
                             </td>
                             <td class="px-6 py-3.5" style="color:var(--text-muted);">

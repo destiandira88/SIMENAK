@@ -38,7 +38,10 @@ class OrderModel extends Model
      */
     public function getByPelanggan(int $idPelanggan): array
     {
-        return $this->select('orders.*, k.nama_produk, k.kategori, k.satuan')
+        return $this->select(
+            'orders.*, k.nama_produk, k.kategori, k.satuan, '
+            . sqlLatestOrderStatusPaymentFields('orders.id_order')
+        )
             ->join('katalog k', 'k.id_katalog = orders.id_katalog')
             ->where('orders.id_pelanggan', $idPelanggan)
             ->orderBy('orders.created_at', 'DESC')
@@ -53,7 +56,8 @@ class OrderModel extends Model
         $row = $this->select(
             'orders.*, k.nama_produk, k.kategori, k.estimasi_hari, '
             . 'k.kuota_revisi_default, k.min_order, k.satuan, '
-            . 'k.gambar AS gambar_katalog, u.nama AS nama_pelanggan, u.email AS email_pelanggan'
+            . 'k.gambar AS gambar_katalog, u.nama AS nama_pelanggan, u.email AS email_pelanggan, '
+            . 'p.no_telp'
         )
             ->join('katalog k', 'k.id_katalog = orders.id_katalog')
             ->join('pelanggan p', 'p.id_pelanggan = orders.id_pelanggan')
@@ -76,7 +80,8 @@ class OrderModel extends Model
     {
         return $this->select(
             'orders.*, k.nama_produk, k.kategori, k.satuan, '
-            . 'u.nama AS nama_pelanggan, u.email AS email_pelanggan'
+            . 'u.nama AS nama_pelanggan, u.email AS email_pelanggan, p.no_telp, '
+            . sqlLatestOrderStatusPaymentFields('orders.id_order')
         )
             ->join('katalog k', 'k.id_katalog = orders.id_katalog')
             ->join('pelanggan p', 'p.id_pelanggan = orders.id_pelanggan')

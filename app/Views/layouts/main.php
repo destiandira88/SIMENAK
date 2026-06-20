@@ -5,11 +5,66 @@ $idUser      = (int) session()->get('id_user');
 $currentPath = trim(uri_string(), '/');
 
 $unreadCount = 0;
+$userEmail   = '';
 if ($idUser > 0) {
     try {
         $unreadCount = model(\App\Models\NotificationModel::class)->getUnreadCount($idUser);
     } catch (\Throwable $e) {
         $unreadCount = 0;
+    }
+
+    try {
+        $userRow = \Config\Database::connect()
+            ->table('users')
+            ->select('email')
+            ->where('id_user', $idUser)
+            ->get()
+            ->getRowArray();
+        $userEmail = (string) ($userRow['email'] ?? '');
+    } catch (\Throwable $e) {
+        $userEmail = '';
+    }
+}
+
+$profilData      = null;
+$openProfilModal      = (bool) session()->getFlashdata('open_profil_modal');
+$openProfilFromQuery  = service('request')->getGet('profil') === '1';
+
+if ($role === 'pelanggan' && $idUser > 0) {
+    $idPelanggan = (int) session()->get('id_pelanggan');
+
+    if ($idPelanggan > 0) {
+        try {
+            $dbProfil = \Config\Database::connect();
+
+            $profilUser = $dbProfil->table('users')
+                ->where('id_user', $idUser)
+                ->get()
+                ->getRowArray();
+
+            $profilPelanggan = $dbProfil->table('pelanggan')
+                ->where('id_pelanggan', $idPelanggan)
+                ->get()
+                ->getRowArray();
+
+            if ($profilUser !== null && $profilPelanggan !== null) {
+                helper('notification');
+                $verifikasiTerbaru = $dbProfil->table('verifikasi_perusahaan')
+                    ->where('id_pelanggan', $idPelanggan)
+                    ->orderBy('tgl_pengajuan', 'DESC')
+                    ->get()
+                    ->getRowArray();
+
+                $profilData = [
+                    'user'              => $profilUser,
+                    'pelanggan'         => $profilPelanggan,
+                    'verifikasiTerbaru' => $verifikasiTerbaru ?: null,
+                    'orderLancarCount'  => countOrderLancarPerusahaan($idPelanggan),
+                ];
+            }
+        } catch (\Throwable $e) {
+            $profilData = null;
+        }
     }
 }
 
@@ -18,7 +73,6 @@ $menusByRole = [
         ['label' => 'Dashboard',     'url' => 'dashboard',           'icon' => 'home'],
         ['label' => 'Pesanan Saya',  'url' => 'order',                 'icon' => 'clipboard'],
         ['label' => 'Katalog',       'url' => 'katalog',             'icon' => 'grid'],
-        ['label' => 'Profil',        'url' => 'profil',              'icon' => 'user'],
     ],
     'admin' => [
         ['label' => 'Dashboard',              'url' => 'dashboard',              'icon' => 'home'],
@@ -27,12 +81,14 @@ $menusByRole = [
         ['label' => 'Pengguna',               'url' => 'pengguna',               'icon' => 'users'],
         ['label' => 'Verifikasi Perusahaan',  'url' => 'verifikasi-perusahaan',  'icon' => 'shield'],
         ['label' => 'Pengiriman',             'url' => 'pengiriman',             'icon' => 'truck'],
-        ['label' => 'Laporan',                'url' => 'laporan',                'icon' => 'chart'],
+        ['label' => 'Laporan',                'url' => 'laporan-admin',          'icon' => 'chart'],
     ],
     'keuangan' => [
         ['label' => 'Dashboard',            'url' => 'dashboard',            'icon' => 'home'],
         ['label' => 'Verifikasi DP',        'url' => 'verifikasi-dp',        'icon' => 'wallet'],
+        ['label' => 'Riwayat Pembayaran',   'url' => 'riwayat-pembayaran',   'icon' => 'clock'],
         ['label' => 'Verifikasi Pelunasan', 'url' => 'verifikasi-pelunasan', 'icon' => 'check-circle'],
+        ['label' => 'Laporan',              'url' => 'laporan-keuangan',     'icon' => 'chart'],
     ],
     'produksi' => [
         ['label' => 'Dashboard',       'url' => 'dashboard',       'icon' => 'home'],
@@ -40,8 +96,22 @@ $menusByRole = [
         ['label' => 'Manajemen Desain', 'url' => 'manajemen-desain', 'icon' => 'edit'],
     ],
     'owner' => [
-        ['label' => 'Dashboard', 'url' => 'dashboard', 'icon' => 'home'],
-        ['label' => 'Laporan',   'url' => 'laporan',   'icon' => 'chart'],
+        ['label' => 'Dashboard',          'url' => 'dashboard',          'icon' => 'home'],
+        ['label' => 'Pesanan',            'url' => 'list-pemesanan',     'icon' => 'clipboard'],
+        ['label' => 'Katalog',            'url' => 'katalog/kelola',     'icon' => 'grid'],
+        ['label' => 'Riwayat Pembayaran', 'url' => 'riwayat-pembayaran', 'icon' => 'clock'],
+        ['label' => 'Manajemen Desain',   'url' => 'manajemen-desain',   'icon' => 'edit'],
+        [
+            'label'    => 'Laporan',
+            'icon'     => 'chart',
+            'url'      => 'laporan',
+            'children' => [
+                ['label' => 'Ringkasan Bisnis', 'url' => 'laporan'],
+                ['label' => 'Pemesanan',        'url' => 'laporan-admin'],
+                ['label' => 'Keuangan',         'url' => 'laporan-keuangan'],
+                ['label' => 'Desain',             'url' => 'laporan-produksi'],
+            ],
+        ],
     ],
 ];
 
@@ -53,6 +123,16 @@ $isMenuActive = static function (string $menuUrl) use ($currentPath): bool {
     }
 
     return $currentPath === $menuUrl || str_starts_with($currentPath, $menuUrl . '/');
+};
+
+$isMenuGroupActive = static function (array $item) use ($isMenuActive): bool {
+    foreach ($item['children'] ?? [] as $child) {
+        if ($isMenuActive((string) ($child['url'] ?? ''))) {
+            return true;
+        }
+    }
+
+    return false;
 };
 
 $iconSvg = static function (string $icon): string {
@@ -70,6 +150,7 @@ $iconSvg = static function (string $icon): string {
         'check-circle' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
         'layers'       => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>',
         'edit'         => '<path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>',
+        'clock'        => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
     ];
 
     $path = $icons[$icon] ?? $icons['home'];
@@ -83,7 +164,7 @@ $iconSvg = static function (string $icon): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= esc($this->renderSection('title') ?: 'SIMENAK') ?> — Z'Plack</title>
+    <title><?= esc($this->renderSection('title') ?: 'SIMENAK') ?>-Z'Plack</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -116,6 +197,7 @@ $iconSvg = static function (string $icon): string {
         .sidebar {
             background: var(--bg-white);
             width: 256px;
+            transition: transform 0.3s ease;
         }
 
         .sidebar-link {
@@ -133,6 +215,62 @@ $iconSvg = static function (string $icon): string {
         }
 
         .sidebar-link.active:hover {
+            background: var(--navy);
+        }
+
+        .sidebar-link-parent {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            text-align: left;
+            font-family: inherit;
+        }
+
+        .sidebar-link-parent.is-expanded {
+            color: var(--navy);
+            font-weight: 600;
+        }
+
+        .sidebar-chevron {
+            margin-left: auto;
+            flex-shrink: 0;
+            transition: transform .2s ease;
+        }
+
+        .sidebar-chevron.is-open {
+            transform: rotate(180deg);
+        }
+
+        .sidebar-submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .25s ease;
+        }
+
+        .sidebar-submenu.is-open {
+            max-height: 220px;
+        }
+
+        .sidebar-sublink {
+            display: block;
+            padding: 7px 12px 7px 48px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-body);
+            transition: background-color .2s ease, color .2s ease;
+        }
+
+        .sidebar-sublink:hover {
+            background: rgba(5, 23, 71, .06);
+        }
+
+        .sidebar-sublink.active {
+            background: var(--navy);
+            color: #ffffff;
+        }
+
+        .sidebar-sublink.active:hover {
             background: var(--navy);
         }
 
@@ -185,14 +323,80 @@ $iconSvg = static function (string $icon): string {
             background: rgba(255, 255, 255, .75);
             border-bottom-color: rgba(226, 232, 240, .7);
         }
+
+        /* Sidebar overlay untuk mobile/tablet */
+        #sidebarOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 23, 71, 0.5);
+            z-index: 39;
+            backdrop-filter: blur(2px);
+        }
+
+        #sidebarOverlay.active {
+            display: block;
+        }
+
+        /* Mobile/tablet: sidebar di-hide by default */
+        @media (max-width: 1023px) {
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 40;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-wrapper {
+                margin-left: 0 !important;
+            }
+        }
+
+        /* Desktop: sidebar selalu tampil */
+        @media (min-width: 1024px) {
+            .sidebar {
+                transform: translateX(0) !important;
+            }
+
+            #hamburgerBtn {
+                display: none !important;
+            }
+
+            #sidebarOverlay {
+                display: none !important;
+            }
+        }
+
+        /* Tabel responsive */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Tabel: text lebih kecil di mobile */
+        @media (max-width: 767px) {
+            table {
+                font-size: 0.75rem;
+            }
+
+            th,
+            td {
+                padding-left: 0.75rem !important;
+                padding-right: 0.75rem !important;
+            }
+        }
     </style>
     <?= $this->renderSection('styles') ?>
 </head>
 
-<body class="min-h-screen">
+<body class="min-h-screen" <?= ($openProfilModal || ($role === 'pelanggan' && $openProfilFromQuery)) ? ' data-open-profil="1"' : '' ?>>
+
+    <div id="sidebarOverlay"></div>
 
     <!-- Sidebar -->
-    <aside class="sidebar fixed left-0 top-0 bottom-0 z-40 flex flex-col border-r" style="border-color:var(--border);">
+    <aside id="mainSidebar" class="sidebar fixed left-0 top-0 bottom-0 z-40 flex flex-col border-r" style="border-color:var(--border);">
         <div class="px-6 py-6 border-b" style="border-color:var(--border);">
             <a href="<?= site_url('dashboard') ?>" class="block">
                 <span class="text-xl font-extrabold tracking-tight" style="color:var(--navy);">Z'PLACK</span>
@@ -202,34 +406,64 @@ $iconSvg = static function (string $icon): string {
 
         <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
             <?php foreach ($menuItems as $item): ?>
-                <?php $active = $isMenuActive($item['url']); ?>
-                <a href="<?= site_url($item['url']) ?>"
-                    class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium <?= $active ? 'active' : '' ?>">
-                    <?= $iconSvg($item['icon']) ?>
-                    <span><?= esc($item['label']) ?></span>
-                </a>
+                <?php if (!empty($item['children'])): ?>
+                    <?php
+                    $groupActive = $isMenuGroupActive($item);
+                    $submenuOpen = $groupActive;
+                    ?>
+                    <div class="sidebar-group">
+                        <button
+                            type="button"
+                            class="sidebar-link sidebar-link-parent flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium w-full <?= $submenuOpen ? 'is-expanded' : '' ?>"
+                            data-sidebar-toggle
+                            aria-expanded="<?= $submenuOpen ? 'true' : 'false' ?>"
+                            aria-controls="sidebar-submenu-<?= esc(md5((string) ($item['label'] ?? 'group'))) ?>">
+                            <?= $iconSvg($item['icon'] ?? 'home') ?>
+                            <span class="truncate"><?= esc($item['label']) ?></span>
+                            <svg class="sidebar-chevron w-4 h-4 text-slate-400 <?= $submenuOpen ? 'is-open' : '' ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div
+                            id="sidebar-submenu-<?= esc(md5((string) ($item['label'] ?? 'group'))) ?>"
+                            class="sidebar-submenu <?= $submenuOpen ? 'is-open' : '' ?>">
+                            <?php foreach ($item['children'] as $child): ?>
+                                <?php $childActive = $isMenuActive((string) ($child['url'] ?? '')); ?>
+                                <a href="<?= site_url($child['url']) ?>"
+                                    class="sidebar-sublink <?= $childActive ? 'active' : '' ?>">
+                                    <?= esc($child['label']) ?>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <?php $active = $isMenuActive($item['url']); ?>
+                    <a href="<?= site_url($item['url']) ?>"
+                        class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium <?= $active ? 'active' : '' ?>">
+                        <?= $iconSvg($item['icon']) ?>
+                        <span><?= esc($item['label']) ?></span>
+                    </a>
+                <?php endif; ?>
             <?php endforeach; ?>
         </nav>
-
-        <div class="px-4 py-4 border-t" style="border-color:var(--border);">
-            <button type="button"
-                data-open-logout-modal
-                class="sidebar-link w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium">
-                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                <span>Keluar</span>
-            </button>
-        </div>
     </aside>
 
     <!-- Main Wrapper -->
-    <div class="ml-64 min-h-screen flex flex-col">
+    <div class="main-wrapper ml-0 lg:ml-64 min-h-screen flex flex-col">
 
         <!-- Topbar -->
-        <header id="mainTopbar" class="glass-topbar sticky top-0 z-30 h-16 flex items-center justify-between px-6">
-            <div>
-                <h1 class="text-lg font-bold text-[#051747]">
+        <header id="mainTopbar" class="glass-topbar sticky top-0 z-30 h-14 lg:h-16 flex items-center justify-between px-4 lg:px-6">
+            <div class="flex items-center gap-3 min-w-0">
+                <!-- Hamburger: hanya tampil di mobile/tablet -->
+                <button id="hamburgerBtn"
+                    type="button"
+                    class="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors shrink-0"
+                    aria-label="Buka menu">
+                    <svg id="hamburgerIcon" class="w-6 h-6 text-[#051747]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <h1 class="text-base lg:text-lg font-bold text-[#051747] truncate max-w-[200px] sm:max-w-none">
                     <?= esc($this->renderSection('page_title') ?: 'Dashboard') ?>
                 </h1>
             </div>
@@ -250,46 +484,35 @@ $iconSvg = static function (string $icon): string {
                     </span>
                 </button>
 
-                <!-- User Info -->
-                <div class="flex items-center gap-3 pl-4 border-l" style="border-color:var(--border);">
-                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold" style="background:var(--blue-accent);">
-                        <?= esc(strtoupper(substr($namaUser ?: 'U', 0, 1))) ?>
-                    </div>
-                    <div class="hidden sm:block">
-                        <p class="text-sm font-semibold text-[#051747] leading-tight"><?= esc($namaUser ?: 'Pengguna') ?></p>
-                        <p class="text-xs capitalize" style="color:var(--text-muted);"><?= esc($role ?: '-') ?></p>
-                    </div>
-                </div>
+                <!-- User Account Menu -->
+                <?php if ($idUser > 0 && session()->get('isLoggedIn')): ?>
+                    <?= view('partials/user_account_menu', [
+                        'namaUser'       => $namaUser,
+                        'role'           => $role,
+                        'userEmail'      => $userEmail,
+                        'showProfilLink' => $role === 'pelanggan' && $profilData !== null,
+                    ]) ?>
+                <?php endif; ?>
             </div>
         </header>
 
         <!-- Content -->
-        <main class="flex-1 p-6" style="background:var(--bg-page);">
-
-            <?php if (session()->getFlashdata('success')): ?>
-                <div class="mb-4 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium">
-                    <?= esc(session()->getFlashdata('success')) ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if (session()->getFlashdata('error')): ?>
-                <div class="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-medium">
-                    <?= esc(session()->getFlashdata('error')) ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if (session()->getFlashdata('warning')): ?>
-                <div class="mb-4 px-4 py-3 rounded-xl bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm font-medium">
-                    <?= esc(session()->getFlashdata('warning')) ?>
-                </div>
-            <?php endif; ?>
+        <main class="flex-1 p-4 lg:p-6" style="background:var(--bg-page);">
 
             <?= $this->renderSection('content') ?>
         </main>
     </div>
 
+    <?= view('partials/flash_toast') ?>
     <?= view('partials/notification_modal') ?>
     <?= view('partials/logout_modal') ?>
+    <?= view('partials/action_confirm_modal') ?>
+    <?php if ($role === 'pelanggan' && $profilData !== null): ?>
+        <?= view('partials/profil_modal', ['profilData' => $profilData]) ?>
+    <?php endif; ?>
+    <?php if ($idUser > 0 && session()->get('isLoggedIn')): ?>
+        <?= view('partials/user_account_menu_scripts') ?>
+    <?php endif; ?>
     <?= $this->renderSection('scripts') ?>
     <script>
         (function() {
@@ -300,8 +523,64 @@ $iconSvg = static function (string $icon): string {
                 topbar.classList.toggle('is-scrolled', window.scrollY > 8);
             };
 
-            window.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('scroll', onScroll, {
+                passive: true
+            });
             onScroll();
+        })();
+    </script>
+    <script>
+        (function() {
+            const sidebar = document.getElementById('mainSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const hamburger = document.getElementById('hamburgerBtn');
+            if (!sidebar || !overlay || !hamburger) return;
+
+            function openSidebar() {
+                sidebar.classList.add('open');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            hamburger.addEventListener('click', function() {
+                sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+            });
+
+            overlay.addEventListener('click', closeSidebar);
+
+            sidebar.querySelectorAll('a').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 1024) closeSidebar();
+                });
+            });
+
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 1024) {
+                    closeSidebar();
+                }
+            });
+
+            sidebar.querySelectorAll('[data-sidebar-toggle]').forEach(function(toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    const submenu = toggleBtn.nextElementSibling;
+                    if (!submenu) return;
+
+                    const isOpen = submenu.classList.toggle('is-open');
+                    toggleBtn.classList.toggle('is-expanded', isOpen);
+                    toggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+                    const chevron = toggleBtn.querySelector('.sidebar-chevron');
+                    if (chevron) {
+                        chevron.classList.toggle('is-open', isOpen);
+                    }
+                });
+            });
         })();
     </script>
 </body>

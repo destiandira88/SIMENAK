@@ -72,6 +72,7 @@ $fieldTypeLabels = [
     'textarea' => 'Textarea',
     'file'     => 'File',
 ];
+$readOnly = (bool) ($readOnly ?? false);
 ?>
 
 <div class="text-xs text-slate-400 mb-2">
@@ -79,83 +80,101 @@ $fieldTypeLabels = [
     <span class="mx-1">›</span>
     <span class="text-slate-500"><?= esc($katalog['nama_produk'] ?? '-') ?></span>
     <span class="mx-1">›</span>
-    <span class="text-slate-500">Kelola Form</span>
+    <span class="text-slate-500"><?= $readOnly ? 'Form Template' : 'Kelola Form' ?></span>
 </div>
 
-<h2 class="text-2xl font-extrabold text-[#051747] mb-6">
-    Kelola Form: <?= esc($katalog['nama_produk'] ?? '-') ?>
+<h2 class="text-2xl font-extrabold text-[#051747] mb-2">
+    <?= $readOnly ? 'Form Template' : 'Kelola Form' ?>: <?= esc($katalog['nama_produk'] ?? '-') ?>
 </h2>
+<?php if (!$readOnly): ?>
+<p class="text-sm text-slate-500 mb-6">
+    ID Katalog <span class="font-mono font-semibold text-[#051747]">#<?= esc((string) ($katalog['id_katalog'] ?? 0)) ?></span>
+    Catatan: field hanya muncul saat pelanggan memesan <strong>produk ini</strong>, bukan produk lain meskipun namanya mirip.
+</p>
+<?php else: ?>
+<div class="mb-6"></div>
+<?php endif; ?>
 
-<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-        <h3 class="text-base font-semibold text-[#051747] mb-4">Tambah Field Baru</h3>
-
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-700">
-            Field ini akan muncul sebagai form khusus saat pelanggan memesan produk ini.
-        </div>
-
-        <form action="<?= site_url('form-template/simpan/' . (int) ($katalog['id_katalog'] ?? 0)) ?>" method="post" class="space-y-4">
-            <?= csrf_field() ?>
-
-            <div>
-                <label for="field_key" class="block text-sm font-semibold text-slate-700 mb-1.5">Field Key</label>
-                <input
-                    type="text"
-                    id="field_key"
-                    name="field_key"
-                    value="<?= esc(old('field_key')) ?>"
-                    placeholder="contoh: nama_mempelai_pria"
-                    pattern="[a-z0-9_]+"
-                    class="input-field w-full px-3 py-2.5 font-mono text-sm"
-                    required>
-                <p class="mt-1.5 text-xs text-slate-400">Hanya huruf kecil, angka, dan underscore (_)</p>
-            </div>
-
-            <div>
-                <label for="field_label" class="block text-sm font-semibold text-slate-700 mb-1.5">Label</label>
-                <input
-                    type="text"
-                    id="field_label"
-                    name="field_label"
-                    value="<?= esc(old('field_label')) ?>"
-                    placeholder="contoh: Nama Mempelai Pria"
-                    class="input-field w-full px-3 py-2.5"
-                    required>
-            </div>
-
-            <div>
-                <label for="field_type" class="block text-sm font-semibold text-slate-700 mb-1.5">Tipe Field</label>
-                <select id="field_type" name="field_type" class="input-field w-full px-3 py-2.5" required>
-                    <option value="">Pilih Tipe</option>
-                    <?php foreach ($fieldTypeLabels as $value => $label): ?>
-                        <option value="<?= esc($value) ?>" <?= old('field_type') === $value ? 'selected' : '' ?>>
-                            <?= esc($label) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <div>
-                <label for="placeholder" class="block text-sm font-semibold text-slate-700 mb-1.5">Placeholder</label>
-                <input
-                    type="text"
-                    id="placeholder"
-                    name="placeholder"
-                    value="<?= esc(old('placeholder')) ?>"
-                    class="input-field w-full px-3 py-2.5"
-                    placeholder="Opsional">
-            </div>
-
-            <label class="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" name="is_required" value="1" <?= old('is_required') ? 'checked' : '' ?> class="w-4 h-4 accent-[#051747]">
-                <span class="text-sm font-medium text-slate-700">Wajib Diisi</span>
-            </label>
-
-            <button type="submit" class="btn-primary w-full py-2.5 text-sm text-white">
-                + Tambah Field
-            </button>
-        </form>
+<?php if ($fields !== []): ?>
+    <div class="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-6 text-sm text-emerald-800">
+        <?= esc((string) count($fields)) ?> field terdaftar untuk produk ini.
+        Pelanggan melihatnya di halaman pesanan sebagai bagian <strong>Spesifikasi Khusus</strong>
+        (URL: <span class="font-mono text-xs">pesanan/buat/<?= esc((string) ($katalog['id_katalog'] ?? 0)) ?></span>).
     </div>
+<?php endif; ?>
+
+<div class="grid grid-cols-1 <?= $readOnly ? '' : 'xl:grid-cols-2 ' ?>gap-6">
+    <?php if (!$readOnly): ?>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+            <h3 class="text-base font-semibold text-[#051747] mb-4">Tambah Field Baru</h3>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-700">
+                Field ini akan muncul sebagai form khusus saat pelanggan memesan produk ini.
+            </div>
+
+            <form action="<?= site_url('form-template/simpan/' . (int) ($katalog['id_katalog'] ?? 0)) ?>" method="post" class="space-y-4">
+                <?= csrf_field() ?>
+
+                <div>
+                    <label for="field_key" class="block text-sm font-semibold text-slate-700 mb-1.5">Field Key</label>
+                    <input
+                        type="text"
+                        id="field_key"
+                        name="field_key"
+                        value="<?= esc(old('field_key')) ?>"
+                        placeholder="contoh: nama_mempelai_pria"
+                        pattern="[a-z0-9_]+"
+                        class="input-field w-full px-3 py-2.5 font-mono text-sm"
+                        required>
+                    <p class="mt-1.5 text-xs text-slate-400">Hanya huruf kecil, angka, dan underscore (_)</p>
+                </div>
+
+                <div>
+                    <label for="field_label" class="block text-sm font-semibold text-slate-700 mb-1.5">Label</label>
+                    <input
+                        type="text"
+                        id="field_label"
+                        name="field_label"
+                        value="<?= esc(old('field_label')) ?>"
+                        placeholder="contoh: Nama Mempelai Pria"
+                        class="input-field w-full px-3 py-2.5"
+                        required>
+                </div>
+
+                <div>
+                    <label for="field_type" class="block text-sm font-semibold text-slate-700 mb-1.5">Tipe Field</label>
+                    <select id="field_type" name="field_type" class="input-field w-full px-3 py-2.5" required>
+                        <option value="">Pilih Tipe</option>
+                        <?php foreach ($fieldTypeLabels as $value => $label): ?>
+                            <option value="<?= esc($value) ?>" <?= old('field_type') === $value ? 'selected' : '' ?>>
+                                <?= esc($label) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="placeholder" class="block text-sm font-semibold text-slate-700 mb-1.5">Placeholder</label>
+                    <input
+                        type="text"
+                        id="placeholder"
+                        name="placeholder"
+                        value="<?= esc(old('placeholder')) ?>"
+                        class="input-field w-full px-3 py-2.5"
+                        placeholder="Opsional">
+                </div>
+
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="is_required" value="1" <?= old('is_required') ? 'checked' : '' ?> class="w-4 h-4 accent-[#051747]">
+                    <span class="text-sm font-medium text-slate-700">Wajib Diisi</span>
+                </label>
+
+                <button type="submit" class="btn-primary w-full py-2.5 text-sm text-white">
+                    + Tambah Field
+                </button>
+            </form>
+        </div>
+    <?php endif; ?>
 
     <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
         <h3 class="text-base font-semibold text-[#051747] mb-4">Field Terdaftar</h3>
@@ -202,68 +221,72 @@ $fieldTypeLabels = [
                                         Wajib
                                     </span>
                                 <?php endif; ?>
-                                <button
-                                    type="button"
-                                    onclick="toggleEdit(<?= $idTemplate ?>)"
-                                    class="text-xs px-2 py-1 border border-slate-300 rounded hover:bg-slate-50">
-                                    Edit
-                                </button>
-                                <button
-                                    type="button"
-                                    data-open-delete-field-modal
-                                    data-delete-id="<?= $idTemplate ?>"
-                                    data-delete-label="<?= esc((string) ($f['field_label'] ?? $f['field_key'] ?? '-')) ?>"
-                                    class="inline-flex text-xs px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-                                    Hapus
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="edit-<?= $idTemplate ?>" class="hidden mt-2 p-3 bg-slate-50 rounded-lg border">
-                            <form method="POST" action="<?= site_url('form-template/update/' . $idTemplate) ?>">
-                                <?= csrf_field() ?>
-                                <div class="grid grid-cols-2 gap-3 mb-3">
-                                    <div>
-                                        <label class="text-xs font-medium text-slate-600">Label</label>
-                                        <input
-                                            type="text"
-                                            name="field_label"
-                                            value="<?= esc((string) ($f['field_label'] ?? '')) ?>"
-                                            class="input-field w-full text-sm px-3 py-1.5 mt-1"
-                                            required>
-                                    </div>
-                                    <div>
-                                        <label class="text-xs font-medium text-slate-600">Placeholder</label>
-                                        <input
-                                            type="text"
-                                            name="placeholder"
-                                            value="<?= esc((string) ($f['placeholder'] ?? '')) ?>"
-                                            class="input-field w-full text-sm px-3 py-1.5 mt-1">
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <label class="flex items-center gap-2 text-xs">
-                                        <input
-                                            type="checkbox"
-                                            name="is_required"
-                                            value="1"
-                                            <?= $isRequired ? 'checked' : '' ?>>
-                                        Wajib Diisi
-                                    </label>
-                                    <button
-                                        type="submit"
-                                        class="px-3 py-1.5 bg-[#051747] text-white text-xs rounded-lg hover:bg-[#2E5CE6]">
-                                        Simpan
-                                    </button>
+                                <?php if (!$readOnly): ?>
                                     <button
                                         type="button"
                                         onclick="toggleEdit(<?= $idTemplate ?>)"
-                                        class="px-3 py-1.5 border border-slate-300 text-xs rounded-lg hover:bg-slate-100">
-                                        Batal
+                                        class="text-xs px-2 py-1 border border-slate-300 rounded hover:bg-slate-50">
+                                        Edit
                                     </button>
-                                </div>
-                            </form>
+                                    <button
+                                        type="button"
+                                        data-open-delete-field-modal
+                                        data-delete-id="<?= $idTemplate ?>"
+                                        data-delete-label="<?= esc((string) ($f['field_label'] ?? $f['field_key'] ?? '-')) ?>"
+                                        class="inline-flex text-xs px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                                        Hapus
+                                    </button>
+                                <?php endif; ?>
+                            </div>
                         </div>
+
+                        <?php if (!$readOnly): ?>
+                            <div id="edit-<?= $idTemplate ?>" class="hidden mt-2 p-3 bg-slate-50 rounded-lg border">
+                                <form method="POST" action="<?= site_url('form-template/update/' . $idTemplate) ?>">
+                                    <?= csrf_field() ?>
+                                    <div class="grid grid-cols-2 gap-3 mb-3">
+                                        <div>
+                                            <label class="text-xs font-medium text-slate-600">Label</label>
+                                            <input
+                                                type="text"
+                                                name="field_label"
+                                                value="<?= esc((string) ($f['field_label'] ?? '')) ?>"
+                                                class="input-field w-full text-sm px-3 py-1.5 mt-1"
+                                                required>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-medium text-slate-600">Placeholder</label>
+                                            <input
+                                                type="text"
+                                                name="placeholder"
+                                                value="<?= esc((string) ($f['placeholder'] ?? '')) ?>"
+                                                class="input-field w-full text-sm px-3 py-1.5 mt-1">
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <label class="flex items-center gap-2 text-xs">
+                                            <input
+                                                type="checkbox"
+                                                name="is_required"
+                                                value="1"
+                                                <?= $isRequired ? 'checked' : '' ?>>
+                                            Wajib Diisi
+                                        </label>
+                                        <button
+                                            type="submit"
+                                            class="px-3 py-1.5 bg-[#051747] text-white text-xs rounded-lg hover:bg-[#2E5CE6]">
+                                            Simpan
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onclick="toggleEdit(<?= $idTemplate ?>)"
+                                            class="px-3 py-1.5 border border-slate-300 text-xs rounded-lg hover:bg-slate-100">
+                                            Batal
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>

@@ -256,7 +256,7 @@ $csrfCookie = config('Security')->cookieName;
         if (unread > 0) {
             notifSubtitle.textContent = unread + ' belum dibaca dari ' + total + ' notifikasi';
         } else {
-            notifSubtitle.textContent = total + ' notifikasi — semua sudah dibaca';
+            notifSubtitle.textContent = total + ' notifikasi-semua sudah dibaca';
         }
     };
 

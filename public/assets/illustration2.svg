@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" fill="none" role="img" aria-label="Ilustrasi layanan cetak">
+  <rect width="640" height="400" fill="#F8FAFC"/>
+  <rect x="80" y="60" width="280" height="200" rx="16" fill="#E2E8F0"/>
+  <rect x="100" y="90" width="240" height="140" rx="8" fill="#fff" stroke="#CBD5E1" stroke-width="2"/>
+  <circle cx="420" cy="140" r="72" fill="#051747" opacity="0.08"/>
+  <circle cx="420" cy="140" r="48" fill="#051747"/>
+  <path d="M404 140h32M420 124v32" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+  <rect x="360" y="230" width="200" height="90" rx="12" fill="#051747"/>
+  <rect x="380" y="252" width="80" height="8" rx="4" fill="#6b9fff"/>
+  <rect x="380" y="272" width="140" height="6" rx="3" fill="#fff" opacity="0.5"/>
+  <rect x="120" y="280" width="120" height="36" rx="18" fill="#2E5CE6"/>
+  <rect x="260" y="280" width="80" height="36" rx="18" fill="#E2E8F0"/>
+</svg>

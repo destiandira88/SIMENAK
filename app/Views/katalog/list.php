@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @var list<array<string, mixed>> $katalog
  * @var string                     $title
@@ -131,7 +132,7 @@ $resolveGambarUrl = static function (array $item): ?string {
 <div>
     <p class="text-[11px] uppercase tracking-[0.2em] text-[#2E5CE6] font-bold">Our Digital Store</p>
     <h2 class="mt-2 text-3xl sm:text-4xl font-extrabold text-[#051747]">Katalog Percetakan</h2>
-    <p class="mt-2 text-sm text-slate-500">Pilih paket produk andalan kami, lalu pesan secara digital.</p>
+    <p class="mt-2 text-sm text-slate-500">Pilih paket produk andalan kami, lalu lakukan pesanan secara digital.</p>
 </div>
 
 <?php if ($userRole === 'admin'): ?>
@@ -181,108 +182,108 @@ $resolveGambarUrl = static function (array $item): ?string {
     </div>
 <?php else: ?>
     <div class="mt-8 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-    <div class="p-5 sm:p-6">
-    <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-5" id="catalogGrid">
-        <?php foreach ($katalog as $item): ?>
-            <?php
-            $idKatalog     = (int) ($item['id_katalog'] ?? 0);
-            $category      = (string) ($item['kategori'] ?? '');
-            $namaProduk    = (string) ($item['nama_produk'] ?? '-');
-            $categoryLabel = $kategoriLabelMap[$category] ?? str_replace('_', ' ', $category);
-            $gambarUrl     = $resolveGambarUrl($item);
-            $hargaDasar    = (float) ($item['harga_dasar'] ?? 0);
-            $satuan        = (string) ($item['satuan'] ?? 'pcs');
-            $minOrder      = (int) ($item['min_order'] ?? 1);
-            $deskripsi     = trim((string) ($item['deskripsi'] ?? ''));
+        <div class="p-5 sm:p-6">
+            <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-5" id="catalogGrid">
+                <?php foreach ($katalog as $item): ?>
+                    <?php
+                    $idKatalog     = (int) ($item['id_katalog'] ?? 0);
+                    $category      = (string) ($item['kategori'] ?? '');
+                    $namaProduk    = (string) ($item['nama_produk'] ?? '-');
+                    $categoryLabel = $kategoriLabelMap[$category] ?? str_replace('_', ' ', $category);
+                    $gambarUrl     = $resolveGambarUrl($item);
+                    $hargaDasar    = (float) ($item['harga_dasar'] ?? 0);
+                    $satuan        = (string) ($item['satuan'] ?? 'pcs');
+                    $minOrder      = (int) ($item['min_order'] ?? 1);
+                    $deskripsi     = trim((string) ($item['deskripsi'] ?? ''));
 
-            $orderUrl = $userRole === 'pelanggan'
-                ? site_url('order/buat/' . $idKatalog)
-                : site_url('order/create/' . $idKatalog);
-            ?>
-            <article
-                class="katalog-card p-4 catalog-item flex flex-col"
-                data-category="<?= esc($category) ?>"
-                data-name="<?= esc(mb_strtolower($namaProduk)) ?>"
-                data-category-label="<?= esc(mb_strtolower($categoryLabel)) ?>"
-                data-search="<?= esc(mb_strtolower(trim($namaProduk . ' ' . $categoryLabel . ' ' . $deskripsi))) ?>">
-                <?php if ($gambarUrl !== null): ?>
-                    <img
-                        src="<?= esc($gambarUrl) ?>"
-                        alt="<?= esc($namaProduk) ?>"
-                        class="h-36 w-full rounded-2xl object-cover border border-slate-100 bg-slate-50">
-                <?php else: ?>
-                    <div class="h-36 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
-                        <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                <?php endif; ?>
+                    $orderUrl = $userRole === 'pelanggan'
+                        ? site_url('pesanan/buat/' . $idKatalog)
+                        : site_url('order/create/' . $idKatalog);
+                    ?>
+                    <article
+                        class="katalog-card p-4 catalog-item flex flex-col"
+                        data-category="<?= esc($category) ?>"
+                        data-name="<?= esc(mb_strtolower($namaProduk)) ?>"
+                        data-category-label="<?= esc(mb_strtolower($categoryLabel)) ?>"
+                        data-search="<?= esc(mb_strtolower(trim($namaProduk . ' ' . $categoryLabel . ' ' . $deskripsi))) ?>">
+                        <?php if ($gambarUrl !== null): ?>
+                            <img
+                                src="<?= esc($gambarUrl) ?>"
+                                alt="<?= esc($namaProduk) ?>"
+                                class="h-36 w-full rounded-2xl object-cover border border-slate-100 bg-slate-50">
+                        <?php else: ?>
+                            <div class="h-36 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center">
+                                <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                        <?php endif; ?>
 
-                <h4 class="mt-4 text-sm font-extrabold text-[#051747] uppercase leading-snug">
-                    <?= esc($namaProduk) ?>
-                </h4>
-                <p class="mt-1 text-xs uppercase tracking-[0.12em] text-[#2E5CE6] font-bold">
-                    <?= esc($categoryLabel) ?>
-                </p>
+                        <h4 class="mt-4 text-sm font-extrabold text-[#051747] uppercase leading-snug">
+                            <?= esc($namaProduk) ?>
+                        </h4>
+                        <p class="mt-1 text-xs uppercase tracking-[0.12em] text-[#2E5CE6] font-bold">
+                            <?= esc($categoryLabel) ?>
+                        </p>
 
-                <?php if ($deskripsi !== ''): ?>
-                    <p class="mt-2 text-xs text-slate-500 line-clamp-2 flex-1"><?= esc($deskripsi) ?></p>
-                <?php else: ?>
-                    <div class="flex-1"></div>
-                <?php endif; ?>
+                        <?php if ($deskripsi !== ''): ?>
+                            <p class="mt-2 text-xs text-slate-500 line-clamp-2 flex-1"><?= esc($deskripsi) ?></p>
+                        <?php else: ?>
+                            <div class="flex-1"></div>
+                        <?php endif; ?>
 
-                <p class="mt-3 text-sm text-slate-500">Mulai</p>
-                <p class="text-2xl font-extrabold text-[#051747]">
-                    Rp <?= esc(number_format($hargaDasar, 0, ',', '.')) ?>
-                    <span class="text-sm font-semibold text-slate-400">/<?= esc($satuan) ?></span>
-                </p>
-                <p class="text-[11px] text-slate-400 mt-0.5">Min. <?= esc((string) $minOrder) ?> <?= esc($satuan) ?></p>
+                        <p class="mt-3 text-sm text-slate-500">Mulai</p>
+                        <p class="text-2xl font-extrabold text-[#051747]">
+                            Rp <?= esc(number_format($hargaDasar, 0, ',', '.')) ?>
+                            <span class="text-sm font-semibold text-slate-400">/<?= esc($satuan) ?></span>
+                        </p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Min. <?= esc((string) $minOrder) ?> <?= esc($satuan) ?></p>
 
-                <?php if ($userRole === 'pelanggan' && $isLoggedIn): ?>
-                    <a
-                        href="<?= esc($orderUrl) ?>"
-                        class="mt-4 w-full inline-flex items-center justify-center btn-katalog-outline py-2.5 text-[10px]">
-                        Pilih &amp; Pesan Sekarang
-                    </a>
-                <?php elseif ($userRole === 'admin'): ?>
-                    <a
-                        href="<?= esc(site_url('katalog/edit/' . $idKatalog)) ?>"
-                        class="mt-4 w-full inline-flex items-center justify-center btn-katalog-outline py-2.5 text-[10px]">
-                        Kelola Produk
-                    </a>
-                <?php endif; ?>
-            </article>
-        <?php endforeach; ?>
-    </div>
+                        <?php if ($userRole === 'pelanggan' && $isLoggedIn): ?>
+                            <a
+                                href="<?= esc($orderUrl) ?>"
+                                class="mt-4 w-full inline-flex items-center justify-center btn-katalog-outline py-2.5 text-[10px]">
+                                Pilih &amp; Pesan Sekarang
+                            </a>
+                        <?php elseif ($userRole === 'admin'): ?>
+                            <a
+                                href="<?= esc(site_url('katalog/edit/' . $idKatalog)) ?>"
+                                class="mt-4 w-full inline-flex items-center justify-center btn-katalog-outline py-2.5 text-[10px]">
+                                Kelola Produk
+                            </a>
+                        <?php endif; ?>
+                    </article>
+                <?php endforeach; ?>
+            </div>
 
-    <p id="catalogEmpty" class="hidden mt-8 text-center text-sm text-slate-500">
-        Produk tidak ditemukan. Coba kata kunci lain atau pilih kategori berbeda.
-    </p>
-    </div>
-
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-slate-100">
-        <div class="flex items-center gap-2 text-sm text-slate-600">
-            <label for="entriesSelect" class="whitespace-nowrap">Show</label>
-            <select id="entriesSelect" class="entries-select">
-                <option value="5">5</option>
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-            </select>
-            <span class="whitespace-nowrap">entries</span>
+            <p id="catalogEmpty" class="hidden mt-8 text-center text-sm text-slate-500">
+                Produk tidak ditemukan. Coba kata kunci lain atau pilih kategori berbeda.
+            </p>
         </div>
-        <p id="entriesInfo" class="text-xs text-slate-500"></p>
-    </div>
 
-    <div id="tablePagination" class="hidden items-center justify-between px-4 py-3 border-t border-slate-100">
-        <button type="button" id="prevPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-            ← Sebelumnya
-        </button>
-        <span id="pageInfo" class="text-xs text-slate-500"></span>
-        <button type="button" id="nextPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-            Selanjutnya →
-        </button>
-    </div>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-slate-100">
+            <div class="flex items-center gap-2 text-sm text-slate-600">
+                <label for="entriesSelect" class="whitespace-nowrap">Show</label>
+                <select id="entriesSelect" class="entries-select">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+                <span class="whitespace-nowrap">entries</span>
+            </div>
+            <p id="entriesInfo" class="text-xs text-slate-500"></p>
+        </div>
+
+        <div id="tablePagination" class="hidden items-center justify-between px-4 py-3 border-t border-slate-100">
+            <button type="button" id="prevPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                ← Sebelumnya
+            </button>
+            <span id="pageInfo" class="text-xs text-slate-500"></span>
+            <button type="button" id="nextPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                Selanjutnya →
+            </button>
+        </div>
     </div>
 <?php endif; ?>
 

@@ -1,7 +1,12 @@
 <?= $this->extend('layouts/main') ?>
 
-<?= $this->section('title') ?><?= esc($title ?? 'Edit Produk') ?><?= $this->endSection() ?>
-<?= $this->section('page_title') ?>Edit Produk<?= $this->endSection() ?>
+<?php
+$readOnly = (bool) ($readOnly ?? false);
+$pageTitle = $readOnly ? 'Detail Produk' : 'Edit Produk';
+?>
+
+<?= $this->section('title') ?><?= esc($title ?? $pageTitle) ?><?= $this->endSection() ?>
+<?= $this->section('page_title') ?><?= esc($pageTitle) ?><?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 <?php
@@ -11,17 +16,121 @@ $kategoriOptions = [
     'cetak_offset'  => 'Cetak Offset',
     'media_promosi' => 'Media Promosi',
 ];
-$idKatalog = (int) ($katalog['id_katalog'] ?? 0);
-$isActive  = (int) ($katalog['is_active'] ?? 0) === 1;
+$idKatalog   = (int) ($katalog['id_katalog'] ?? 0);
+$isActive    = (int) ($katalog['is_active'] ?? 0) === 1;
+$kategoriKey = (string) ($katalog['kategori'] ?? '');
+$kategoriLabel = $kategoriOptions[$kategoriKey] ?? str_replace('_', ' ', $kategoriKey);
+$hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
 ?>
 
 <div class="text-xs text-slate-400 mb-2">
     <a href="<?= site_url('katalog/kelola') ?>" class="hover:text-[#051747]">Katalog</a>
     <span class="mx-1">›</span>
-    <span class="text-slate-500">Edit Produk</span>
+    <span class="text-slate-500"><?= esc($pageTitle) ?></span>
 </div>
 
-<h2 class="text-2xl font-extrabold text-[#051747] mb-6">Edit Produk</h2>
+<h2 class="text-2xl font-extrabold text-[#051747] mb-6"><?= esc($pageTitle) ?></h2>
+
+<?php if ($readOnly): ?>
+<div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="space-y-5">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Nama Produk</p>
+                <p class="text-base font-semibold text-[#051747]"><?= esc((string) ($katalog['nama_produk'] ?? '-')) ?></p>
+            </div>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Kategori</p>
+                <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold bg-indigo-100 text-indigo-800">
+                    <?= esc($kategoriLabel) ?>
+                </span>
+            </div>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Harga Dasar</p>
+                <p class="text-base font-semibold text-[#051747]">Rp <?= esc(number_format($hargaDasar, 0, ',', '.')) ?></p>
+                <p class="text-xs text-slate-400 mt-1">Harga per satuan produk</p>
+            </div>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Estimasi Pengerjaan</p>
+                <p class="text-sm text-slate-700"><?= esc((string) ($katalog['estimasi_hari'] ?? '-')) ?></p>
+            </div>
+        </div>
+
+        <div class="space-y-5">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Kuota Revisi Default</p>
+                <p class="text-sm text-slate-700"><?= esc((string) ($katalog['kuota_revisi_default'] ?? '0')) ?>x</p>
+            </div>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Min Order + Satuan</p>
+                <p class="text-sm text-slate-700">
+                    <?= esc((string) ($katalog['min_order'] ?? '0')) ?>
+                    <?= esc((string) ($katalog['satuan'] ?? '')) ?>
+                </p>
+            </div>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Status Produk</p>
+                <?php if ($isActive): ?>
+                    <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">● Aktif</span>
+                <?php else: ?>
+                    <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600">● Nonaktif</span>
+                <?php endif; ?>
+            </div>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">ID Katalog</p>
+                <p class="text-sm font-mono text-slate-600">#<?= esc((string) $idKatalog) ?></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-6 pt-6 border-t border-slate-100">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">Deskripsi</p>
+        <?php if (trim((string) ($katalog['deskripsi'] ?? '')) !== ''): ?>
+            <p class="text-sm text-slate-700 whitespace-pre-line leading-relaxed"><?= esc((string) $katalog['deskripsi']) ?></p>
+        <?php else: ?>
+            <p class="text-sm text-slate-400 italic">Tidak ada deskripsi.</p>
+        <?php endif; ?>
+    </div>
+
+    <div class="mt-6 pt-6 border-t border-slate-100">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">Gambar Produk</p>
+        <?php if (!empty($katalog['gambar'])): ?>
+            <?php $gambarUrl = base_url('uploads/katalog/' . $katalog['gambar']); ?>
+            <button
+                type="button"
+                class="group relative block rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/40"
+                data-katalog-zoom="<?= esc($gambarUrl) ?>"
+                data-katalog-zoom-alt="<?= esc((string) ($katalog['nama_produk'] ?? 'Gambar produk')) ?>"
+                aria-label="Perbesar foto produk">
+                <img
+                    src="<?= esc($gambarUrl) ?>"
+                    alt="<?= esc((string) ($katalog['nama_produk'] ?? 'Gambar produk')) ?>"
+                    class="w-40 h-40 object-cover rounded-xl border border-slate-200 cursor-zoom-in transition-opacity group-hover:opacity-90">
+                <span class="absolute bottom-2 right-2 bg-[#051747] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                    Zoom
+                </span>
+            </button>
+            <p class="mt-2 text-xs text-slate-400">Klik gambar untuk melihat ukuran penuh.</p>
+        <?php else: ?>
+            <div class="w-40 h-40 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center">
+                <span class="text-xs text-slate-400">Belum ada gambar</span>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <div class="mt-6 pt-6 border-t border-slate-100 flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+        <a href="<?= site_url('katalog/kelola') ?>" class="btn-outline inline-flex items-center justify-center px-5 py-2.5 text-sm text-center">
+            ← Kembali ke Katalog
+        </a>
+        <a href="<?= site_url('form-template/' . $idKatalog) ?>" class="btn-primary inline-flex items-center justify-center px-5 py-2.5 text-sm text-white">
+            Lihat Form Template →
+        </a>
+    </div>
+</div>
+
+<?= $this->include('partials/katalog_gambar_zoom') ?>
+
+<?php else: ?>
 
 <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
     <form action="<?= site_url('katalog/update/' . $idKatalog) ?>" method="post" enctype="multipart/form-data">
@@ -140,7 +249,7 @@ $isActive  = (int) ($katalog['is_active'] ?? 0) === 1;
                         placeholder="Contoh: Hardcover linen, ukuran 12x17cm, 4 halaman, laminasi doff, ribbon pita, sablon emas, amplop custom"
                         class="input-field w-full px-3 py-2.5 resize-none"><?= esc(old('deskripsi', $katalog['deskripsi'] ?? '')) ?></textarea>
                     <p class="mt-1.5 text-xs text-slate-400">
-                        Isi Deskripsi sedetail mungkin, ini ditampilkan di katalog public dan form pemesanan agar pelanggan tahu spesifikasi.
+                        Isi Deskripsi sedetail mungkin, ini ditampilkan di katalog public dan form pesanan agar pelanggan tahu spesifikasi.
                     </p>
                 </div>
             </div>
@@ -173,7 +282,7 @@ $isActive  = (int) ($katalog['is_active'] ?? 0) === 1;
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <p class="text-sm text-slate-400">Klik untuk upload gambar produk</p>
-                    <p class="text-xs text-slate-300 mt-1">JPG, PNG, WEBP — Maks 2MB</p>
+                    <p class="text-xs text-slate-300 mt-1">JPG, PNG, WEBP-Maks 2MB</p>
                 </div>
                 <span id="fileName" class="hidden text-sm text-slate-500 mt-2 block"></span>
             </div>
@@ -206,8 +315,11 @@ $isActive  = (int) ($katalog['is_active'] ?? 0) === 1;
     </form>
 </div>
 
+<?php endif; ?>
+
 <?= $this->endSection() ?>
 
+<?php if (!$readOnly): ?>
 <?= $this->section('scripts') ?>
 <script>
     document.getElementById('inputGambar')?.addEventListener('change', function() {
@@ -226,3 +338,4 @@ $isActive  = (int) ($katalog['is_active'] ?? 0) === 1;
     });
 </script>
 <?= $this->endSection() ?>
+<?php endif; ?>

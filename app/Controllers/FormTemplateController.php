@@ -11,10 +11,13 @@ class FormTemplateController extends BaseController
 
     public function index(int $idKatalog)
     {
-        $adminCheck = $this->ensureAdmin();
-        if ($adminCheck !== null) {
-            return $adminCheck;
+        $role = (string) session()->get('role');
+        if (!in_array($role, ['admin', 'owner'], true)) {
+            return redirect()->to(site_url('dashboard'))
+                ->with('error', 'Akses ditolak.');
         }
+
+        $readOnly = $role === 'owner';
 
         try {
             $katalogModel = model(KatalogModel::class);
@@ -34,9 +37,10 @@ class FormTemplateController extends BaseController
                 ->getResultArray();
 
             return view('katalog/form_template', [
-                'katalog' => $katalog,
-                'fields'  => $fields,
-                'title'   => 'Kelola Form: ' . ($katalog['nama_produk'] ?? ''),
+                'katalog'  => $katalog,
+                'fields'   => $fields,
+                'title'    => ($readOnly ? 'Form Template: ' : 'Kelola Form: ') . ($katalog['nama_produk'] ?? ''),
+                'readOnly' => $readOnly,
             ]);
         } catch (\Throwable $e) {
             log_message('error', 'FormTemplate index: {message}', ['message' => $e->getMessage()]);

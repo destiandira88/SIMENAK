@@ -8,7 +8,14 @@
  * @var string                           $page_title
  */
 $isVerified      = (int) ($pelanggan['is_verified'] ?? 0);
-$companyDisabled = $isVerified === 0;
+$tierPerusahaan  = (string) ($pelanggan['tier_perusahaan'] ?? 'pemula');
+$isSuspended     = (int) ($pelanggan['is_suspended'] ?? 0) === 1;
+$alamatProfil    = trim((string) ($pelanggan['alamat'] ?? ''));
+$alamatKirimPrefill = trim((string) old('alamat_kirim', $alamatProfil));
+$hasAlamatProfil = $alamatProfil !== '';
+$companyDisabled = $isVerified === 0 || $isSuspended;
+helper('notification');
+$batasTanpaDp    = BATAS_ORDER_TANPA_DP;
 $idKatalog       = (int) ($katalog['id_katalog'] ?? 0);
 $minOrder        = (int) ($katalog['min_order'] ?? 1);
 $hargaDasar      = (float) ($katalog['harga_dasar'] ?? 0);
@@ -19,8 +26,6 @@ $kategoriKey     = (string) ($katalog['kategori'] ?? '');
 $estimasiHari    = (string) ($katalog['estimasi_hari'] ?? '-');
 $deskripsiKatalog = trim((string) ($katalog['deskripsi'] ?? ''));
 $gambarKatalog   = trim((string) ($katalog['gambar'] ?? ''));
-$deadlineMin     = date('Y-m-d', strtotime('+3 days'));
-
 $kategoriLabel = match ($kategoriKey) {
     'desain_grafis' => 'Desain Grafis',
     'cetak_digital' => 'Cetak Digital',
@@ -100,7 +105,7 @@ $kategoriLabel = match ($kategoriKey) {
     </p>
 
     <div id="step1">
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">1. Jenis Pemesanan <span class="text-red-500">*</span></p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">1. Jenis Pesanan <span class="text-red-500">*</span></p>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label class="cursor-pointer block">
@@ -136,9 +141,15 @@ $kategoriLabel = match ($kategoriKey) {
                         <div>
                             <p class="font-bold text-[#051747] text-sm">Kerja Sama Perusahaan</p>
                             <p class="text-xs text-slate-500 mt-0.5">
-                                <?= $isVerified
-                                    ? 'Invoice setelah barang diterima, tanpa DP'
-                                    : '⚠️ Belum terverifikasi — ajukan di Profil' ?>
+                                <?php if (!$isVerified): ?>
+                                    ⚠️ Belum terverifikasi-ajukan di Profil
+                                <?php elseif ($isSuspended): ?>
+                                    ⚠️ Akun disuspend-pesanan diproses perseorangan
+                                <?php elseif ($tierPerusahaan === 'terpercaya'): ?>
+                                    Tanpa DP (≤ Rp 5 jt) · pelunasan setelah diterima
+                                <?php else: ?>
+                                    Tier Pemula: wajib DP 50% · pelunasan sebelum kirim
+                                <?php endif; ?>
                             </p>
                         </div>
                     </div>
@@ -148,7 +159,7 @@ $kategoriLabel = match ($kategoriKey) {
 
         <div id="warningPerusahaan" class="hidden mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
             ⚠️ Akun belum terverifikasi sebagai perusahaan. Pesanan akan diproses dengan skema perseorangan (DP 50%).
-            <a href="<?= site_url('profil') ?>" class="underline font-semibold ml-1">Ajukan verifikasi →</a>
+            <a href="#" data-open-profil-modal class="underline font-semibold ml-1">Ajukan verifikasi →</a>
         </div>
 
         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3 mt-6">2. Jenis Produk</p>
@@ -198,6 +209,8 @@ $kategoriLabel = match ($kategoriKey) {
                 id="jumlahOrder"
                 value="<?= esc((string) $minOrder) ?>"
                 min="<?= esc((string) $minOrder) ?>"
+                step="1"
+                onwheel="this.blur()"
                 class="w-40 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
             <span class="text-sm font-medium text-slate-600 pb-2.5"><?= esc($satuan) ?></span>
         </div>
@@ -208,18 +221,9 @@ $kategoriLabel = match ($kategoriKey) {
             Minimum order <?= esc((string) $minOrder) ?> <?= esc($satuan) ?>
         </p>
 
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3 mt-6">4. Detail Pesanan <span class="text-red-500">*</span></p>
-
-        <textarea
-            name="detail_pesanan"
-            id="detailPesanan"
-            rows="4"
-            required
-            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"
-            placeholder="Jelaskan kebutuhan cetak (warna, dll)"></textarea>
-
         <?php if (!empty($fields)): ?>
-            <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-5 mt-6">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3 mt-6">4. Spesifikasi Khusus <span class="text-red-500">*</span></p>
+            <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-5">
                 <div class="flex items-center gap-2 mb-4">
                     <span class="text-lg" aria-hidden="true">📋</span>
                     <p class="font-semibold text-indigo-900 text-sm">
@@ -236,6 +240,7 @@ $kategoriLabel = match ($kategoriKey) {
                         $placeholder = (string) ($f['placeholder'] ?? '');
                         $isRequired  = (int) ($f['is_required'] ?? 0) === 1;
                         $inputClass  = 'w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10';
+                        $oldVal      = old('eav.' . $fieldKey);
                         ?>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5">
@@ -251,7 +256,7 @@ $kategoriLabel = match ($kategoriKey) {
                                     rows="3"
                                     placeholder="<?= esc($placeholder) ?>"
                                     class="<?= esc($inputClass) ?>"
-                                    <?= $isRequired ? 'required' : '' ?>></textarea>
+                                    <?= $isRequired ? 'required' : '' ?>><?= esc((string) $oldVal) ?></textarea>
                             <?php elseif ($fieldType === 'file'): ?>
                                 <input
                                     type="file"
@@ -259,11 +264,12 @@ $kategoriLabel = match ($kategoriKey) {
                                     accept=".jpg,.jpeg,.png,.pdf"
                                     class="block w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#051747] file:text-white hover:file:bg-[#2E5CE6]"
                                     <?= $isRequired ? 'required' : '' ?>>
-                                <p class="text-xs text-slate-400 mt-1">JPG, PNG, PDF — Maks 2MB</p>
+                                <p class="text-xs text-slate-400 mt-1">JPG, PNG, PDF-Maks 2MB</p>
                             <?php else: ?>
                                 <input
                                     type="<?= esc(in_array($fieldType, ['text', 'date', 'time'], true) ? $fieldType : 'text') ?>"
                                     name="eav[<?= esc($fieldKey) ?>]"
+                                    value="<?= esc((string) $oldVal) ?>"
                                     placeholder="<?= esc($placeholder) ?>"
                                     class="<?= esc($inputClass) ?>"
                                     <?= $isRequired ? 'required' : '' ?>>
@@ -274,9 +280,21 @@ $kategoriLabel = match ($kategoriKey) {
             </div>
         <?php endif; ?>
 
+        <?php $detailSectionNum = !empty($fields) ? 5 : 4; ?>
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3 mt-6"><?= esc((string) $detailSectionNum) ?>. Detail Pesanan <span class="text-red-500">*</span></p>
+
+        <textarea
+            name="detail_pesanan"
+            id="detailPesanan"
+            rows="4"
+            required
+            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"
+            placeholder="Jelaskan kebutuhan cetak (warna, dll)"></textarea>
+
+        <?php $referensiSectionNum = $detailSectionNum + 1; ?>
         <div class="mt-6">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
-                5. Referensi Desain
+                <?= esc((string) $referensiSectionNum) ?>. Referensi Desain
                 <span class="normal-case font-normal text-slate-400 ml-1">(Opsional)</span>
             </p>
 
@@ -288,7 +306,7 @@ $kategoriLabel = match ($kategoriKey) {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
                     <p class="text-sm text-slate-500">Klik untuk upload referensi desain</p>
-                    <p class="text-xs text-slate-300 mt-1">JPG, PNG, PDF — Maks 2MB</p>
+                    <p class="text-xs text-slate-300 mt-1">JPG, PNG, PDF-Maks 2MB</p>
                 </div>
                 <div id="uploadPreview" class="hidden">
                     <p id="uploadFileName" class="text-sm text-slate-600"></p>
@@ -315,19 +333,24 @@ $kategoriLabel = match ($kategoriKey) {
     <div id="step2" class="hidden">
         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">6. Deadline Pengerjaan <span class="text-red-500">*</span></p>
 
-        <div class="flex items-start gap-4">
-            <div class="flex-1">
-                <input
-                    type="date"
-                    name="deadline"
-                    id="inputDeadline"
-                    required
-                    class="w-full max-w-xs border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
-                <p id="deadlineHelper" class="text-xs text-slate-400 mt-1.5"></p>
-            </div>
-            <div class="flex-shrink-0 bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700 max-w-xs">
-                ℹ️ Tanggal sebelum estimasi selesai tidak dapat dipilih.
-                Estimasi pengerjaan: <?= esc($estimasiHari) ?> (Terhitung sejak desain disetujui)
+        <div>
+            <input
+                type="date"
+                name="deadline"
+                id="inputDeadline"
+                required
+                class="w-full max-w-xs border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
+            <p id="deadlineHelper" class="text-xs text-slate-400 mt-1.5"></p>
+            <div class="mt-2 w-full flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-xs text-red-700">
+                <div class="space-y-2 min-w-0 flex-1">
+                <p>
+                    ⚠️ Tanggal sebelum estimasi selesai tidak dapat dipilih.<br>
+                    ℹ️ Estimasi pengerjaan: <?= esc($estimasiHari) ?> setelah desain disetujui.
+                </p>
+                <p id="kurirDeadlineNote" class="hidden">
+                    <strong>Pengiriman membutuhkan waktu tambahan.</strong>
+                </p>
+                </div>
             </div>
         </div>
 
@@ -365,13 +388,30 @@ $kategoriLabel = match ($kategoriKey) {
             <label class="block text-sm font-medium text-slate-700 mb-1.5">
                 Alamat Pengiriman Lengkap <span class="text-red-500">*</span>
             </label>
+            <?php if ($hasAlamatProfil): ?>
+                <p id="alamatProfilHint" class="text-xs text-slate-500 mb-2">
+                    Diisi otomatis dari profil Anda. Anda bisa mengubahnya khusus untuk pesanan ini.
+                </p>
+            <?php else: ?>
+                <p id="alamatProfilHint" class="text-xs text-amber-700 mb-2">
+                    Alamat profil belum diisi. Lengkapi di sini atau perbarui profil agar terisi otomatis di pesanan berikutnya.
+                </p>
+            <?php endif; ?>
             <textarea
                 name="alamat_kirim"
                 id="alamatKirim"
                 rows="3"
                 required
                 class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"
-                placeholder="Jl. Nama Jalan No. X, RT/RW, Kelurahan, Kecamatan, Kota"></textarea>
+                placeholder="Jl. Nama Jalan No. X, RT/RW, Kelurahan, Kecamatan, Kota"><?= esc($alamatKirimPrefill) ?></textarea>
+            <div class="mt-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-xs text-red-900">
+                <span class="shrink-0 text-base leading-none" aria-hidden="true">ℹ️</span>
+                <p>
+                    <strong class="font-semibold">Skema COD:</strong>
+                    ongkos kirim dibayarkan langsung kepada kurir saat pesanan diterima.
+                    Biaya pengiriman tidak termasuk dalam total pesanan di sistem.
+                </p>
+            </div>
         </div>
 
         <div class="bg-[#051747] text-white rounded-2xl p-5 mt-6">
@@ -419,7 +459,7 @@ $kategoriLabel = match ($kategoriKey) {
             </p>
 
             <div id="summaryPerusahaanInfo" class="hidden mt-2 p-2 bg-blue-900/30 rounded-lg text-xs text-blue-200">
-                ℹ️ Skema perusahaan: tanpa DP. Invoice aktif setelah pesanan diterima.
+                <span id="summaryPerusahaanText">ℹ️ Skema perusahaan aktif.</span>
             </div>
 
             <div class="flex gap-3 mt-4">
@@ -465,10 +505,15 @@ $kategoriLabel = match ($kategoriKey) {
     const minOrder = <?= (int) $minOrder ?>;
     const hargaDasar = <?= (float) $hargaDasar ?>;
     const satuan = <?= json_encode($satuan, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+    const isVerifiedCorp = <?= $isVerified === 1 ? 'true' : 'false' ?>;
+    const tierPerusahaan = <?= json_encode($tierPerusahaan, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+    const batasTanpaDp = <?= (int) $batasTanpaDp ?>;
+    const defaultAlamatProfil = <?= json_encode($alamatProfil, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 
     document.getElementById('btnNextStep')?.addEventListener('click', function() {
         const jumlah = parseInt(document.getElementById('jumlahOrder')?.value, 10) || 0;
         const detail = (document.getElementById('detailPesanan')?.value || '').trim();
+        const step1 = document.getElementById('step1');
 
         if (jumlah < minOrder) {
             document.getElementById('errJumlah')?.classList.remove('hidden');
@@ -480,7 +525,24 @@ $kategoriLabel = match ($kategoriKey) {
             return;
         }
 
-        document.getElementById('step1')?.classList.add('hidden');
+        if (step1) {
+            const step1Fields = step1.querySelectorAll('input, textarea, select');
+            for (const field of step1Fields) {
+                if (field.type === 'file' || field.type === 'radio' || field.type === 'hidden') {
+                    continue;
+                }
+                if (!field.checkValidity()) {
+                    field.reportValidity();
+                    field.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    return;
+                }
+            }
+        }
+
+        step1?.classList.add('hidden');
         document.getElementById('step2')?.classList.remove('hidden');
         updateStepIndicator(2);
         window.scrollTo(0, 0);
@@ -491,6 +553,32 @@ $kategoriLabel = match ($kategoriKey) {
         document.getElementById('step1')?.classList.remove('hidden');
         updateStepIndicator(1);
         window.scrollTo(0, 0);
+    });
+
+    document.getElementById('formPesan')?.addEventListener('submit', function(e) {
+        const step1 = document.getElementById('step1');
+        if (!step1) {
+            return;
+        }
+
+        const step1Fields = step1.querySelectorAll('input, textarea, select');
+        for (const field of step1Fields) {
+            if (field.type === 'radio' || field.type === 'hidden') {
+                continue;
+            }
+            if (!field.checkValidity()) {
+                e.preventDefault();
+                document.getElementById('step2')?.classList.add('hidden');
+                step1.classList.remove('hidden');
+                updateStepIndicator(1);
+                field.reportValidity();
+                field.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                return;
+            }
+        }
     });
 
     function updateStepIndicator(step) {
@@ -524,25 +612,33 @@ $kategoriLabel = match ($kategoriKey) {
         updateSummary();
     }
 
-    document.querySelectorAll('[name="metode_pengiriman"]').forEach((r) => {
-        r.addEventListener('change', function() {
-            const show = this.value === 'kurir';
-            document.getElementById('alamatField')?.classList.toggle('hidden', !show);
-            const alamat = document.getElementById('alamatKirim');
-            if (alamat) {
-                alamat.required = show;
+    function applyMetodePengiriman() {
+        const isKurir = document.querySelector('[name="metode_pengiriman"]:checked')?.value === 'kurir';
+        document.getElementById('alamatField')?.classList.toggle('hidden', !isKurir);
+        const alamat = document.getElementById('alamatKirim');
+        if (alamat) {
+            alamat.required = isKurir;
+            if (isKurir && alamat.value.trim() === '' && defaultAlamatProfil !== '') {
+                alamat.value = defaultAlamatProfil;
             }
-        });
+        }
+    }
+
+    applyMetodePengiriman();
+    document.querySelectorAll('[name="metode_pengiriman"]').forEach((r) => {
+        r.addEventListener('change', applyMetodePengiriman);
     });
 
     function updateSummary() {
         const jumlah = parseInt(document.getElementById('jumlahOrder')?.value, 10) || 0;
         const isCustom = document.querySelector('[name="is_custom"]:checked')?.value === '1';
-        const isPerseorangan = document.querySelector('[name="jenis_pelanggan"]:checked')?.value === 'perseorangan';
+        const jenisPelanggan = document.querySelector('[name="jenis_pelanggan"]:checked')?.value || 'perseorangan';
+        const isPerseorangan = jenisPelanggan === 'perseorangan';
+        const isPerusahaan = jenisPelanggan === 'perusahaan';
 
         const hargaSatuan = isCustom ? 0 : hargaDasar;
-        const total = hargaSatuan * jumlah;
-        const dp = total * 0.5;
+        const total = Math.round(hargaSatuan * jumlah);
+        const dp = Math.round(total * 0.5);
 
         const summaryJumlah = document.getElementById('summaryJumlah');
         const summarySatuan = document.getElementById('summarySatuan');
@@ -551,35 +647,59 @@ $kategoriLabel = match ($kategoriKey) {
         const summaryDPAmount = document.getElementById('summaryDPAmount');
         const summaryCustomNote = document.getElementById('summaryCustomNote');
         const summaryPerusahaanInfo = document.getElementById('summaryPerusahaanInfo');
+        const summaryPerusahaanText = document.getElementById('summaryPerusahaanText');
 
         if (summaryJumlah) {
             summaryJumlah.textContent = jumlah + ' ' + satuan;
         }
         if (summarySatuan) {
-            summarySatuan.textContent = isCustom
-                ? 'Dikonfirmasi Admin'
-                : 'Rp ' + hargaSatuan.toLocaleString('id-ID') + ' / ' + satuan;
+            summarySatuan.textContent = isCustom ?
+                'Dikonfirmasi Admin' :
+                'Rp ' + hargaSatuan.toLocaleString('id-ID') + ' / ' + satuan;
         }
         if (summaryTotal) {
-            summaryTotal.textContent = isCustom
-                ? 'Dikonfirmasi Admin'
-                : 'Rp ' + total.toLocaleString('id-ID');
+            summaryTotal.textContent = isCustom ?
+                'Dikonfirmasi Admin' :
+                'Rp ' + total.toLocaleString('id-ID');
+        }
+
+        let showDp = false;
+        if (!isCustom && total > 0) {
+            if (isPerseorangan) {
+                showDp = true;
+            } else if (isPerusahaan && isVerifiedCorp) {
+                if (tierPerusahaan === 'pemula') {
+                    showDp = true;
+                } else if (tierPerusahaan === 'terpercaya' && total > batasTanpaDp) {
+                    showDp = true;
+                }
+            }
         }
 
         const dpWrap = document.getElementById('summaryDP');
-        if (isPerseorangan && !isCustom && total > 0) {
-            dpWrap.classList.remove('hidden');
+        if (showDp) {
+            dpWrap?.classList.remove('hidden');
             if (summaryDPAmount) {
                 summaryDPAmount.textContent = 'Rp ' + dp.toLocaleString('id-ID');
             }
         } else {
-            dpWrap.classList.add('hidden');
+            dpWrap?.classList.add('hidden');
         }
 
         summaryCustomNote?.classList.toggle('hidden', !isCustom);
 
         if (summaryPerusahaanInfo) {
-            summaryPerusahaanInfo.classList.toggle('hidden', isPerseorangan || isCustom);
+            const showInfo = isPerusahaan && isVerifiedCorp && !isCustom;
+            summaryPerusahaanInfo.classList.toggle('hidden', !showInfo);
+            if (showInfo && summaryPerusahaanText) {
+                if (tierPerusahaan === 'pemula') {
+                    summaryPerusahaanText.textContent = 'ℹ️ Tier Pemula: wajib DP 50%. Pelunasan sebelum pengiriman.';
+                } else if (total > batasTanpaDp) {
+                    summaryPerusahaanText.textContent = 'ℹ️ Order > Rp 5 jt: wajib DP 50%. Sisa pelunasan setelah barang diterima.';
+                } else {
+                    summaryPerusahaanText.textContent = 'ℹ️ Tier Terpercaya: tanpa DP. Pelunasan setelah pesanan diterima.';
+                }
+            }
         }
     }
 
@@ -623,6 +743,16 @@ $kategoriLabel = match ($kategoriKey) {
                 this.value = toYMD(minDate);
                 alert('Deadline tidak bisa sebelum estimasi selesai pengerjaan.');
             }
+        });
+
+        const kurirNote = document.getElementById('kurirDeadlineNote');
+        const syncKurirNote = () => {
+            const isKurir = document.querySelector('[name="metode_pengiriman"]:checked')?.value === 'kurir';
+            kurirNote?.classList.toggle('hidden', !isKurir);
+        };
+        syncKurirNote();
+        document.querySelectorAll('[name="metode_pengiriman"]').forEach((r) => {
+            r.addEventListener('change', syncKurirNote);
         });
     });
 

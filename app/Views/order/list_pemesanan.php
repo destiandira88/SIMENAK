@@ -1,13 +1,17 @@
 <?php
+
 /**
  * @var list<array<string, mixed>> $orders
  * @var string                     $title
  * @var string                     $page_title
  * @var int                        $countAll
+ * @var int                        $countStandar
  * @var int                        $countCustom
  * @var int                        $countMenunggu
  * @var string                     $activeTab
+ * @var bool                       $readOnly
  */
+$readOnly = (bool) ($readOnly ?? false);
 $kategoriBadges = [
     'desain_grafis' => ['label' => 'Desain Grafis', 'class' => 'bg-purple-100 text-purple-800'],
     'cetak_digital' => ['label' => 'Cetak Digital', 'class' => 'bg-blue-100 text-blue-800'],
@@ -52,14 +56,57 @@ $kategoriBadges = [
         background: #FEF3C7;
         color: #92400E;
     }
+
+    .list-pemesanan-date-range {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .list-pemesanan-date-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748B;
+        white-space: nowrap;
+    }
+
+    .list-pemesanan-date-sep {
+        font-size: 12px;
+        font-weight: 600;
+        color: #94A3B8;
+        user-select: none;
+    }
+
+    .list-pemesanan-date-input {
+        border: 1.5px solid #E2E8F0;
+        border-radius: 14px;
+        padding: 8px 12px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 12px;
+        color: #4A5568;
+        background-color: #fff;
+        min-width: 130px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+    .list-pemesanan-date-input:focus {
+        border-color: #2E5CE6;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(46, 92, 230, .1);
+    }
 </style>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 
 <div class="mb-4">
-    <h2 class="text-2xl font-extrabold text-[#051747]">List Pemesanan</h2>
-    <p class="mt-1 text-sm text-slate-500">Kelola semua pemesanan standar dan custom dalam satu tempat</p>
+    <h2 class="text-2xl font-extrabold text-[#051747]"><?= $readOnly ? 'Pesanan' : 'List Pemesanan' ?></h2>
+    <p class="mt-1 text-sm text-slate-500">
+        <?= $readOnly
+            ? 'Pantau seluruh data pemesanan pelanggan.'
+            : 'Pantau status dan detail seluruh pemesanan pelanggan' ?>
+    </p>
 </div>
 
 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4 border-b border-slate-200">
@@ -67,56 +114,93 @@ $kategoriBadges = [
         <button type="button" class="pemesanan-tab <?= $activeTab === 'semua' ? 'is-active' : '' ?>" data-tab="semua" role="tab" aria-selected="<?= $activeTab === 'semua' ? 'true' : 'false' ?>">
             Semua (<?= esc((string) $countAll) ?>)
         </button>
+        <button type="button" class="pemesanan-tab <?= $activeTab === 'standar' ? 'is-active' : '' ?>" data-tab="standar" role="tab" aria-selected="<?= $activeTab === 'standar' ? 'true' : 'false' ?>">
+            Standar (<?= esc((string) $countStandar) ?>)
+        </button>
         <button type="button" class="pemesanan-tab <?= $activeTab === 'custom' ? 'is-active' : '' ?>" data-tab="custom" role="tab" aria-selected="<?= $activeTab === 'custom' ? 'true' : 'false' ?>">
             Custom (<?= esc((string) $countCustom) ?>)
         </button>
-        <button type="button" class="pemesanan-tab <?= $activeTab === 'menunggu-harga' ? 'is-active' : '' ?>" data-tab="menunggu-harga" role="tab" aria-selected="<?= $activeTab === 'menunggu-harga' ? 'true' : 'false' ?>">
-            Menunggu harga (<?= esc((string) $countMenunggu) ?>)
+        <button type="button" class="pemesanan-tab relative <?= $activeTab === 'menunggu-harga' ? 'is-active' : '' ?>" data-tab="menunggu-harga" role="tab" aria-selected="<?= $activeTab === 'menunggu-harga' ? 'true' : 'false' ?>">
+            Menunggu harga<?php if ($countMenunggu > 0): ?>
+                <span class="ml-1.5 inline-flex min-w-[18px] h-[18px] items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1 align-middle"><?= esc((string) $countMenunggu) ?></span>
+            <?php else: ?>
+                (<?= esc((string) $countMenunggu) ?>)
+            <?php endif; ?>
         </button>
     </div>
 
-    <label for="listPemesananSearch" class="sr-only">Cari pemesanan</label>
-    <div class="search-control mb-3 sm:mb-4">
-        <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-        </svg>
-        <input
-            id="listPemesananSearch"
-            type="search"
-            placeholder="Cari kode, pelanggan, produk..."
-            autocomplete="off">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap sm:justify-end mb-3 sm:mb-4">
+        <div class="list-pemesanan-date-range">
+            <label for="listPemesananDateFrom" class="list-pemesanan-date-label">Dari</label>
+            <input
+                id="listPemesananDateFrom"
+                type="date"
+                class="list-pemesanan-date-input"
+                aria-label="Filter tanggal mulai">
+            <span class="list-pemesanan-date-sep" aria-hidden="true">-</span>
+            <label for="listPemesananDateTo" class="list-pemesanan-date-label">Sampai</label>
+            <input
+                id="listPemesananDateTo"
+                type="date"
+                class="list-pemesanan-date-input"
+                aria-label="Filter tanggal akhir">
+        </div>
+        <label for="listPemesananSearch" class="sr-only">Cari pemesanan</label>
+        <div class="search-control w-full sm:w-auto">
+            <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+            </svg>
+            <input
+                id="listPemesananSearch"
+                type="search"
+                placeholder="Cari kode, pelanggan, produk..."
+                autocomplete="off">
+        </div>
     </div>
 </div>
 
 <?php if ($activeTab === 'menunggu-harga' || $activeTab === 'custom'): ?>
     <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         <?php if ($activeTab === 'menunggu-harga'): ?>
-            Pemesanan custom yang memerlukan penawaran harga dari Admin. Klik <strong>Set Harga</strong> pada menu aksi.
+            Pesanan custom yang memerlukan penawaran harga dari Admin. Klik <strong>Set Harga</strong> pada menu aksi.
         <?php else: ?>
-            Daftar pemesanan custom — termasuk yang menunggu konfirmasi harga dan konfirmasi pelanggan.
+            Daftar pemesanan custom-termasuk yang menunggu konfirmasi harga dan konfirmasi pelanggan.
         <?php endif; ?>
     </div>
 <?php endif; ?>
 
 <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-    <div class="overflow-x-auto">
+    <div class="table-responsive">
         <table class="w-full text-sm">
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
                     <th class="px-4 py-3 text-left font-semibold">No</th>
-                    <th class="px-4 py-3 text-left font-semibold">Kode Order</th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kode">
+                        Kode Order<span class="sort-icon">↕</span>
+                    </th>
                     <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
-                    <th class="px-4 py-3 text-left font-semibold">Produk / Kategori</th>
-                    <th class="px-4 py-3 text-left font-semibold">Tipe</th>
-                    <th class="px-4 py-3 text-left font-semibold">Total Harga</th>
-                    <th class="px-4 py-3 text-left font-semibold">Status</th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="produk">
+                        Produk / Kategori<span class="sort-icon">↕</span>
+                    </th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="tipe">
+                        Tipe<span class="sort-icon">↕</span>
+                    </th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="tanggal">
+                        Tanggal Pesanan<span class="sort-icon">↕</span>
+                    </th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="total">
+                        Total Harga<span class="sort-icon">↕</span>
+                    </th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="status">
+                        Status<span class="sort-icon">↕</span>
+                    </th>
                     <th class="px-4 py-3 text-left font-semibold w-12"></th>
                 </tr>
             </thead>
             <tbody id="listPemesananBody">
                 <?php if ($orders === []): ?>
                     <tr id="emptyDataRow">
-                        <td colspan="8" class="py-16 text-center">
+                        <td colspan="9" class="py-16 text-center">
                             <div class="text-4xl mb-3">📦</div>
                             <p class="text-sm font-medium text-slate-500">Belum ada pemesanan</p>
                         </td>
@@ -126,6 +210,7 @@ $kategoriBadges = [
                         <?php
                         $kodeOrder     = (string) ($o['kode_order'] ?? '');
                         $namaPelanggan = (string) ($o['nama_pelanggan'] ?? '-');
+                        $noTelp        = trim((string) ($o['no_telp'] ?? ''));
                         $namaProduk    = (string) ($o['nama_produk'] ?? '-');
                         $kategoriKey   = (string) ($o['kategori'] ?? '');
                         $badge         = $kategoriBadges[$kategoriKey] ?? [
@@ -139,19 +224,32 @@ $kategoriBadges = [
                         $satuan        = (string) ($o['satuan'] ?? 'pcs');
                         $idOrder       = (int) ($o['id_order'] ?? 0);
                         $searchText    = mb_strtolower(trim(
-                            $kodeOrder . ' ' . $namaPelanggan . ' ' . $namaProduk . ' ' . $badge['label']
+                            $kodeOrder . ' ' . $namaPelanggan . ' ' . $noTelp . ' ' . $namaProduk . ' ' . $badge['label']
                         ));
                         $tipeKey       = $isCustom ? 'custom' : 'standar';
+                        $createdAt     = (string) ($o['created_at'] ?? '');
+                        $tsCreated     = $createdAt !== '' ? strtotime($createdAt) : 0;
+                        $tglPesan      = $tsCreated > 0 ? date('d M Y', $tsCreated) : '-';
+                        $sortTotal     = ($status === 'menunggu_konfirmasi_harga' || ($isCustom && $totalHarga <= 0))
+                            ? -1
+                            : $totalHarga;
                         ?>
                         <tr
                             class="data-table-row border-b border-slate-100 hover:bg-[#F8FAFF] transition-colors"
                             data-search="<?= esc($searchText) ?>"
                             data-status="<?= esc($status) ?>"
-                            data-tipe="<?= esc($tipeKey) ?>">
+                            data-tipe="<?= esc($tipeKey) ?>"
+                            data-kode="<?= esc($kodeOrder) ?>"
+                            data-produk="<?= esc($namaProduk) ?>"
+                            data-tanggal="<?= esc((string) $tsCreated) ?>"
+                            data-total="<?= esc((string) $sortTotal) ?>">
                             <td class="row-num px-4 py-3.5 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3.5 font-mono text-sm font-semibold text-[#051747]"><?= esc($kodeOrder) ?></td>
                             <td class="px-4 py-3.5">
-                                <p class="font-semibold text-[#051747]"><?= esc($namaPelanggan) ?></p>
+                                <?= view('partials/pelanggan_kontak_cell', [
+                                    'nama'   => $namaPelanggan,
+                                    'noTelp' => $noTelp,
+                                ]) ?>
                             </td>
                             <td class="px-4 py-3.5">
                                 <p class="font-semibold text-[#051747]"><?= esc($namaProduk) ?></p>
@@ -167,6 +265,7 @@ $kategoriBadges = [
                                     <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold badge-tipe-standar">Standar</span>
                                 <?php endif; ?>
                             </td>
+                            <td class="px-4 py-3.5 text-slate-600 whitespace-nowrap"><?= esc($tglPesan) ?></td>
                             <td class="px-4 py-3.5">
                                 <?php if ($status === 'menunggu_konfirmasi_harga' || ($isCustom && $totalHarga <= 0)): ?>
                                     <span class="text-sm italic text-slate-400">Menunggu Admin</span>
@@ -178,7 +277,7 @@ $kategoriBadges = [
                             </td>
                             <td class="px-4 py-3.5">
                                 <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
-                                    <?= esc(getStatusLabel($status)) ?>
+                                    <?= esc(getOrderStatusLabel($o)) ?>
                                 </span>
                             </td>
                             <td class="px-4 py-3.5">
@@ -203,7 +302,7 @@ $kategoriBadges = [
                                             </svg>
                                             Detail
                                         </a>
-                                        <?php if ($status === 'menunggu_konfirmasi_harga'): ?>
+                                        <?php if (!$readOnly && $status === 'menunggu_konfirmasi_harga'): ?>
                                             <button
                                                 type="button"
                                                 role="menuitem"
@@ -220,9 +319,9 @@ $kategoriBadges = [
                         </tr>
                     <?php endforeach; ?>
                     <tr id="emptyFilterRow" class="hidden">
-                        <td colspan="8" class="py-12 text-center">
+                        <td colspan="9" class="py-12 text-center">
                             <p class="text-sm font-medium text-slate-500">Tidak ada pemesanan yang cocok dengan filter.</p>
-                            <p class="text-xs text-slate-400 mt-1">Coba ubah tab atau kata kunci pencarian.</p>
+                            <p class="text-xs text-slate-400 mt-1">Coba ubah tab, rentang tanggal, atau kata kunci pencarian.</p>
                         </td>
                     </tr>
                 <?php endif; ?>
@@ -255,77 +354,113 @@ $kategoriBadges = [
     </div>
 </div>
 
-<?php foreach ($orders as $o): ?>
-    <?php if (($o['status'] ?? '') === 'menunggu_konfirmasi_harga'): ?>
-        <div id="modalSetHarga_<?= esc((string) ($o['id_order'] ?? 0)) ?>" class="hidden fixed inset-0 bg-black/50 z-50 p-4 flex items-center justify-center">
-            <div class="bg-white rounded-2xl shadow-lg p-6 max-w-lg w-full border border-[#E2E8F0]">
-                <h3 class="font-bold text-lg text-[#051747]">
-                    Set Harga Pemesanan Custom
-                    <span class="block text-xs text-slate-500 mt-1 font-normal"><?= esc((string) ($o['kode_order'] ?? '-')) ?></span>
-                </h3>
+<?php if (!$readOnly): ?>
+    <?php foreach ($orders as $o): ?>
+        <?php if (($o['status'] ?? '') === 'menunggu_konfirmasi_harga'): ?>
+            <div id="modalSetHarga_<?= esc((string) ($o['id_order'] ?? 0)) ?>" class="hidden fixed inset-0 bg-black/50 z-50 p-4 flex items-center justify-center">
+                <div class="bg-white rounded-2xl shadow-lg p-6 max-w-lg w-full border border-[#E2E8F0]">
+                    <h3 class="font-bold text-lg text-[#051747]">
+                        Set Harga Pesanan Custom
+                        <span class="block text-xs text-slate-500 mt-1 font-normal"><?= esc((string) ($o['kode_order'] ?? '-')) ?></span>
+                    </h3>
 
-                <div class="bg-slate-50 rounded-xl p-4 mb-4 mt-4">
-                    <p class="text-sm text-slate-700"><span class="font-semibold">Pelanggan:</span> <?= esc((string) ($o['nama_pelanggan'] ?? '-')) ?></p>
-                    <p class="text-sm text-slate-700 mt-1"><span class="font-semibold">Produk:</span> <?= esc((string) ($o['nama_produk'] ?? '-')) ?></p>
-                    <p class="text-sm text-slate-700 mt-1">
-                        <span class="font-semibold">Jumlah:</span>
-                        <?= esc((string) ($o['jumlah_order'] ?? 0)) ?> <?= esc((string) ($o['satuan'] ?? 'pcs')) ?>
-                    </p>
-                    <p class="text-sm text-slate-700 mt-2"><span class="font-semibold">Catatan:</span> <?= esc((string) ($o['catatan_custom'] ?? '-')) ?></p>
+                    <div class="bg-slate-50 rounded-xl p-4 mb-4 mt-4">
+                        <p class="text-sm text-slate-700">
+                            <span class="font-semibold">Pelanggan:</span>
+                            <?= esc((string) ($o['nama_pelanggan'] ?? '-')) ?>
+                            <?php if (!empty($o['no_telp'])): ?>
+                                · <span class="text-slate-500"><?= esc((string) $o['no_telp']) ?></span>
+                            <?php endif; ?>
+                        </p>
+                        <p class="text-sm text-slate-700 mt-1"><span class="font-semibold">Produk:</span> <?= esc((string) ($o['nama_produk'] ?? '-')) ?></p>
+                        <p class="text-sm text-slate-700 mt-1">
+                            <span class="font-semibold">Jumlah:</span>
+                            <?= esc((string) ($o['jumlah_order'] ?? 0)) ?> <?= esc((string) ($o['satuan'] ?? 'pcs')) ?>
+                        </p>
+                        <p class="text-sm text-slate-700 mt-2"><span class="font-semibold">Catatan:</span> <?= esc((string) ($o['catatan_custom'] ?? '-')) ?></p>
+                        <?php if (!empty($o['deadline'])): ?>
+                            <?php helper('deadline'); ?>
+                            <p class="text-sm text-slate-700 mt-2">
+                                <span class="font-semibold">Deadline diajukan pelanggan:</span>
+                                <?= esc(formatTanggalId((string) $o['deadline'])) ?>
+                            </p>
+                        <?php endif; ?>
+                    </div>
+
+                    <form method="post"
+                        action="<?= esc(site_url('list-pemesanan/set-harga')) ?>"
+                        class="js-action-confirm-form"
+                        data-confirm-variant="offer"
+                        data-confirm-kode="<?= esc((string) ($o['kode_order'] ?? '-')) ?>">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="id_order" value="<?= esc((string) ($o['id_order'] ?? 0)) ?>">
+
+                        <div class="mb-3">
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Harga yang Ditawarkan (Rp)</label>
+                            <input
+                                type="number"
+                                name="harga_custom"
+                                min="1"
+                                step="1"
+                                required
+                                placeholder="Contoh: 350000"
+                                onwheel="this.blur()"
+                                class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Estimasi Pengerjaan</label>
+                            <input
+                                type="text"
+                                name="estimasi_custom"
+                                required
+                                placeholder="Contoh: 5-7 hari kerja (setelah ACC desain)"
+                                class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
+                            <p class="text-xs text-slate-400 mt-1">Dihitung setelah pelanggan menyetujui desain.</p>
+                        </div>
+
+                        <div class="mb-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Deadline Produksi Penawaran</label>
+                            <input
+                                type="date"
+                                name="deadline"
+                                required
+                                min="<?= esc(date('Y-m-d')) ?>"
+                                value="<?= esc((string) ($o['deadline'] ?? date('Y-m-d'))) ?>"
+                                class="w-full max-w-xs border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
+                            <p class="text-xs text-slate-400 mt-1.5">
+                                Barang selesai dikerjakan — belum termasuk pengiriman. Sesuaikan jika ajuan pelanggan tidak sanggup.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Catatan untuk Pelanggan</label>
+                            <textarea
+                                name="catatan_admin_custom"
+                                rows="3"
+                                placeholder="Jelaskan rincian harga, material, dll"
+                                class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"></textarea>
+                        </div>
+
+                        <div class="flex gap-3 justify-end mt-4">
+                            <button
+                                type="button"
+                                onclick="document.getElementById('modalSetHarga_<?= esc((string) ($o['id_order'] ?? 0)) ?>').classList.add('hidden')"
+                                class="border border-slate-300 text-slate-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors">
+                                Tutup
+                            </button>
+                            <button
+                                type="submit"
+                                class="bg-[#051747] text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#2E5CE6] transition-colors">
+                                Kirim Penawaran
+                            </button>
+                        </div>
+                    </form>
                 </div>
-
-                <form method="post" action="<?= esc(site_url('list-pemesanan/set-harga')) ?>">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="id_order" value="<?= esc((string) ($o['id_order'] ?? 0)) ?>">
-
-                    <div class="mb-3">
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Harga yang Ditawarkan (Rp)</label>
-                        <input
-                            type="number"
-                            name="harga_custom"
-                            min="1"
-                            required
-                            placeholder="Contoh: 350000"
-                            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Estimasi Pengerjaan</label>
-                        <input
-                            type="text"
-                            name="estimasi_custom"
-                            required
-                            placeholder="Contoh: 5-7 hari kerja"
-                            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Catatan untuk Pelanggan</label>
-                        <textarea
-                            name="catatan_admin_custom"
-                            rows="3"
-                            placeholder="Jelaskan rincian harga, material, dll"
-                            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"></textarea>
-                    </div>
-
-                    <div class="flex gap-3 justify-end mt-4">
-                        <button
-                            type="button"
-                            onclick="document.getElementById('modalSetHarga_<?= esc((string) ($o['id_order'] ?? 0)) ?>').classList.add('hidden')"
-                            class="border border-slate-300 text-slate-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors">
-                            Tutup
-                        </button>
-                        <button
-                            type="submit"
-                            class="bg-[#051747] text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#2E5CE6] transition-colors">
-                            Kirim Penawaran
-                        </button>
-                    </div>
-                </form>
             </div>
-        </div>
-    <?php endif; ?>
-<?php endforeach; ?>
+        <?php endif; ?>
+    <?php endforeach; ?>
+<?php endif; ?>
 
 <?= $this->endSection() ?>
 
@@ -336,8 +471,14 @@ $kategoriBadges = [
     window.adminDataTableConfig = {
         searchId: 'listPemesananSearch',
         filterId: '',
+        dateFromId: 'listPemesananDateFrom',
+        dateToId: 'listPemesananDateTo',
         tbodyId: 'listPemesananBody',
+        enableSort: true,
         getTabFilter: function(row) {
+            if (activePemesananTab === 'standar') {
+                return row.dataset.tipe === 'standar';
+            }
             if (activePemesananTab === 'custom') {
                 return row.dataset.tipe === 'custom';
             }

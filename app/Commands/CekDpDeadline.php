@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use CodeIgniter\Database\BaseConnection;
 
 class CekDpDeadline extends BaseCommand
 {
@@ -28,7 +29,7 @@ class CekDpDeadline extends BaseCommand
         }
     }
 
-    private function kirimReminderJam12($db): void
+    private function kirimReminderJam12(BaseConnection $db): void
     {
         $paidIds = $this->getOrderIdsWithDpPayment($db);
         $jam12   = date('Y-m-d H:i:s', strtotime('+12 hours'));
@@ -60,10 +61,10 @@ class CekDpDeadline extends BaseCommand
                     $email,
                     "Pengingat: Upload Bukti DP Pesanan {$kodeOrder}",
                     '<p>Halo <strong>' . esc($nama) . '</strong>,</p>'
-                    . "<p>Pesanan <strong>{$kodeOrder}</strong> belum ada bukti DP-nya.</p>"
-                    . '<p>Segera upload bukti transfer sebelum batas waktu: '
-                    . '<strong>' . esc($batasFmt) . '</strong>.</p>'
-                    . '<p>Jika tidak diupload, pesanan otomatis dibatalkan.</p>'
+                        . "<p>Pesanan <strong>{$kodeOrder}</strong> belum ada bukti DP-nya.</p>"
+                        . '<p>Segera upload bukti transfer sebelum batas waktu: '
+                        . '<strong>' . esc($batasFmt) . '</strong>.</p>'
+                        . '<p>Jika tidak diupload, pesanan otomatis dibatalkan.</p>'
                 );
 
                 $db->table('orders')
@@ -85,7 +86,7 @@ class CekDpDeadline extends BaseCommand
         }
     }
 
-    private function autoBatalJam24($db): void
+    private function autoBatalJam24(BaseConnection $db): void
     {
         $paidIds = $this->getOrderIdsWithDpPayment($db);
         $now     = date('Y-m-d H:i:s');
@@ -119,11 +120,11 @@ class CekDpDeadline extends BaseCommand
 
                 sendNotifEmail(
                     $email,
-                    "Pesanan {$kodeOrder} Dibatalkan — Timeout Pembayaran DP",
+                    "Pesanan {$kodeOrder} Dibatalkan-Timeout Pembayaran DP",
                     '<p>Halo <strong>' . esc($nama) . '</strong>,</p>'
-                    . "<p>Pesanan <strong>{$kodeOrder}</strong> telah otomatis dibatalkan "
-                    . 'karena bukti DP tidak diterima dalam 24 jam.</p>'
-                    . '<p>Kamu bisa membuat pesanan baru kapan saja.</p>'
+                        . "<p>Pesanan <strong>{$kodeOrder}</strong> telah otomatis dibatalkan "
+                        . 'karena bukti DP tidak diterima dalam 24 jam.</p>'
+                        . '<p>Anda bisa membuat pesanan baru kapan saja.</p>'
                 );
 
                 sendNotifInApp(
@@ -149,13 +150,17 @@ class CekDpDeadline extends BaseCommand
     }
 
     /**
+     * Kembalikan id_order yang DP-nya AKTIF (menunggu atau sudah terverifikasi).
+     * DP yang ditolak TIDAK dihitung — order tetap bisa auto-cancel.
+     *
      * @return list<int>
      */
-    private function getOrderIdsWithDpPayment($db): array
+    private function getOrderIdsWithDpPayment(BaseConnection $db): array
     {
         $rows = $db->table('payments')
             ->select('id_order')
             ->where('jenis', 'dp')
+            ->whereIn('status', ['menunggu', 'terverifikasi'])
             ->get()
             ->getResultArray();
 

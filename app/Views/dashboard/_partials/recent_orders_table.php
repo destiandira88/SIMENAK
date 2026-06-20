@@ -1,11 +1,20 @@
 <?php
 /**
  * @var list<array<string, mixed>> $orders
- * @var string                     $variant admin|pelanggan
+ * @var string                     $variant admin|pelanggan|owner
  * @var string                     $sectionTitle
  * @var string                     $searchId
  * @var string                     $tbodyId
  * @var string                     $searchPlaceholder
+ * @var bool                       $showDateFilter
+ * @var string                     $dateFromId
+ * @var string                     $dateToId
+ * @var string                     $entriesId
+ * @var string                     $entriesInfoId
+ * @var string                     $paginationId
+ * @var string                     $prevPageId
+ * @var string                     $nextPageId
+ * @var string                     $pageInfoId
  */
 $variant           = $variant ?? 'pelanggan';
 $orders            = $orders ?? [];
@@ -13,21 +22,58 @@ $sectionTitle      = $sectionTitle ?? 'Pesanan Terbaru';
 $searchId          = $searchId ?? 'dashboardOrdersSearch';
 $tbodyId           = $tbodyId ?? 'dashboardOrdersBody';
 $searchPlaceholder = $searchPlaceholder ?? 'Cari kode atau produk...';
+$showDateFilter    = $showDateFilter ?? false;
+$dateFromId        = $dateFromId ?? 'dashboardDateFrom';
+$dateToId          = $dateToId ?? 'dashboardDateTo';
+$entriesId         = $entriesId ?? 'entriesSelect';
+$entriesInfoId     = $entriesInfoId ?? 'entriesInfo';
+$paginationId      = $paginationId ?? 'tablePagination';
+$prevPageId        = $prevPageId ?? 'prevPageBtn';
+$nextPageId        = $nextPageId ?? 'nextPageBtn';
+$pageInfoId        = $pageInfoId ?? 'pageInfo';
 $isAdmin           = $variant === 'admin';
-$colspan           = 7;
+$isOwner           = $variant === 'owner';
+$colspan           = $isAdmin ? 9 : ($isOwner ? 5 : 7);
 ?>
-<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
     <h3 class="text-base font-bold text-[#051747]"><?= esc($sectionTitle) ?></h3>
-    <label for="<?= esc($searchId) ?>" class="sr-only">Cari pesanan</label>
-    <div class="search-control">
-        <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-        </svg>
-        <input
-            id="<?= esc($searchId) ?>"
-            type="search"
-            placeholder="<?= esc($searchPlaceholder) ?>"
-            autocomplete="off">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap sm:justify-end">
+        <?php if ($showDateFilter): ?>
+            <div class="flex items-center gap-2">
+                <label for="<?= esc($dateFromId) ?>" class="text-xs font-medium text-slate-500 whitespace-nowrap">Dari</label>
+                <input
+                    id="<?= esc($dateFromId) ?>"
+                    type="date"
+                    class="date-filter-input"
+                    aria-label="Filter tanggal mulai">
+                <label for="<?= esc($dateToId) ?>" class="text-xs font-medium text-slate-500 whitespace-nowrap">Sampai</label>
+                <input
+                    id="<?= esc($dateToId) ?>"
+                    type="date"
+                    class="date-filter-input"
+                    aria-label="Filter tanggal akhir">
+            </div>
+        <?php endif; ?>
+        <label for="<?= esc($searchId) ?>" class="sr-only">Cari pesanan</label>
+        <div class="search-control w-full sm:w-auto">
+            <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+            </svg>
+            <input
+                id="<?= esc($searchId) ?>"
+                type="search"
+                placeholder="<?= esc($searchPlaceholder) ?>"
+                autocomplete="off">
+        </div>
+        <?php if ($isOwner): ?>
+            <button
+                type="button"
+                disabled
+                title="Fitur ekspor ada di halaman Laporan"
+                class="inline-flex shrink-0 items-center justify-center opacity-50 cursor-not-allowed border-2 border-[#051747] text-[#051747] px-4 py-2 rounded-full text-xs font-bold uppercase">
+                Export Excel
+            </button>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -36,18 +82,51 @@ $colspan           = 7;
         <table class="w-full text-sm">
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
-                    <th class="px-4 py-3 text-left font-semibold">No</th>
-                    <th class="px-4 py-3 text-left font-semibold">Kode Order</th>
-                    <?php if ($isAdmin): ?>
+                    <?php if ($isOwner): ?>
+                        <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kode">
+                            Kode Order<span class="sort-icon">↕</span>
+                        </th>
                         <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
+                        <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="produk">
+                            Produk<span class="sort-icon">↕</span>
+                        </th>
+                        <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="total">
+                            Total<span class="sort-icon">↕</span>
+                        </th>
+                        <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="status">
+                            Status<span class="sort-icon">↕</span>
+                        </th>
+                    <?php else: ?>
+                        <th class="px-4 py-3 text-left font-semibold">No</th>
+                        <?php if ($isAdmin): ?>
+                            <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kode">
+                                Kode Order<span class="sort-icon">↕</span>
+                            </th>
+                            <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
+                            <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="produk">
+                                Produk<span class="sort-icon">↕</span>
+                            </th>
+                            <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="tanggal">
+                                Tanggal<span class="sort-icon">↕</span>
+                            </th>
+                            <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="tipe">
+                                Tipe<span class="sort-icon">↕</span>
+                            </th>
+                            <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="total">
+                                Total Harga<span class="sort-icon">↕</span>
+                            </th>
+                            <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="status">
+                                Status<span class="sort-icon">↕</span>
+                            </th>
+                        <?php else: ?>
+                            <th class="px-4 py-3 text-left font-semibold">Kode Order</th>
+                            <th class="px-4 py-3 text-left font-semibold">Produk</th>
+                            <th class="px-4 py-3 text-left font-semibold">Tanggal</th>
+                            <th class="px-4 py-3 text-left font-semibold">Total</th>
+                            <th class="px-4 py-3 text-left font-semibold">Status</th>
+                        <?php endif; ?>
+                        <th class="px-4 py-3 text-left font-semibold w-12"></th>
                     <?php endif; ?>
-                    <th class="px-4 py-3 text-left font-semibold">Produk</th>
-                    <?php if (!$isAdmin): ?>
-                        <th class="px-4 py-3 text-left font-semibold">Tanggal</th>
-                    <?php endif; ?>
-                    <th class="px-4 py-3 text-left font-semibold">Total</th>
-                    <th class="px-4 py-3 text-left font-semibold">Status</th>
-                    <th class="px-4 py-3 text-left font-semibold w-12"></th>
                 </tr>
             </thead>
             <tbody id="<?= esc($tbodyId) ?>">
@@ -55,11 +134,13 @@ $colspan           = 7;
                     <tr id="emptyDataRow">
                         <td colspan="<?= esc((string) $colspan) ?>" class="py-16 text-center">
                             <div class="text-4xl mb-3">📦</div>
-                            <p class="text-sm font-medium text-slate-500">
-                                <?= $isAdmin ? 'Belum ada pesanan' : 'Belum ada pesanan' ?>
-                            </p>
+                            <p class="text-sm font-medium text-slate-500">Belum ada pesanan</p>
                             <p class="text-xs text-slate-400 mt-1">
-                                <?= $isAdmin ? 'Pesanan baru akan muncul di sini.' : 'Mulai pesan dari katalog!' ?>
+                                <?php if ($isOwner || $isAdmin): ?>
+                                    Pesanan baru akan muncul di sini.
+                                <?php else: ?>
+                                    Mulai pesan dari katalog!
+                                <?php endif; ?>
                             </p>
                         </td>
                     </tr>
@@ -68,85 +149,131 @@ $colspan           = 7;
                         <?php
                         $kodeOrder     = (string) ($order['kode_order'] ?? '');
                         $namaPelanggan = (string) ($order['nama_pelanggan'] ?? '-');
-                        $namaProduk    = !empty($order['is_custom'])
-                            ? 'Pemesanan Custom'
+                        $isCustom      = (int) ($order['is_custom'] ?? 0) === 1;
+                        $namaProduk    = $isCustom
+                            ? 'Pesanan Custom'
                             : (string) ($order['nama_produk'] ?? '-');
                         $status        = (string) ($order['status'] ?? '');
+                        $totalHarga    = (float) ($order['total_harga'] ?? 0);
+                        $createdAt     = (string) ($order['created_at'] ?? '');
+                        $tsCreated     = $createdAt !== '' ? strtotime($createdAt) : 0;
+                        $tipeKey       = $isCustom ? 'custom' : 'standar';
+                        $noTelp        = trim((string) ($order['no_telp'] ?? ''));
                         $searchText    = mb_strtolower(trim(
-                            $kodeOrder . ' ' . $namaPelanggan . ' ' . $namaProduk . ' ' . $status
+                            $kodeOrder . ' ' . $namaPelanggan . ' ' . $noTelp . ' ' . $namaProduk . ' ' . $status
                         ));
                         $detailUrl     = site_url('order/detail/' . $kodeOrder);
+                        $tglTampil     = $tsCreated > 0 ? date('d M Y', $tsCreated) : '-';
                         ?>
                         <tr
                             class="data-table-row border-b border-slate-100 hover:bg-[#F8FAFF] transition-colors"
                             data-search="<?= esc($searchText) ?>"
-                            data-status="<?= esc($status) ?>">
-                            <td class="row-num px-4 py-3.5 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
-                            <td class="px-4 py-3.5 font-mono text-sm font-semibold text-[#051747]">
-                                <?= esc($kodeOrder ?: '-') ?>
-                            </td>
-                            <?php if ($isAdmin): ?>
-                                <td class="px-4 py-3.5">
-                                    <p class="font-semibold text-[#051747]"><?= esc($namaPelanggan) ?></p>
-                                </td>
-                            <?php endif; ?>
-                            <td class="px-4 py-3.5"><?= esc($namaProduk) ?></td>
-                            <?php if (!$isAdmin): ?>
-                                <td class="px-4 py-3.5 text-slate-500">
-                                    <?= esc(date('d M Y', strtotime((string) ($order['created_at'] ?? 'now')))) ?>
-                                </td>
-                            <?php endif; ?>
-                            <td class="px-4 py-3.5 font-semibold text-[#051747]">
-                                Rp <?= esc(number_format((float) ($order['total_harga'] ?? 0), 0, ',', '.')) ?>
-                            </td>
-                            <td class="px-4 py-3.5">
-                                <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
-                                    <?= esc(getStatusLabel($status)) ?>
-                                </span>
-                            </td>
-                            <td class="px-4 py-3.5">
-                                <div class="action-menu relative inline-block">
-                                    <button
-                                        type="button"
-                                        class="action-menu-btn"
-                                        aria-label="Menu aksi"
-                                        aria-expanded="false"
-                                        data-action-toggle>
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <circle cx="12" cy="5" r="1.75" />
-                                            <circle cx="12" cy="12" r="1.75" />
-                                            <circle cx="12" cy="19" r="1.75" />
-                                        </svg>
-                                    </button>
-                                    <div class="action-dropdown hidden" role="menu">
-                                        <a href="<?= esc($detailUrl) ?>" role="menuitem">
-                                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                            Detail
+                            data-status="<?= esc($status) ?>"
+                            <?php if ($isAdmin || $isOwner): ?>
+                            data-kode="<?= esc(mb_strtolower($kodeOrder)) ?>"
+                            data-produk="<?= esc(mb_strtolower($namaProduk)) ?>"
+                            data-tanggal="<?= esc((string) $tsCreated) ?>"
+                            data-tipe="<?= esc($tipeKey) ?>"
+                            data-total="<?= esc((string) $totalHarga) ?>"
+                            <?php endif; ?>>
+                            <?php if ($isOwner): ?>
+                                <td class="px-4 py-3.5 font-mono text-sm font-semibold text-[#051747] whitespace-nowrap">
+                                    <?php if ($kodeOrder !== ''): ?>
+                                        <a href="<?= esc($detailUrl) ?>" class="hover:text-[#2E5CE6] hover:underline">
+                                            <?= esc($kodeOrder) ?>
                                         </a>
-                                        <?php if ($isAdmin): ?>
-                                            <button
-                                                type="button"
-                                                class="action-danger"
-                                                role="menuitem"
-                                                data-dashboard-delete="<?= esc($kodeOrder, 'attr') ?>">
-                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                                Hapus
-                                            </button>
+                                    <?php else: ?>
+                                        —
+                                    <?php endif; ?>
+                                </td>
+                                <td class="px-4 py-3.5">
+                                    <?= view('partials/pelanggan_kontak_cell', [
+                                        'nama'   => $namaPelanggan,
+                                        'noTelp' => $noTelp,
+                                    ]) ?>
+                                </td>
+                                <td class="px-4 py-3.5"><?= esc($namaProduk) ?></td>
+                                <td class="px-4 py-3.5 font-semibold text-[#051747]">
+                                    <?php if ($totalHarga > 0): ?>
+                                        Rp <?= esc(number_format($totalHarga, 0, ',', '.')) ?>
+                                    <?php else: ?>
+                                        <span class="text-xs italic text-slate-400">Menunggu Admin</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="px-4 py-3.5">
+                                    <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
+                                        <?= esc(getOrderStatusLabel($order, 'owner')) ?>
+                                    </span>
+                                </td>
+                            <?php else: ?>
+                                <td class="row-num px-4 py-3.5 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
+                                <td class="px-4 py-3.5 font-mono text-sm font-semibold text-[#051747]">
+                                    <?= esc($kodeOrder ?: '-') ?>
+                                </td>
+                                <?php if ($isAdmin): ?>
+                                    <td class="px-4 py-3.5">
+                                        <?= view('partials/pelanggan_kontak_cell', [
+                                            'nama'   => $namaPelanggan,
+                                            'noTelp' => $noTelp,
+                                        ]) ?>
+                                    </td>
+                                    <td class="px-4 py-3.5"><?= esc($namaProduk) ?></td>
+                                    <td class="px-4 py-3.5 text-slate-600 whitespace-nowrap"><?= esc($tglTampil) ?></td>
+                                    <td class="px-4 py-3.5">
+                                        <?php if ($isCustom): ?>
+                                            <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold bg-[#FEF3C7] text-[#92400E]">Custom</span>
+                                        <?php else: ?>
+                                            <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold bg-[#DBEAFE] text-[#1E40AF]">Standar</span>
                                         <?php endif; ?>
+                                    </td>
+                                <?php else: ?>
+                                    <td class="px-4 py-3.5"><?= esc($namaProduk) ?></td>
+                                    <td class="px-4 py-3.5 text-slate-500 whitespace-nowrap"><?= esc($tglTampil) ?></td>
+                                <?php endif; ?>
+                                <td class="px-4 py-3.5 font-semibold text-[#051747]">
+                                    <?php if ($totalHarga > 0): ?>
+                                        Rp <?= esc(number_format($totalHarga, 0, ',', '.')) ?>
+                                    <?php else: ?>
+                                        <span class="text-xs italic text-slate-400">Menunggu Admin</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="px-4 py-3.5">
+                                    <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
+                                        <?= esc(getOrderStatusLabel($order)) ?>
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3.5">
+                                    <div class="action-menu relative inline-block">
+                                        <button
+                                            type="button"
+                                            class="action-menu-btn"
+                                            aria-label="Menu aksi"
+                                            aria-expanded="false"
+                                            data-action-toggle>
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <circle cx="12" cy="5" r="1.75" />
+                                                <circle cx="12" cy="12" r="1.75" />
+                                                <circle cx="12" cy="19" r="1.75" />
+                                            </svg>
+                                        </button>
+                                        <div class="action-dropdown hidden" role="menu">
+                                            <a href="<?= esc($detailUrl) ?>" role="menuitem">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                                Detail
+                                            </a>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
+                                </td>
+                            <?php endif; ?>
                         </tr>
                     <?php endforeach; ?>
                     <tr id="emptyFilterRow" class="hidden">
                         <td colspan="<?= esc((string) $colspan) ?>" class="py-12 text-center">
-                            <p class="text-sm font-medium text-slate-500">Tidak ada pesanan yang cocok dengan pencarian.</p>
-                            <p class="text-xs text-slate-400 mt-1">Coba ubah kata kunci.</p>
+                            <p class="text-sm font-medium text-slate-500">Tidak ada pesanan yang cocok dengan filter.</p>
+                            <p class="text-xs text-slate-400 mt-1">Coba ubah kata kunci<?= $showDateFilter ? ' atau rentang tanggal' : '' ?>.</p>
                         </td>
                     </tr>
                 <?php endif; ?>
@@ -154,27 +281,14 @@ $colspan           = 7;
         </table>
     </div>
 
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-slate-100">
-        <div class="flex items-center gap-2 text-sm text-slate-600">
-            <label for="entriesSelect" class="whitespace-nowrap">Show</label>
-            <select id="entriesSelect" class="entries-select">
-                <option value="5">5</option>
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-            </select>
-            <span class="whitespace-nowrap">entries</span>
-        </div>
-        <p id="entriesInfo" class="text-xs text-slate-500"></p>
-    </div>
-
-    <div id="tablePagination" class="hidden items-center justify-between px-4 py-3 border-t border-slate-100">
-        <button type="button" id="prevPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-            ← Sebelumnya
-        </button>
-        <span id="pageInfo" class="text-xs text-slate-500"></span>
-        <button type="button" id="nextPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-            Selanjutnya →
-        </button>
-    </div>
+    <?php if ($orders !== []): ?>
+        <?= view('partials/admin_data_table_footer', [
+            'entriesId'     => $entriesId,
+            'entriesInfoId' => $entriesInfoId,
+            'paginationId'  => $paginationId,
+            'prevPageId'    => $prevPageId,
+            'nextPageId'    => $nextPageId,
+            'pageInfoId'    => $pageInfoId,
+        ]) ?>
+    <?php endif; ?>
 </div>

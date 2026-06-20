@@ -56,7 +56,7 @@ class OrderController extends BaseController
             ->getRowArray();
 
         return view('order/create', [
-            'title'      => 'Buat Pesanan — ' . ($katalog['nama_produk'] ?? ''),
+            'title'      => 'Buat Pesanan-' . ($katalog['nama_produk'] ?? ''),
             'page_title' => 'Buat Pesanan Baru',
             'katalog'    => $katalog,
             'fields'     => $fields,
@@ -79,6 +79,11 @@ class OrderController extends BaseController
             'metode_pengiriman' => 'required|in_list[kurir,ambil_sendiri]',
         ];
 
+        $metodePengiriman = (string) $this->request->getPost('metode_pengiriman');
+        if ($metodePengiriman === 'kurir') {
+            $rules['alamat_kirim'] = 'required|min_length[10]';
+        }
+
         if (!$this->validate($rules)) {
             return redirect()->back()
                 ->withInput()
@@ -99,6 +104,13 @@ class OrderController extends BaseController
                 ->with('error', "Minimum order {$katalog['min_order']} {$katalog['satuan']}.");
         }
 
+        $formError = $this->validateFormTemplateFields($idKatalog);
+        if ($formError !== null) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $formError);
+        }
+
         $db          = \Config\Database::connect();
         $idPelanggan = (int) session()->get('id_pelanggan');
         $pelanggan   = $db->table('pelanggan')
@@ -107,25 +119,19 @@ class OrderController extends BaseController
             ->getRowArray();
 
         $jenisDiminta = (string) $this->request->getPost('jenis_pelanggan');
-        $isVerified   = (int) ($pelanggan['is_verified'] ?? 0);
+        $isCustom     = (int) $this->request->getPost('is_custom');
+        helper('notification');
 
-        if ($jenisDiminta === 'perusahaan' && $isVerified === 1) {
-            $jenisFinal = 'perusahaan';
-            $requireDp  = 0;
-            $statusAwal = 'terverifikasi';
-        } else {
-            $jenisFinal = 'perseorangan';
-            $requireDp  = 1;
-            $statusAwal = 'menunggu_verifikasi_dp';
-            if ($jenisDiminta === 'perusahaan' && $isVerified === 0) {
-                session()->setFlashdata(
-                    'warning',
-                    'Akun belum terverifikasi sebagai perusahaan. Diproses sebagai perseorangan (DP 50%).'
-                );
-            }
+        $totalHarga  = $isCustom === 1 ? 0 : orderTotalFromKatalog($katalog['harga_dasar'], $jumlahOrder);
+        $scheme      = resolveOrderPaymentScheme($pelanggan ?? [], $jenisDiminta, $totalHarga);
+        $jenisFinal  = $scheme['jenisFinal'];
+        $requireDp   = $scheme['requireDp'];
+        $statusAwal  = $scheme['statusAwal'];
+
+        if ($scheme['warning'] !== null) {
+            session()->setFlashdata('warning', $scheme['warning']);
         }
 
-        $isCustom = (int) $this->request->getPost('is_custom');
         if ($isCustom === 1) {
             $statusAwal = 'menunggu_konfirmasi_harga';
             $requireDp  = 1;
@@ -159,7 +165,6 @@ class OrderController extends BaseController
             $referensiPath = $newName;
         }
 
-        $totalHarga  = $isCustom === 1 ? 0 : (float) $katalog['harga_dasar'] * $jumlahOrder;
         $kuotaRevisi = (int) $katalog['kuota_revisi_default'];
         $kodeOrder   = generateKodeOrder();
         $idOrder     = 0;
@@ -178,15 +183,17 @@ class OrderController extends BaseController
                 'referensi_desain'  => $referensiPath,
                 'detail_pesanan'    => $this->request->getPost('detail_pesanan'),
                 'deadline'          => $this->request->getPost('deadline'),
-                'metode_pengiriman' => $this->request->getPost('metode_pengiriman'),
-                'alamat_kirim'      => $this->request->getPost('alamat_kirim'),
+                'metode_pengiriman' => $metodePengiriman,
+                'alamat_kirim'      => $metodePengiriman === 'kurir'
+                    ? trim((string) $this->request->getPost('alamat_kirim'))
+                    : null,
                 'kuota_revisi'      => $kuotaRevisi,
                 'sisa_kuota'        => $kuotaRevisi,
                 'total_harga'       => $totalHarga,
                 'require_dp'        => $requireDp,
                 'status'            => $statusAwal,
                 'created_at'        => date('Y-m-d H:i:s'),
-                'batas_upload_dp'   => ($jenisFinal === 'perseorangan' && $requireDp === 1 && $isCustom === 0)
+                'batas_upload_dp'   => ($requireDp === 1 && $isCustom === 0)
                     ? date('Y-m-d H:i:s', strtotime('+24 hours'))
                     : null,
                 'reminder_dp_sent'  => 0,
@@ -264,7 +271,7 @@ class OrderController extends BaseController
             if ($userRow !== null) {
                 sendNotifEmail(
                     (string) $userRow['email'],
-                    "Pesanan {$kodeOrder} Berhasil Dibuat — SIMENAK Z'Plack",
+                    "Pesanan {$kodeOrder} Berhasil Dibuat-SIMENAK Z'Plack",
                     '<p>Halo <strong>' . esc((string) $userRow['nama']) . '</strong>,</p>'
                     . '<p>Pesanan <strong>' . esc($kodeOrder) . '</strong> telah berhasil dibuat '
                     . 'dan langsung masuk ke antrian produksi tanpa DP.</p>'
@@ -314,7 +321,7 @@ class OrderController extends BaseController
                 'o.*, k.nama_produk, k.kategori, k.estimasi_hari, '
                 . 'k.gambar AS gambar_katalog, k.satuan, k.min_order, '
                 . 'k.kuota_revisi_default, u.nama AS nama_pelanggan, u.email AS email_pelanggan, '
-                . 'p.no_telp, p.is_verified'
+                . 'p.no_telp, p.is_verified, p.tier_perusahaan, p.is_suspended'
             )
             ->join('katalog k', 'k.id_katalog = o.id_katalog')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
@@ -372,7 +379,7 @@ class OrderController extends BaseController
             ->getRowArray();
 
         return view('order/detail', [
-            'title'      => 'Detail Pesanan — ' . $kodeOrder,
+            'title'      => 'Detail Pesanan-' . $kodeOrder,
             'page_title' => 'Detail Pesanan',
             'order'      => $order,
             'attrs'      => $attrs,
@@ -384,18 +391,22 @@ class OrderController extends BaseController
 
     public function listPemesanan()
     {
-        if ((string) session()->get('role') !== 'admin') {
+        $role = (string) session()->get('role');
+        if (!in_array($role, ['admin', 'owner'], true)) {
             return redirect()->to(site_url('dashboard'));
         }
 
         $orders = model(OrderModel::class)->getListPemesanan();
 
         $countAll      = count($orders);
+        $countStandar  = 0;
         $countCustom   = 0;
         $countMenunggu = 0;
         foreach ($orders as $row) {
             if ((int) ($row['is_custom'] ?? 0) === 1) {
                 $countCustom++;
+            } else {
+                $countStandar++;
             }
             if (($row['status'] ?? '') === 'menunggu_konfirmasi_harga') {
                 $countMenunggu++;
@@ -403,73 +414,37 @@ class OrderController extends BaseController
         }
 
         $activeTab = (string) ($this->request->getGet('tab') ?? 'semua');
-        if (!in_array($activeTab, ['semua', 'custom', 'menunggu-harga'], true)) {
+        if (!in_array($activeTab, ['semua', 'standar', 'custom', 'menunggu-harga'], true)) {
             $activeTab = 'semua';
         }
 
         return view('order/list_pemesanan', [
-            'title'         => 'List Pemesanan',
-            'page_title'    => 'List Pemesanan',
+            'title'         => $role === 'owner' ? 'Pesanan' : 'List Pemesanan',
+            'page_title'    => $role === 'owner' ? 'Pesanan' : 'List Pemesanan',
             'orders'        => $orders,
             'countAll'      => $countAll,
+            'countStandar'  => $countStandar,
             'countCustom'   => $countCustom,
             'countMenunggu' => $countMenunggu,
             'activeTab'     => $activeTab,
+            'readOnly'      => $role === 'owner',
         ]);
     }
 
     public function detailById(int $idOrder)
     {
-        if ((string) session()->get('role') !== 'admin') {
+        $role = (string) session()->get('role');
+        if (!in_array($role, ['admin', 'owner'], true)) {
             return redirect()->to(site_url('dashboard'));
         }
 
         $order = model(OrderModel::class)->find($idOrder);
         if ($order === null) {
             return redirect()->to(site_url('list-pemesanan'))
-                ->with('error', 'Pemesanan tidak ditemukan.');
+                ->with('error', 'Pesanan tidak ditemukan.');
         }
 
         return redirect()->to(site_url('order/detail/' . $order['kode_order']));
-    }
-
-    public function delete(string $kodeOrder)
-    {
-        if ((string) session()->get('role') !== 'admin') {
-            return redirect()->to(site_url('dashboard'));
-        }
-
-        $db    = \Config\Database::connect();
-        $order = $db->table('orders')->where('kode_order', $kodeOrder)->get()->getRowArray();
-
-        if ($order === null) {
-            return redirect()->back()->with('error', 'Pesanan tidak ditemukan.');
-        }
-
-        $idOrder = (int) $order['id_order'];
-
-        try {
-            $db->transStart();
-            $db->table('notifications')->where('id_order', $idOrder)->delete();
-            $db->table('order_attributes')->where('id_order', $idOrder)->delete();
-            $db->table('payments')->where('id_order', $idOrder)->delete();
-            $db->table('revisi_desain')->where('id_order', $idOrder)->delete();
-            $db->table('pengiriman')->where('id_order', $idOrder)->delete();
-            $db->table('orders')->where('id_order', $idOrder)->delete();
-            $db->transComplete();
-
-            if ($db->transStatus() === false) {
-                throw new \RuntimeException('Gagal menghapus pesanan.');
-            }
-        } catch (\Throwable $e) {
-            $db->transRollback();
-            log_message('error', '[OrderController::delete] {msg}', ['msg' => $e->getMessage()]);
-
-            return redirect()->back()->with('error', 'Gagal menghapus pesanan.');
-        }
-
-        return redirect()->to(site_url('list-pemesanan'))
-            ->with('success', 'Pemesanan ' . $kodeOrder . ' berhasil dihapus.');
     }
 
     public function batalkan(): RedirectResponse
@@ -516,7 +491,7 @@ class OrderController extends BaseController
         if ($role === 'admin') {
             sendNotifEmail(
                 $order['email'],
-                "Pesanan {$order['kode_order']} Dibatalkan — SIMENAK Z'Plack",
+                "Pesanan {$order['kode_order']} Dibatalkan-SIMENAK Z'Plack",
                 '<p>Halo <strong>' . esc($order['nama']) . '</strong>,</p>'
                 . '<p>Pesanan <strong>' . esc($order['kode_order']) . '</strong> dibatalkan. '
                 . 'Alasan: <strong>' . esc($alasan) . '</strong>.</p>'
@@ -536,6 +511,51 @@ class OrderController extends BaseController
     {
         if ((string) session()->get('role') !== 'pelanggan') {
             return redirect()->to(site_url('dashboard'));
+        }
+
+        return null;
+    }
+
+    private function validateFormTemplateFields(int $idKatalog): ?string
+    {
+        $db = \Config\Database::connect();
+
+        $templates = $db->table('form_templates')
+            ->where('id_katalog', $idKatalog)
+            ->where('is_required', 1)
+            ->get()
+            ->getResultArray();
+
+        if ($templates === []) {
+            return null;
+        }
+
+        $eavData  = $this->request->getPost('eav') ?? [];
+        $allFiles = $this->request->getFiles();
+        $eavFiles = $allFiles['eav_file'] ?? [];
+
+        foreach ($templates as $template) {
+            $key   = (string) ($template['field_key'] ?? '');
+            $label = (string) ($template['field_label'] ?? $key);
+            $type  = (string) ($template['field_type'] ?? 'text');
+
+            if ($key === '') {
+                continue;
+            }
+
+            if ($type === 'file') {
+                $file = is_array($eavFiles) ? ($eavFiles[$key] ?? null) : null;
+                if ($file === null || !$file->isValid() || $file->hasMoved()) {
+                    return "Field \"{$label}\" wajib diisi.";
+                }
+
+                continue;
+            }
+
+            $value = is_array($eavData) ? trim((string) ($eavData[$key] ?? '')) : '';
+            if ($value === '') {
+                return "Field \"{$label}\" wajib diisi.";
+            }
         }
 
         return null;

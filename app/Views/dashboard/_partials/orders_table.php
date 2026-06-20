@@ -46,7 +46,10 @@ $emptyMessage  = $emptyMessage ?? 'Belum ada pesanan.';
                             </td>
                             <?php if ($showPelanggan): ?>
                                 <td class="px-6 py-3.5">
-                                    <?= esc($order['nama_pelanggan'] ?? '-') ?>
+                                    <?= view('partials/pelanggan_kontak_cell', [
+                                        'nama'   => (string) ($order['nama_pelanggan'] ?? '-'),
+                                        'noTelp' => (string) ($order['no_telp'] ?? ''),
+                                    ]) ?>
                                 </td>
                             <?php endif; ?>
                             <td class="px-6 py-3.5"><?= esc($produk) ?></td>
@@ -55,7 +58,7 @@ $emptyMessage  = $emptyMessage ?? 'Belum ada pesanan.';
                             </td>
                             <td class="px-6 py-3.5">
                                 <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
-                                    <?= esc(getStatusLabel($status)) ?>
+                                    <?= esc(getOrderStatusLabel($order)) ?>
                                 </span>
                             </td>
                             <td class="px-6 py-3.5" style="color:var(--text-muted);">

@@ -57,7 +57,7 @@ $kategoriBadges = [
 </div>
 
 <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-    <div class="overflow-x-auto">
+    <div class="table-responsive">
         <table class="w-full text-sm">
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
@@ -132,7 +132,7 @@ $kategoriBadges = [
                             </td>
                             <td class="px-4 py-3.5">
                                 <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
-                                    <?= esc(getStatusLabel($status)) ?>
+                                    <?= esc(getOrderStatusLabel($o)) ?>
                                 </span>
                             </td>
                             <td class="px-4 py-3.5">

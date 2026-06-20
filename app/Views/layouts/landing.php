@@ -203,16 +203,6 @@ $navMenus = [
     </header>
 
     <main class="pt-28">
-        <?php if (session()->getFlashdata('success')): ?>
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
-                <div class="px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium"><?= esc(session()->getFlashdata('success')) ?></div>
-            </div>
-        <?php endif; ?>
-        <?php if (session()->getFlashdata('error')): ?>
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
-                <div class="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-medium"><?= esc(session()->getFlashdata('error')) ?></div>
-            </div>
-        <?php endif; ?>
         <?= $this->renderSection('content') ?>
     </main>
 
@@ -691,6 +681,7 @@ $navMenus = [
             }
         })();
     </script>
+    <?= view('partials/flash_toast') ?>
     <?= view('partials/logout_modal') ?>
     <?= $this->renderSection('scripts') ?>
 </body>

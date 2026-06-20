@@ -23,11 +23,11 @@
             Halo, <?= esc($nama) ?> 👋
         </h2>
         <p class="mt-1 text-sm text-slate-500">
-            Ringkasan pemesanan cetak kamu di SIMENAK Z'Plack
+            Ringkasan pesanan cetak Anda di SIMENAK Z'Plack
         </p>
     </div>
     <a href="<?= site_url('katalog') ?>" class="btn-primary inline-flex items-center justify-center px-4 py-2.5 text-sm text-white shrink-0">
-        + Buat Pemesanan Baru
+        + Buat Pesanan Baru
     </a>
 </div>
 
@@ -36,7 +36,7 @@
 <?= view('dashboard/_partials/recent_orders_table', [
     'orders'            => $recentOrders,
     'variant'           => 'pelanggan',
-    'sectionTitle'      => 'Pemesanan Terbaru',
+    'sectionTitle'      => 'Pesanan Terbaru',
     'searchId'          => 'pelangganDashboardSearch',
     'tbodyId'           => 'pelangganDashboardBody',
     'searchPlaceholder' => 'Cari kode atau produk...',

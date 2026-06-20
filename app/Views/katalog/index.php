@@ -1,7 +1,8 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('title') ?><?= esc($title ?? 'Kelola Katalog') ?><?= $this->endSection() ?>
-<?= $this->section('page_title') ?>Kelola Katalog<?= $this->endSection() ?>
+<?php $readOnly = (bool) ($readOnly ?? false); ?>
+<?= $this->section('page_title') ?><?= esc($readOnly ? 'Katalog Produk' : 'Kelola Katalog') ?><?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <style>
@@ -234,11 +235,17 @@ $kategoriBadges = [
 <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
     <div>
         <h2 class="text-2xl font-extrabold text-[#051747]">Katalog Produk dan Layanan</h2>
-        <p class="mt-1 text-sm text-slate-500">Kelola seluruh produk dan layanan cetak yang tersedia</p>
+        <p class="mt-1 text-sm text-slate-500">
+            <?= $readOnly
+                ? 'Pantau seluruh produk dan template pesanan yang tersedia.'
+                : 'Kelola seluruh produk dan layanan cetak yang tersedia' ?>
+        </p>
     </div>
-    <a href="<?= site_url('katalog/tambah') ?>" class="btn-primary inline-flex items-center justify-center px-4 py-2.5 text-sm text-white shrink-0">
-        + Tambah Produk
-    </a>
+    <?php if (!$readOnly): ?>
+        <a href="<?= site_url('katalog/tambah') ?>" class="btn-primary inline-flex items-center justify-center px-4 py-2.5 text-sm text-white shrink-0">
+            + Tambah Produk
+        </a>
+    <?php endif; ?>
 </div>
 
 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
@@ -277,7 +284,7 @@ $kategoriBadges = [
 </div>
 
 <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-    <div class="overflow-x-auto">
+    <div class="table-responsive">
         <table class="w-full text-sm">
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
@@ -311,7 +318,9 @@ $kategoriBadges = [
                         <td colspan="10" class="py-16 text-center">
                             <div class="text-4xl mb-3">📋</div>
                             <p class="text-sm font-medium text-slate-500">Belum ada produk katalog</p>
-                            <p class="text-xs text-slate-400 mt-1">Tambahkan produk pertama Anda.</p>
+                            <p class="text-xs text-slate-400 mt-1">
+                                <?= $readOnly ? 'Belum ada produk yang terdaftar.' : 'Tambahkan produk pertama Anda.' ?>
+                            </p>
                         </td>
                     </tr>
                 <?php else: ?>
@@ -339,10 +348,18 @@ $kategoriBadges = [
                             <td class="row-num px-4 py-3.5 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3.5">
                                 <?php if (!empty($k['gambar'])): ?>
-                                    <img
-                                        src="<?= esc(base_url('uploads/katalog/' . $k['gambar'])) ?>"
-                                        alt="<?= esc($namaProduk) ?>"
-                                        class="w-14 h-14 rounded-xl object-cover border border-slate-100 bg-slate-50">
+                                    <?php $gambarUrl = base_url('uploads/katalog/' . $k['gambar']); ?>
+                                    <button
+                                        type="button"
+                                        class="group relative block rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/40"
+                                        data-katalog-zoom="<?= esc($gambarUrl) ?>"
+                                        data-katalog-zoom-alt="<?= esc($namaProduk) ?>"
+                                        aria-label="Perbesar foto <?= esc($namaProduk) ?>">
+                                        <img
+                                            src="<?= esc($gambarUrl) ?>"
+                                            alt="<?= esc($namaProduk) ?>"
+                                            class="w-14 h-14 rounded-xl object-cover border border-slate-100 bg-slate-50 cursor-zoom-in transition-opacity group-hover:opacity-90">
+                                    </button>
                                 <?php else: ?>
                                     <div class="w-14 h-14 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-center">
                                         <svg class="w-7 h-7 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -405,44 +422,60 @@ $kategoriBadges = [
                                         </svg>
                                     </button>
                                     <div class="action-dropdown hidden" role="menu">
-                                        <a href="<?= site_url('katalog/edit/' . $idKatalog) ?>" role="menuitem">
-                                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
-                                            Edit
-                                        </a>
-                                        <a href="<?= site_url('form-template/' . $idKatalog) ?>" role="menuitem">
-                                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                            Form
-                                        </a>
-                                        <button
-                                            type="button"
-                                            class="<?= $isActive ? 'action-danger' : '' ?>"
-                                            role="menuitem"
-                                            data-open-katalog-confirm
-                                            data-confirm-type="<?= $isActive ? 'nonaktif' : 'aktif' ?>"
-                                            data-confirm-id="<?= $idKatalog ?>"
-                                            data-confirm-name="<?= esc($namaProduk) ?>">
-                                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                            </svg>
-                                            <?= $isActive ? 'Nonaktifkan' : 'Aktifkan' ?>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="action-danger"
-                                            role="menuitem"
-                                            data-open-katalog-confirm
-                                            data-confirm-type="hapus"
-                                            data-confirm-id="<?= $idKatalog ?>"
-                                            data-confirm-name="<?= esc($namaProduk) ?>">
-                                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                            Hapus
-                                        </button>
+                                        <?php if ($readOnly): ?>
+                                            <a href="<?= site_url('katalog/detail/' . $idKatalog) ?>" role="menuitem">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Lihat Detail
+                                            </a>
+                                            <a href="<?= site_url('form-template/' . $idKatalog) ?>" role="menuitem">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                                Lihat Form
+                                            </a>
+                                        <?php else: ?>
+                                            <a href="<?= site_url('katalog/edit/' . $idKatalog) ?>" role="menuitem">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                                Edit
+                                            </a>
+                                            <a href="<?= site_url('form-template/' . $idKatalog) ?>" role="menuitem">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                Form
+                                            </a>
+                                            <button
+                                                type="button"
+                                                class="<?= $isActive ? 'action-danger' : '' ?>"
+                                                role="menuitem"
+                                                data-open-katalog-confirm
+                                                data-confirm-type="<?= $isActive ? 'nonaktif' : 'aktif' ?>"
+                                                data-confirm-id="<?= $idKatalog ?>"
+                                                data-confirm-name="<?= esc($namaProduk) ?>">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                </svg>
+                                                <?= $isActive ? 'Nonaktifkan' : 'Aktifkan' ?>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="action-danger"
+                                                role="menuitem"
+                                                data-open-katalog-confirm
+                                                data-confirm-type="hapus"
+                                                data-confirm-id="<?= $idKatalog ?>"
+                                                data-confirm-name="<?= esc($namaProduk) ?>">
+                                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Hapus
+                                            </button>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </td>
@@ -511,6 +544,8 @@ $kategoriBadges = [
         </div>
     </div>
 </div>
+
+<?= $this->include('partials/katalog_gambar_zoom') ?>
 
 <?= $this->endSection() ?>
 

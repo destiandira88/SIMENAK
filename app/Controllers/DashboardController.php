@@ -109,18 +109,26 @@ class DashboardController extends BaseController
                 ->whereIn('status', ['siap_kirim', 'siap_diambil'])
                 ->countAllResults();
 
+            $pendingVerifikasiPerusahaan = $db->table('verifikasi_perusahaan')
+                ->where('status', 'pending')
+                ->countAllResults();
+
             $recentOrders = $db->table('orders o')
-                ->select('o.id_order, o.kode_order, o.status, o.total_harga, o.created_at, o.is_custom, k.nama_produk, u.nama AS nama_pelanggan')
+                ->select(
+                    'o.id_order, o.kode_order, o.status, o.total_harga, o.created_at, o.is_custom, '
+                        . 'k.nama_produk, u.nama AS nama_pelanggan, p.no_telp, '
+                        . sqlLatestOrderStatusPaymentFields('o.id_order')
+                )
                 ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan', 'left')
                 ->join('users u', 'u.id_user = p.id_user', 'left')
                 ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
                 ->orderBy('o.created_at', 'DESC')
-                ->limit(5)
                 ->get()
                 ->getResultArray();
 
             return view('dashboard/admin', [
-                'nama'         => $nama,
+                'nama'                        => $nama,
+                'pendingVerifikasiPerusahaan' => $pendingVerifikasiPerusahaan,
                 'cards'        => [
                     ['label' => 'Pesanan Hari Ini', 'value' => $totalHariIni, 'icon' => 'calendar', 'color' => '#2E5CE6'],
                     ['label' => 'Total Pesanan', 'value' => $totalSemua, 'icon' => 'clipboard', 'color' => '#051747'],
@@ -133,7 +141,8 @@ class DashboardController extends BaseController
             log_message('error', 'Dashboard admin: {message}', ['message' => $e->getMessage()]);
 
             return view('dashboard/admin', [
-                'nama'         => $nama,
+                'nama'                        => $nama,
+                'pendingVerifikasiPerusahaan' => 0,
                 'cards'        => $this->emptyCards(4),
                 'recentOrders' => [],
             ]);
@@ -155,22 +164,32 @@ class DashboardController extends BaseController
                 ->where('status', 'menunggu')
                 ->countAllResults();
 
-            $totalMenunggu = $pendingDp + $pendingPelunasan;
-
             $totalNominalMenunggu = $db->table('payments')
                 ->selectSum('nominal', 'total')
                 ->where('status', 'menunggu')
                 ->get()
                 ->getRowArray()['total'] ?? 0;
 
+            $todayStart = date('Y-m-d') . ' 00:00:00';
+            $tomorrowStart = date('Y-m-d', strtotime('+1 day')) . ' 00:00:00';
+
+            $terverifikasiHariIni = $db->table('payments')
+                ->where('status', 'terverifikasi')
+                ->where('tgl_verifikasi >=', $todayStart)
+                ->where('tgl_verifikasi <', $tomorrowStart)
+                ->countAllResults();
+
             $recentPayments = $db->table('payments py')
-                ->select('py.id_payment, py.jenis, py.nominal, py.status AS payment_status, py.created_at, o.kode_order, o.status AS order_status, u.nama AS nama_pelanggan')
+                ->select(
+                    'py.id_payment, py.kode_payment, py.jenis, py.nominal, py.bukti_tf, '
+                        . 'py.status AS payment_status, py.tgl_upload, o.kode_order, o.status AS order_status, '
+                        . 'u.nama AS nama_pelanggan, p.no_telp'
+                )
                 ->join('orders o', 'o.id_order = py.id_order', 'left')
                 ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan', 'left')
                 ->join('users u', 'u.id_user = p.id_user', 'left')
                 ->where('py.status', 'menunggu')
-                ->orderBy('py.created_at', 'DESC')
-                ->limit(5)
+                ->orderBy('py.tgl_upload', 'ASC')
                 ->get()
                 ->getResultArray();
 
@@ -179,8 +198,8 @@ class DashboardController extends BaseController
                 'cards'           => [
                     ['label' => 'DP Menunggu', 'value' => $pendingDp, 'icon' => 'wallet', 'color' => '#F59E0B'],
                     ['label' => 'Pelunasan Menunggu', 'value' => $pendingPelunasan, 'icon' => 'check-circle', 'color' => '#EF4444'],
-                    ['label' => 'Total Verifikasi', 'value' => $totalMenunggu, 'icon' => 'clipboard', 'color' => '#2E5CE6'],
                     ['label' => 'Nominal Menunggu', 'value' => 'Rp ' . number_format((float) $totalNominalMenunggu, 0, ',', '.'), 'icon' => 'cash', 'color' => '#10B981', 'isText' => true],
+                    ['label' => 'Terverifikasi Hari Ini', 'value' => $terverifikasiHariIni, 'icon' => 'clipboard', 'color' => '#2E5CE6'],
                 ],
                 'recentPayments' => $recentPayments,
             ]);
@@ -217,6 +236,13 @@ class DashboardController extends BaseController
             $prosesCetak  = ($statusCounts['proses_cetak'] ?? 0) + ($statusCounts['finishing'] ?? 0);
 
             $recentOrders = $this->getRecentOrders($db, [], $productionStatuses);
+            $revisiModel  = model(\App\Models\RevisiDesainModel::class);
+            foreach ($recentOrders as &$order) {
+                $order['last_revisi'] = $revisiModel->getLatestByOrder((int) ($order['id_order'] ?? 0));
+            }
+            unset($order);
+
+            $calendarData = $this->getProduksiCalendarData($db, $productionStatuses);
 
             return view('dashboard/produksi', [
                 'nama'         => $nama,
@@ -227,6 +253,7 @@ class DashboardController extends BaseController
                     ['label' => 'Finishing', 'value' => $statusCounts['finishing'] ?? 0, 'icon' => 'sparkles', 'color' => '#10B981'],
                 ],
                 'recentOrders' => $recentOrders,
+                'byDateJson'   => $calendarData['byDateJson'],
             ]);
         } catch (\Throwable $e) {
             log_message('error', 'Dashboard produksi: {message}', ['message' => $e->getMessage()]);
@@ -235,32 +262,30 @@ class DashboardController extends BaseController
                 'nama'         => $nama,
                 'cards'        => $this->emptyCards(4),
                 'recentOrders' => [],
+                'byDateJson'   => '{}',
             ]);
         }
     }
 
     private function dashboardOwner(string $nama)
     {
+        helper('notification');
+
         try {
             $db = \Config\Database::connect();
 
-            $bulanIni = date('Y-m');
+            $bulanIni   = date('Y-m-01');
+            $akhirBulan = date('Y-m-t');
 
-            $totalPesanan = $db->table('orders')->countAllResults();
+            $totalPesanan   = $db->table('orders')->countAllResults();
             $pesananSelesai = $db->table('orders')->where('status', 'selesai')->countAllResults();
-            $pesananAktif = $db->table('orders')
+            $pesananAktif   = $db->table('orders')
                 ->whereNotIn('status', ['selesai', 'dibatalkan'])
                 ->countAllResults();
 
-            $transaksiBulanIni = $db->table('orders')
-                ->selectSum('total_harga', 'total')
-                ->where('status', 'selesai')
-                ->where('created_at >=', $bulanIni . '-01 00:00:00')
-                ->where('created_at <', date('Y-m-d', strtotime($bulanIni . '-01 +1 month')) . ' 00:00:00')
-                ->get()
-                ->getRowArray()['total'] ?? 0;
+            $transaksiBulanIni = getTotalPendapatanPeriode($bulanIni, $akhirBulan);
 
-            $recentOrders = $this->getRecentOrders($db);
+            $recentOrders = $this->getRecentOrders($db, [], null, 50);
 
             // Data grafik 7 hari terakhir
             $chartRows = $db->table('orders')
@@ -276,10 +301,35 @@ class DashboardController extends BaseController
             return view('dashboard/owner', [
                 'nama'         => $nama,
                 'cards'        => [
-                    ['label' => 'Total Pesanan', 'value' => $totalPesanan, 'icon' => 'clipboard', 'color' => '#2E5CE6'],
-                    ['label' => 'Pesanan Aktif', 'value' => $pesananAktif, 'icon' => 'clock', 'color' => '#F59E0B'],
-                    ['label' => 'Pesanan Selesai', 'value' => $pesananSelesai, 'icon' => 'check', 'color' => '#10B981'],
-                    ['label' => 'Transaksi Bulan Ini', 'value' => 'Rp ' . number_format((float) $transaksiBulanIni, 0, ',', '.'), 'icon' => 'cash', 'color' => '#051747', 'isText' => true],
+                    [
+                        'label'   => 'Total Pesanan',
+                        'value'   => $totalPesanan,
+                        'icon'    => 'clipboard',
+                        'color'   => '#2E5CE6',
+                        'tooltip' => 'Total seluruh pesanan yang tercatat dalam sistem',
+                    ],
+                    [
+                        'label'   => 'Pesanan Aktif',
+                        'value'   => $pesananAktif,
+                        'icon'    => 'clock',
+                        'color'   => '#F59E0B',
+                        'tooltip' => 'Pesanan yang masih aktif dan belum berstatus selesai atau dibatalkan.',
+                    ],
+                    [
+                        'label'   => 'Pesanan Selesai',
+                        'value'   => $pesananSelesai,
+                        'icon'    => 'check',
+                        'color'   => '#10B981',
+                        'tooltip' => 'Akumulasi seluruh pesanan yang berhasil diselesaikan.',
+                    ],
+                    [
+                        'label'    => 'Transaksi Bulan Ini',
+                        'value'    => 'Rp ' . number_format((float) $transaksiBulanIni, 0, ',', '.'),
+                        'icon'     => 'cash',
+                        'color'    => '#051747',
+                        'isText'   => true,
+                        'tooltip'  => 'Berdasarkan pembayaran terverifikasi (DP dan pelunasan) pada bulan berjalan.',
+                    ],
                 ],
                 'recentOrders' => $recentOrders,
                 'chartLabels'  => $chartLabels,
@@ -296,6 +346,44 @@ class DashboardController extends BaseController
                 'chartValues'  => [],
             ]);
         }
+    }
+
+    /**
+     * @param list<string> $productionStatuses
+     * @return array{byDateJson: string}
+     */
+    private function getProduksiCalendarData(\CodeIgniter\Database\BaseConnection $db, array $productionStatuses): array
+    {
+        $rows = $db->table('orders o')
+            ->select(
+                'o.id_order, o.kode_order, o.status, o.deadline, o.sisa_kuota, o.kuota_revisi, '
+                    . 'o.jumlah_order, o.is_custom, k.nama_produk, k.satuan, u.nama AS nama_pelanggan'
+            )
+            ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
+            ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan', 'left')
+            ->join('users u', 'u.id_user = p.id_user', 'left')
+            ->whereIn('o.status', $productionStatuses)
+            ->where('o.deadline IS NOT NULL', null, false)
+            ->orderBy('o.deadline', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $byDate = [];
+        foreach ($rows as $row) {
+            $deadline = (string) ($row['deadline'] ?? '');
+            if ($deadline === '') {
+                continue;
+            }
+
+            if ((int) ($row['is_custom'] ?? 0) === 1) {
+                $row['nama_produk'] = 'Pesanan Custom';
+            }
+
+            $row['satuan'] = (string) ($row['satuan'] ?? 'pcs');
+            $byDate[$deadline][] = $row;
+        }
+
+        return ['byDateJson' => json_encode($byDate, JSON_UNESCAPED_UNICODE)];
     }
 
     /**
@@ -330,11 +418,21 @@ class DashboardController extends BaseController
      * @param list<string>|null    $statusFilter
      * @return list<array<string, mixed>>
      */
-    private function getRecentOrders(\CodeIgniter\Database\BaseConnection $db, array $where = [], ?array $statusFilter = null): array
-    {
+    private function getRecentOrders(
+        \CodeIgniter\Database\BaseConnection $db,
+        array $where = [],
+        ?array $statusFilter = null,
+        int $limit = 5
+    ): array {
         $builder = $db->table('orders o')
-            ->select('o.id_order, o.kode_order, o.status, o.total_harga, o.created_at, o.is_custom, k.nama_produk')
-            ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left');
+            ->select(
+                'o.id_order, o.kode_order, o.status, o.total_harga, o.created_at, o.is_custom, '
+                    . 'o.sisa_kuota, o.kuota_revisi, k.nama_produk, u.nama AS nama_pelanggan, p.no_telp, '
+                    . sqlLatestOrderStatusPaymentFields('o.id_order')
+            )
+            ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
+            ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan', 'left')
+            ->join('users u', 'u.id_user = p.id_user', 'left');
 
         foreach ($where as $col => $val) {
             $builder->where('o.' . $col, $val);
@@ -345,7 +443,7 @@ class DashboardController extends BaseController
         }
 
         return $builder->orderBy('o.created_at', 'DESC')
-            ->limit(5)
+            ->limit($limit)
             ->get()
             ->getResultArray();
     }

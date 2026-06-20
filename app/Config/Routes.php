@@ -41,12 +41,17 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->post('order/simpan', 'OrderController::store');
     $routes->get('order/detail/(:segment)', 'OrderController::detail/$1');
     $routes->post('order/(:segment)/upload-dp', 'PaymentController::uploadDp/$1');
+    $routes->post('order/(:segment)/upload-pelunasan', 'PaymentController::uploadPelunasan/$1');
+    $routes->get('order/(:segment)/nota-tagihan', 'PaymentController::notaTagihan/$1');
+    $routes->get('order/(:segment)/bukti-pembayaran-pelunasan', 'PaymentController::buktiPembayaranPelunasan/$1');
     $routes->post('order/batalkan', 'OrderController::batalkan');
     $routes->post('custom-order/setuju', 'CustomOrderController::setuju');
     $routes->post('custom-order/tolak', 'CustomOrderController::tolak');
+    $routes->get('revisi/history/(:segment)', 'RevisiController::approvalHistory/$1');
 
     // Katalog admin (protected)
     $routes->get('katalog/kelola', 'KatalogController::index');
+    $routes->get('katalog/detail/(:num)', 'KatalogController::detail/$1');
     $routes->get('katalog/tambah', 'KatalogController::create');
     $routes->post('katalog/simpan', 'KatalogController::store');
     $routes->get('katalog/edit/(:num)', 'KatalogController::edit/$1');
@@ -69,15 +74,24 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->get('profil', 'ProfilController::index');
         $routes->post('profil', 'ProfilController::update');
         $routes->post('profil/verifikasi-perusahaan', 'ProfilController::verifikasiPerusahaan');
+        $routes->post('revisi/acc', 'RevisiController::acc');
+        $routes->post('revisi/ajukan', 'RevisiController::ajukan');
+        $routes->post('pesanan/konfirmasi-diterima', 'PengirimanController::konfirmasiDiterimaPelanggan');
+    });
+
+    // ─── Admin + Owner (baca pemesanan) ────────────────────────────────────────
+    $routes->group('', ['filter' => 'role:admin,owner'], static function ($routes) {
+        $routes->get('list-pemesanan', 'OrderController::listPemesanan');
+        $routes->get('list-pemesanan/(:num)', 'OrderController::detailById/$1');
     });
 
     // ─── Admin ─────────────────────────────────────────────────────────────────
     $routes->group('', ['filter' => 'role:admin'], static function ($routes) {
-        $routes->get('list-pemesanan', 'OrderController::listPemesanan');
-        $routes->get('list-pemesanan/(:num)', 'OrderController::detailById/$1');
         $routes->post('list-pemesanan/(:num)/status', 'OrderController::updateStatus/$1');
-        $routes->post('pesanan/delete/(:segment)', 'OrderController::delete/$1');
         $routes->get('pengguna', 'ProfilController::pengguna');
+        $routes->post('pengguna/(:num)/promosikan', 'ProfilController::promosikanTerpercaya/$1');
+        $routes->post('pengguna/(:num)/suspend', 'ProfilController::toggleSuspend/$1');
+        $routes->post('pengguna/(:num)/demote', 'ProfilController::demoteTerpercaya/$1');
         $routes->get('verifikasi-perusahaan', 'ProfilController::verifikasiPerusahaanList');
         $routes->post('verifikasi-perusahaan/(:num)', 'ProfilController::verifikasiPerusahaanProses/$1');
         $routes->get('pesanan-custom', 'CustomOrderController::redirectToList');
@@ -86,6 +100,13 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->post('custom-order/set-harga', 'CustomOrderController::setHarga');
         $routes->get('pengiriman', 'PengirimanController::index');
         $routes->post('pengiriman/(:num)', 'PengirimanController::proses/$1');
+    });
+
+    // ─── Keuangan + Owner (baca riwayat pembayaran) ───────────────────────────
+    $routes->group('', ['filter' => 'role:keuangan,owner'], static function ($routes) {
+        $routes->get('riwayat-pembayaran', 'PaymentController::riwayat');
+        $routes->get('laporan-keuangan', 'LaporanController::keuanganIndex');
+        $routes->get('laporan-keuangan/export', 'LaporanController::keuanganExport');
     });
 
     // ─── Keuangan ──────────────────────────────────────────────────────────────
@@ -98,17 +119,30 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->post('verifikasi-pelunasan/(:num)/tolak', 'PaymentController::tolakPelunasan/$1');
     });
 
+    // ─── Produksi + Owner (baca manajemen desain) ─────────────────────────────
+    $routes->group('', ['filter' => 'role:produksi,owner'], static function ($routes) {
+        $routes->get('manajemen-desain', 'RevisiController::manajemenDesain');
+        $routes->get('manajemen-desain/(:num)', 'RevisiController::detail/$1');
+    });
+
     // ─── Produksi ──────────────────────────────────────────────────────────────
     $routes->group('', ['filter' => 'role:produksi'], static function ($routes) {
         $routes->get('antrian-desain', 'RevisiController::antrianDesain');
-        $routes->get('manajemen-desain', 'RevisiController::manajemenDesain');
-        $routes->get('manajemen-desain/(:num)', 'RevisiController::detail/$1');
         $routes->post('manajemen-desain/(:num)/upload', 'RevisiController::upload/$1');
+        $routes->post('produksi/update-status', 'RevisiController::updateStatusProduksi');
     });
 
-    // ─── Laporan (admin + owner) ───────────────────────────────────────────────
-    $routes->group('', ['filter' => 'role:admin,owner'], static function ($routes) {
+    // ─── Laporan Owner ─────────────────────────────────────────────────────────
+    $routes->group('', ['filter' => 'role:owner'], static function ($routes) {
         $routes->get('laporan', 'LaporanController::index');
         $routes->get('laporan/export', 'LaporanController::export');
+        $routes->get('laporan-produksi', 'LaporanController::produksiIndex');
+        $routes->get('laporan-produksi/export', 'LaporanController::produksiExport');
+    });
+
+    // ─── Laporan Admin (admin + owner baca) ────────────────────────────────────
+    $routes->group('', ['filter' => 'role:admin,owner'], static function ($routes) {
+        $routes->get('laporan-admin', 'LaporanController::adminIndex');
+        $routes->get('laporan-admin/export', 'LaporanController::adminExport');
     });
 });

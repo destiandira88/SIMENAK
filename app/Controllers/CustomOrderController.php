@@ -24,13 +24,37 @@ class CustomOrderController extends BaseController
             return redirect()->to(site_url('dashboard'));
         }
 
+        helper(['notification', 'deadline']);
+
         $idOrder        = (int) $this->request->getPost('id_order');
-        $hargaCustom    = (float) $this->request->getPost('harga_custom');
-        $estimasiCustom = $this->request->getPost('estimasi_custom');
+        $hargaCustom    = parseRupiahAmount($this->request->getPost('harga_custom'));
+        $estimasiCustom = trim((string) $this->request->getPost('estimasi_custom'));
         $catatanAdmin   = $this->request->getPost('catatan_admin_custom');
+        $deadline       = (string) $this->request->getPost('deadline');
 
         if ($hargaCustom <= 0) {
             return redirect()->back()->with('error', 'Harga harus lebih dari 0.');
+        }
+
+        if ($estimasiCustom === '') {
+            return redirect()->back()->with('error', 'Estimasi pengerjaan wajib diisi.');
+        }
+
+        if ($deadline === '' || strtotime($deadline) === false) {
+            return redirect()->back()->with('error', 'Deadline produksi wajib diisi.');
+        }
+
+        if ($deadline < date('Y-m-d')) {
+            return redirect()->back()->with('error', 'Deadline produksi tidak boleh di masa lalu.');
+        }
+
+        if (!isDeadlineValidForEstimasi($deadline, $estimasiCustom)) {
+            $minDl = formatTanggalId(minDeadlineFromEstimasi($estimasiCustom));
+
+            return redirect()->back()->with(
+                'error',
+                "Deadline terlalu cepat untuk estimasi \"{$estimasiCustom}\" (setelah ACC desain). Paling cepat: {$minDl}."
+            );
         }
 
         $db = \Config\Database::connect();
@@ -43,32 +67,34 @@ class CustomOrderController extends BaseController
             ->get()
             ->getRowArray();
 
-        if (!$order) {
+        if ($order === null) {
             return redirect()->back()->with('error', 'Pesanan tidak ditemukan atau sudah diproses.');
         }
+
+        $deadlineLabel = formatTanggalId($deadline);
 
         $db->table('orders')->update([
             'harga_custom'         => $hargaCustom,
             'total_harga'          => $hargaCustom,
             'estimasi_custom'      => $estimasiCustom,
             'catatan_admin_custom' => $catatanAdmin,
+            'deadline'             => $deadline,
             'status'               => 'menunggu_konfirmasi_pelanggan',
         ], ['id_order' => $idOrder]);
 
-        helper('notification');
-
         sendNotifEmail(
             $order['email'],
-            "Penawaran Harga Pesanan Custom — {$order['kode_order']}",
+            "Penawaran Harga Pesanan Custom-{$order['kode_order']}",
             "<p>Halo <strong>{$order['nama']}</strong>,</p>
-             <p>Admin Z'Plack telah menetapkan harga untuk pesanan custom kamu
+             <p>Admin Z'Plack telah menetapkan penawaran untuk pesanan custom Anda
              <strong>{$order['kode_order']}</strong>:</p>
              <ul>
                <li>Harga: <strong>Rp " . number_format($hargaCustom, 0, ',', '.') . "</strong></li>
-               <li>Estimasi pengerjaan: <strong>{$estimasiCustom}</strong></li>
+               <li>Estimasi pengerjaan: <strong>{$estimasiCustom}</strong> (setelah desain disetujui)</li>
+               <li>Deadline produksi: <strong>{$deadlineLabel}</strong> (barang selesai, belum termasuk pengiriman)</li>
                <li>Catatan Admin: {$catatanAdmin}</li>
              </ul>
-             <p>Silakan login ke SIMENAK dan konfirmasi apakah kamu
+             <p>Silakan login ke SIMENAK dan konfirmasi apakah Anda
              <strong>Setuju</strong> atau <strong>Menolak</strong> penawaran ini.</p>"
         );
 
@@ -82,7 +108,7 @@ class CustomOrderController extends BaseController
         );
 
         return redirect()->to(site_url('list-pemesanan?tab=custom'))
-            ->with('success', 'Penawaran harga berhasil dikirim ke pelanggan.');
+            ->with('success', 'Penawaran berhasil dikirim ke pelanggan.');
     }
 
     public function setuju()
@@ -101,8 +127,12 @@ class CustomOrderController extends BaseController
             ->get()
             ->getRowArray();
 
-        if (!$order) {
+        if ($order === null) {
             return redirect()->back()->with('error', 'Pesanan tidak ditemukan.');
+        }
+
+        if (empty($order['deadline']) || empty($order['estimasi_custom'])) {
+            return redirect()->back()->with('error', 'Data penawaran belum lengkap. Hubungi admin.');
         }
 
         $pelanggan = $db->table('pelanggan')
@@ -110,16 +140,11 @@ class CustomOrderController extends BaseController
             ->get()
             ->getRowArray();
 
-        $jenisDiminta = $order['jenis_pelanggan'];
-        $isVerified   = (int) ($pelanggan['is_verified'] ?? 0);
-
-        if ($jenisDiminta === 'perusahaan' && $isVerified === 1) {
-            $newStatus = 'terverifikasi';
-            $requireDp = 0;
-        } else {
-            $newStatus = 'menunggu_verifikasi_dp';
-            $requireDp = 1;
-        }
+        helper('notification');
+        $totalHarga = (int) round((float) ($order['total_harga'] ?? 0));
+        $scheme     = resolveOrderPaymentScheme($pelanggan ?? [], (string) $order['jenis_pelanggan'], $totalHarga);
+        $newStatus  = $scheme['statusAwal'];
+        $requireDp  = $scheme['requireDp'];
 
         $updateOrder = [
             'status'     => $newStatus,
@@ -132,10 +157,13 @@ class CustomOrderController extends BaseController
 
         $db->table('orders')->update($updateOrder, ['id_order' => $idOrder]);
 
+        helper('deadline');
+        $deadlineLabel = formatTanggalId((string) $order['deadline']);
+
         return redirect()->to(site_url('order/detail/' . $order['kode_order']))
             ->with(
                 'success',
-                'Penawaran disetujui! '
+                'Penawaran disetujui (harga, estimasi, deadline produksi ' . $deadlineLabel . '). '
                 . ($requireDp ? 'Silakan lakukan pembayaran DP.' : 'Pesanan masuk ke antrian produksi.')
             );
     }
@@ -158,7 +186,7 @@ class CustomOrderController extends BaseController
             ->get()
             ->getRowArray();
 
-        if (!$order) {
+        if ($order === null) {
             return redirect()->back()->with('error', 'Pesanan tidak ditemukan.');
         }
 

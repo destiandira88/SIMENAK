@@ -16,6 +16,8 @@ class PelangganModel extends Model
         'jenis',
         'nama_perusahaan',
         'is_verified',
+        'tier_perusahaan',
+        'is_suspended',
     ];
 
     /**

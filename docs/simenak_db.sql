@@ -180,7 +180,9 @@ CREATE TABLE `payments` (
   `catatan_tolak` text DEFAULT NULL,
   `id_verifikator` int(11) DEFAULT NULL,
   `tgl_upload` datetime DEFAULT current_timestamp(),
-  `tgl_verifikasi` datetime DEFAULT NULL
+  `tgl_verifikasi` datetime DEFAULT NULL,
+  `reminder_verif_2j_sent` tinyint(1) NOT NULL DEFAULT 0,
+  `reminder_verif_6j_sent` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------

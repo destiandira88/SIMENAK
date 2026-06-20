@@ -27,7 +27,7 @@
             value="<?= esc(old('nama')) ?>"
             required
             autocomplete="name"
-            placeholder="Nama lengkap kamu"
+            placeholder="Nama lengkap Anda"
             class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]"
         >
     </div>

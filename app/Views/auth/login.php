@@ -9,7 +9,7 @@
         Selamat datang 👋
     </h1>
     <p class="mt-1.5 text-sm" style="color:var(--text-muted);">
-        Masuk ke akun SIMENAK kamu
+        Masuk ke akun SIMENAK Anda
     </p>
 </div>
 

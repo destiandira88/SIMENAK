@@ -490,7 +490,9 @@ Pelanggan:
   Keuangan:
 - Bukti DP baru diunggah
 - Bukti pelunasan baru diunggah
-- Eskalasi jika belum diverifikasi >2 jam, lalu >6 jam
+- Reminder jika bukti DP belum diverifikasi >2 jam
+  Owner (email + in-app):
+- Eskalasi jika bukti DP belum diverifikasi >6 jam
   IN-APP (INSERT ke tabel notifications):
   Admin:
 - Pesanan custom baru masuk

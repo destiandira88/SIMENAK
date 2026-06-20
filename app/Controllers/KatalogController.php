@@ -11,11 +11,13 @@ class KatalogController extends BaseController
 
     public function index()
     {
-        $adminCheck = $this->ensureAdmin();
-        if ($adminCheck !== null) {
-            return $adminCheck;
+        $role = (string) session()->get('role');
+        if (!in_array($role, ['admin', 'owner'], true)) {
+            return redirect()->to(site_url('dashboard'))
+                ->with('error', 'Akses ditolak.');
         }
 
+        $readOnly = $role === 'owner';
         $katalogModel = model(KatalogModel::class);
 
         try {
@@ -28,8 +30,9 @@ class KatalogController extends BaseController
         }
 
         return view('katalog/index', [
-            'katalog' => $katalog,
-            'title'   => 'Kelola Katalog',
+            'katalog'  => $katalog,
+            'title'    => $readOnly ? 'Katalog Produk' : 'Kelola Katalog',
+            'readOnly' => $readOnly,
         ]);
     }
 
@@ -109,14 +112,33 @@ class KatalogController extends BaseController
             return $adminCheck;
         }
 
+        return $this->renderKatalogForm($id, false);
+    }
+
+    public function detail(int $id)
+    {
+        $role = (string) session()->get('role');
+        if (!in_array($role, ['admin', 'owner'], true)) {
+            return redirect()->to(site_url('dashboard'))
+                ->with('error', 'Akses ditolak.');
+        }
+
+        return $this->renderKatalogForm($id, true);
+    }
+
+    /**
+     * @return RedirectResponse|string
+     */
+    private function renderKatalogForm(int $id, bool $readOnly)
+    {
         $katalogModel = model(KatalogModel::class);
 
         try {
             $katalog = $katalogModel->find($id);
         } catch (\Throwable $e) {
-            log_message('error', 'Katalog edit: {message}', ['message' => $e->getMessage()]);
+            log_message('error', 'Katalog form: {message}', ['message' => $e->getMessage()]);
 
-            return redirect()->to(site_url('katalog'))
+            return redirect()->to(site_url('katalog/kelola'))
                 ->with('error', 'Gagal memuat data produk.');
         }
 
@@ -126,8 +148,9 @@ class KatalogController extends BaseController
         }
 
         return view('katalog/edit', [
-            'katalog' => $katalog,
-            'title'   => 'Edit Produk',
+            'katalog'  => $katalog,
+            'title'    => $readOnly ? 'Detail Produk' : 'Edit Produk',
+            'readOnly' => $readOnly,
         ]);
     }
 
