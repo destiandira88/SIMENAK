@@ -33,9 +33,9 @@ $verifikasiOptions = [
 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-4">
     <form method="get" action="<?= esc(site_url('pengguna')) ?>"
         class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-        <label for="filterRole" class="sr-only">Filter role</label>
+        <label for="filterRole" class="sr-only">Filter peran</label>
         <select id="filterRole" name="role" onchange="this.form.submit()" class="filter-select min-w-[140px]">
-            <option value="" <?= $filterRole === '' ? 'selected' : '' ?>>Semua Role</option>
+            <option value="" <?= $filterRole === '' ? 'selected' : '' ?>>Semua Peran</option>
             <?php foreach (['pelanggan', 'admin', 'keuangan', 'produksi', 'owner'] as $r): ?>
                 <option value="<?= esc($r) ?>" <?= $filterRole === $r ? 'selected' : '' ?>><?= esc(ucfirst($r)) ?></option>
             <?php endforeach; ?>

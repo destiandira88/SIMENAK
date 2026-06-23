@@ -67,17 +67,17 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
             </div>
-            <h4 id="logoutModalTitle" class="text-xl md:text-2xl font-extrabold text-[#051747] leading-tight">Logout dari Portal?</h4>
+            <h4 id="logoutModalTitle" class="text-xl md:text-2xl font-extrabold text-[#051747] leading-tight">Keluar dari Portal?</h4>
             <p class="mt-2 text-sm text-slate-500 leading-relaxed">
                 Apakah Anda yakin ingin keluar dari akun SIMENAK saat ini?
             </p>
         </div>
         <div class="mt-6 flex gap-3">
             <button type="button" data-close-logout-modal class="btn-logout-cancel flex-1 h-11 text-sm">
-                Cancel
+                Batal
             </button>
             <button type="button" id="logoutConfirmBtn" class="btn-logout-confirm flex-1 h-11 text-sm">
-                Yes, Logout
+                Ya, Keluar
             </button>
         </div>
     </div>

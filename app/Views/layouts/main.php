@@ -70,12 +70,12 @@ if ($role === 'pelanggan' && $idUser > 0) {
 
 $menusByRole = [
     'pelanggan' => [
-        ['label' => 'Dashboard',     'url' => 'dashboard',           'icon' => 'home'],
+        ['label' => 'Beranda',     'url' => 'dashboard',           'icon' => 'home'],
         ['label' => 'Pesanan Saya',  'url' => 'order',                 'icon' => 'clipboard'],
         ['label' => 'Katalog',       'url' => 'katalog',             'icon' => 'grid'],
     ],
     'admin' => [
-        ['label' => 'Dashboard',              'url' => 'dashboard',              'icon' => 'home'],
+        ['label' => 'Beranda',              'url' => 'dashboard',              'icon' => 'home'],
         ['label' => 'List Pemesanan',         'url' => 'list-pemesanan',         'icon' => 'clipboard'],
         ['label' => 'Katalog',                'url' => 'katalog/kelola',                'icon' => 'grid'],
         ['label' => 'Pengguna',               'url' => 'pengguna',               'icon' => 'users'],
@@ -84,19 +84,19 @@ $menusByRole = [
         ['label' => 'Laporan',                'url' => 'laporan-admin',          'icon' => 'chart'],
     ],
     'keuangan' => [
-        ['label' => 'Dashboard',            'url' => 'dashboard',            'icon' => 'home'],
+        ['label' => 'Beranda',            'url' => 'dashboard',            'icon' => 'home'],
         ['label' => 'Verifikasi DP',        'url' => 'verifikasi-dp',        'icon' => 'wallet'],
         ['label' => 'Riwayat Pembayaran',   'url' => 'riwayat-pembayaran',   'icon' => 'clock'],
         ['label' => 'Verifikasi Pelunasan', 'url' => 'verifikasi-pelunasan', 'icon' => 'check-circle'],
         ['label' => 'Laporan',              'url' => 'laporan-keuangan',     'icon' => 'chart'],
     ],
     'produksi' => [
-        ['label' => 'Dashboard',       'url' => 'dashboard',       'icon' => 'home'],
+        ['label' => 'Beranda',       'url' => 'dashboard',       'icon' => 'home'],
         ['label' => 'Antrian Desain',  'url' => 'antrian-desain',  'icon' => 'layers'],
         ['label' => 'Manajemen Desain', 'url' => 'manajemen-desain', 'icon' => 'edit'],
     ],
     'owner' => [
-        ['label' => 'Dashboard',          'url' => 'dashboard',          'icon' => 'home'],
+        ['label' => 'Beranda',          'url' => 'dashboard',          'icon' => 'home'],
         ['label' => 'Pesanan',            'url' => 'list-pemesanan',     'icon' => 'clipboard'],
         ['label' => 'Katalog',            'url' => 'katalog/kelola',     'icon' => 'grid'],
         ['label' => 'Riwayat Pembayaran', 'url' => 'riwayat-pembayaran', 'icon' => 'clock'],
@@ -464,7 +464,7 @@ $iconSvg = static function (string $icon): string {
                     </svg>
                 </button>
                 <h1 class="text-base lg:text-lg font-bold text-[#051747] truncate max-w-[200px] sm:max-w-none">
-                    <?= esc($this->renderSection('page_title') ?: 'Dashboard') ?>
+                    <?= esc($this->renderSection('page_title') ?: 'Beranda') ?>
                 </h1>
             </div>
 

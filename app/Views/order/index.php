@@ -62,7 +62,7 @@ $kategoriBadges = [
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
                     <th class="px-4 py-3 text-left font-semibold">No</th>
-                    <th class="px-4 py-3 text-left font-semibold">Kode Order</th>
+                    <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
                     <th class="px-4 py-3 text-left font-semibold">Produk</th>
                     <th class="px-4 py-3 text-left font-semibold">Tgl Pesan</th>
                     <th class="px-4 py-3 text-left font-semibold">Total</th>
@@ -175,14 +175,14 @@ $kategoriBadges = [
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-slate-100">
         <div class="flex items-center gap-2 text-sm text-slate-600">
-            <label for="entriesSelect" class="whitespace-nowrap">Show</label>
+            <label for="entriesSelect" class="whitespace-nowrap">Tampilkan</label>
             <select id="entriesSelect" class="entries-select">
                 <option value="5">5</option>
                 <option value="10" selected>10</option>
                 <option value="25">25</option>
                 <option value="50">50</option>
             </select>
-            <span class="whitespace-nowrap">entries</span>
+            <span class="whitespace-nowrap">data</span>
         </div>
         <p id="entriesInfo" class="text-xs text-slate-500"></p>
     </div>

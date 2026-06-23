@@ -8,8 +8,8 @@
 ?>
 <?= $this->extend('layouts/main') ?>
 
-<?= $this->section('title') ?>Dashboard<?= $this->endSection() ?>
-<?= $this->section('page_title') ?>Dashboard Keuangan<?= $this->endSection() ?>
+<?= $this->section('title') ?>Beranda<?= $this->endSection() ?>
+<?= $this->section('page_title') ?>Beranda Keuangan<?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
@@ -71,13 +71,13 @@
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
                     <th class="px-4 py-3 text-left font-semibold">No</th>
-                    <th class="px-4 py-3 text-left font-semibold">Kode Payment</th>
-                    <th class="px-4 py-3 text-left font-semibold">Kode Order</th>
+                    <th class="px-4 py-3 text-left font-semibold">Kode Pembayaran</th>
+                    <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
                     <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
                     <th class="px-4 py-3 text-left font-semibold">Jenis</th>
                     <th class="px-4 py-3 text-left font-semibold">Nominal</th>
                     <th class="px-4 py-3 text-left font-semibold">Status Order</th>
-                    <th class="px-4 py-3 text-left font-semibold">Tgl Upload</th>
+                    <th class="px-4 py-3 text-left font-semibold">Tgl Unggah</th>
                     <th class="px-4 py-3 text-left font-semibold">Bukti</th>
                     <th class="px-4 py-3 text-left font-semibold">Aksi</th>
                 </tr>

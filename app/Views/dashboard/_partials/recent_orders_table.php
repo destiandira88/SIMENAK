@@ -71,7 +71,7 @@ $colspan           = $isAdmin ? 9 : ($isOwner ? 5 : 7);
                 disabled
                 title="Fitur ekspor ada di halaman Laporan"
                 class="inline-flex shrink-0 items-center justify-center opacity-50 cursor-not-allowed border-2 border-[#051747] text-[#051747] px-4 py-2 rounded-full text-xs font-bold uppercase">
-                Export Excel
+                Ekspor Excel
             </button>
         <?php endif; ?>
     </div>
@@ -84,7 +84,7 @@ $colspan           = $isAdmin ? 9 : ($isOwner ? 5 : 7);
                 <tr class="bg-[#051747] text-white text-xs uppercase">
                     <?php if ($isOwner): ?>
                         <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kode">
-                            Kode Order<span class="sort-icon">↕</span>
+                            Kode Pesanan<span class="sort-icon">↕</span>
                         </th>
                         <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
                         <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="produk">
@@ -100,7 +100,7 @@ $colspan           = $isAdmin ? 9 : ($isOwner ? 5 : 7);
                         <th class="px-4 py-3 text-left font-semibold">No</th>
                         <?php if ($isAdmin): ?>
                             <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kode">
-                                Kode Order<span class="sort-icon">↕</span>
+                                Kode Pesanan<span class="sort-icon">↕</span>
                             </th>
                             <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
                             <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="produk">
@@ -119,7 +119,7 @@ $colspan           = $isAdmin ? 9 : ($isOwner ? 5 : 7);
                                 Status<span class="sort-icon">↕</span>
                             </th>
                         <?php else: ?>
-                            <th class="px-4 py-3 text-left font-semibold">Kode Order</th>
+                            <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
                             <th class="px-4 py-3 text-left font-semibold">Produk</th>
                             <th class="px-4 py-3 text-left font-semibold">Tanggal</th>
                             <th class="px-4 py-3 text-left font-semibold">Total</th>

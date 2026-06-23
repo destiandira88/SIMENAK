@@ -127,12 +127,12 @@ foreach ($payments as $p) {
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-[#051747] text-white text-xs uppercase">
-                        <th class="px-4 py-3 text-left font-semibold">Kode Payment</th>
-                        <th class="px-4 py-3 text-left font-semibold">Kode Order</th>
+                        <th class="px-4 py-3 text-left font-semibold">Kode Pembayaran</th>
+                        <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
                         <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
                         <th class="px-4 py-3 text-left font-semibold">Jenis</th>
                         <th class="px-4 py-3 text-left font-semibold">Nominal</th>
-                        <th class="px-4 py-3 text-left font-semibold">Tgl Upload</th>
+                        <th class="px-4 py-3 text-left font-semibold">Tgl Unggah</th>
                         <th class="px-4 py-3 text-left font-semibold">Status</th>
                         <th class="px-4 py-3 text-left font-semibold">Verifikator</th>
                         <th class="px-4 py-3 text-left font-semibold">Tgl Verifikasi</th>

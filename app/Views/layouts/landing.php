@@ -4,12 +4,19 @@ $userRole   = (string) session()->get('role');
 $userName   = (string) session()->get('nama');
 $isCustomer = $isLoggedIn && $userRole === 'pelanggan';
 
+$roleLabels = [
+    'pelanggan' => 'Pelanggan',
+    'admin'     => 'Admin',
+    'keuangan'  => 'Keuangan',
+    'produksi'  => 'Produksi',
+    'owner'     => 'Pemilik',
+];
 $navMenus = [
-    ['label' => 'About Us', 'href' => '#about'],
-    ['label' => 'Services We Provide', 'href' => '#services'],
-    ['label' => 'Work Process', 'href' => '#process'],
-    ['label' => 'Our Portfolio', 'href' => '#portfolio'],
-    ['label' => 'Product Catalog', 'href' => '#catalog'],
+    ['label' => 'Tentang Kami', 'href' => '#about'],
+    ['label' => 'Layanan Kami', 'href' => '#services'],
+    ['label' => 'Proses Kerja', 'href' => '#process'],
+    ['label' => 'Portofolio', 'href' => '#portfolio'],
+    ['label' => 'Katalog Produk', 'href' => '#catalog'],
 ];
 ?>
 <!DOCTYPE html>
@@ -161,7 +168,7 @@ $navMenus = [
 <body class="min-h-screen">
     <div class="fixed top-0 left-0 right-0 z-50 h-8 bg-[#051747] flex items-center justify-center px-4">
         <p class="text-white text-[10px] md:text-xs uppercase tracking-[0.2em] text-center truncate font-semibold">
-            ⚡ Professional Printing Solution ⚡
+            ⚡ SOLUSI CETAK PROFESIONAL • PENGIRIMAN PRIORITAS SELURUH INDONESIA ⚡
         </p>
     </div>
 
@@ -172,7 +179,7 @@ $navMenus = [
                     <span class="w-8 h-8  bg-[#051747] text-white text-xs font-bold flex items-center justify-center">Z</span>
                     <div>
                         <p class="text-[11px] font-extrabold tracking-tight text-[#051747] leading-none">Z'PLACK <span class="text-[#2E5CE6]">SIMENAK</span></p>
-                        <p class="text-[9px] text-slate-500 tracking-[0.12em] uppercase">Integrated Printing Solution</p>
+                        <p class="text-[9px] text-slate-500 tracking-[0.12em] uppercase">Solusi Cetak Terintegrasi</p>
                     </div>
                 </a>
                 <ul class="hidden lg:flex items-center gap-6">
@@ -183,20 +190,20 @@ $navMenus = [
 
                 <?php if ($isCustomer): ?>
                     <div class="flex items-center gap-2 md:gap-3">
-                        <a href="<?= site_url('dashboard') ?>" class="btn-primary px-4 py-2 text-[10px] md:text-xs">Dashboard</a>
+                        <a href="<?= site_url('dashboard') ?>" class="btn-primary px-4 py-2 text-[10px] md:text-xs">Beranda</a>
                         <div class="hidden sm:flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5">
                             <span class="w-7 h-7 rounded-full bg-[#2E5CE6] text-white text-xs font-bold flex items-center justify-center"><?= esc(strtoupper(substr($userName ?: 'P', 0, 1))) ?></span>
                             <span class="text-xs font-semibold text-slate-700 max-w-[130px] truncate"><?= esc($userName ?: 'Pelanggan') ?></span>
                         </div>
-                        <button type="button" data-open-logout-modal class="btn-outline px-4 py-2 text-xs hidden md:inline-flex">Logout</button>
+                        <button type="button" data-open-logout-modal class="btn-outline px-4 py-2 text-xs hidden md:inline-flex">Keluar</button>
                     </div>
                 <?php elseif ($isLoggedIn): ?>
                     <div class="flex items-center gap-2 md:gap-3">
-                        <a href="<?= site_url('dashboard') ?>" class="btn-primary px-4 py-2 text-[10px] md:text-xs">Portal <?= esc($userRole) ?></a>
-                        <button type="button" data-open-logout-modal class="btn-outline px-4 py-2 text-xs hidden md:inline-flex">Logout</button>
+                        <a href="<?= site_url('dashboard') ?>" class="btn-primary px-4 py-2 text-[10px] md:text-xs">Portal <?= esc($roleLabels[$userRole] ?? ucfirst($userRole)) ?></a>
+                        <button type="button" data-open-logout-modal class="btn-outline px-4 py-2 text-xs hidden md:inline-flex">Keluar</button>
                     </div>
                 <?php else: ?>
-                    <button type="button" data-open-modal="loginModal" class="btn-primary px-5 py-2 text-[10px] md:text-xs">Portal Login</button>
+                    <button type="button" data-open-modal="loginModal" class="btn-primary px-5 py-2 text-[10px] md:text-xs">Masuk</button>
                 <?php endif; ?>
             </nav>
         </div>
@@ -213,11 +220,11 @@ $navMenus = [
                 <p class="mt-3 text-sm text-white/70 max-w-sm">Sistem informasi Pemesanan pada Percetakan Z'Plack Berbasis Web</p>
             </div>
             <div>
-                <p class="text-sm font-bold uppercase tracking-[0.15em]">Quick Links</p>
+                <p class="text-sm font-bold uppercase tracking-[0.15em]">Tautan Cepat</p>
                 <ul class="mt-3 space-y-2 text-sm text-white/70">
-                    <li><a href="#about" class="hover:text-white">About Us</a></li>
-                    <li><a href="#services" class="hover:text-white">Services</a></li>
-                    <li><a href="#catalog" class="hover:text-white">Catalog</a></li>
+                    <li><a href="#about" class="hover:text-white">Tentang Kami</a></li>
+                    <li><a href="#services" class="hover:text-white">Layanan</a></li>
+                    <li><a href="#catalog" class="hover:text-white">Katalog</a></li>
                 </ul>
             </div>
             <div>
@@ -229,7 +236,7 @@ $navMenus = [
                 </ul>
             </div>
         </div>
-        <div class="border-t border-white/10 py-4 text-center text-xs text-white/60">&copy; <?= esc((string) date('Y')) ?> Z'Plack SIMENAK. All rights reserved.</div>
+        <div class="border-t border-white/10 py-4 text-center text-xs text-white/60">&copy; <?= esc((string) date('Y')) ?> Z'Plack SIMENAK. Hak cipta dilindungi.</div>
     </footer>
 
     <?php if (!$isLoggedIn): ?>
@@ -264,7 +271,7 @@ $navMenus = [
                         </div>
                     </div>
                     <div>
-                        <label for="login_password" class="block text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 mb-2">Password</label>
+                        <label for="login_password" class="block text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 mb-2">Kata Sandi</label>
                         <div class="relative">
                             <span class="modal-input-icon">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -272,7 +279,7 @@ $navMenus = [
                                 </svg>
                             </span>
                             <input id="login_password" name="password" type="password" class="modal-input pr-11" placeholder="••••••••" required>
-                            <button type="button" id="loginPasswordToggle" class="modal-input-toggle" aria-label="Tampilkan password">
+                            <button type="button" id="loginPasswordToggle" class="modal-input-toggle" aria-label="Tampilkan kata sandi">
                                 <svg id="loginEyeShow" xmlns="http://www.w3.org/2000/svg" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -341,7 +348,7 @@ $navMenus = [
                         </div>
                     </div>
                     <div>
-                        <label for="reg_password" class="block text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 mb-2">Password</label>
+                        <label for="reg_password" class="block text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 mb-2">Kata Sandi</label>
                         <div class="relative">
                             <span class="modal-input-icon">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -349,7 +356,7 @@ $navMenus = [
                                 </svg>
                             </span>
                             <input id="reg_password" name="password" type="password" class="modal-input pr-11" placeholder="••••••••" required>
-                            <button type="button" id="regPasswordToggle" class="modal-input-toggle" aria-label="Tampilkan password">
+                            <button type="button" id="regPasswordToggle" class="modal-input-toggle" aria-label="Tampilkan kata sandi">
                                 <svg id="regEyeShow" xmlns="http://www.w3.org/2000/svg" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -370,7 +377,7 @@ $navMenus = [
                         </div>
                     </div>
                     <div>
-                        <label for="reg_password_confirm" class="block text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 mb-2">Konfirmasi Password</label>
+                        <label for="reg_password_confirm" class="block text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 mb-2">Konfirmasi Kata Sandi</label>
                         <div class="relative">
                             <span class="modal-input-icon">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -378,7 +385,7 @@ $navMenus = [
                                 </svg>
                             </span>
                             <input id="reg_password_confirm" name="password_confirm" type="password" class="modal-input pr-11" placeholder="••••••••" required>
-                            <button type="button" id="regPasswordConfirmToggle" class="modal-input-toggle" aria-label="Tampilkan konfirmasi password">
+                            <button type="button" id="regPasswordConfirmToggle" class="modal-input-toggle" aria-label="Tampilkan konfirmasi kata sandi">
                                 <svg id="regConfirmEyeShow" xmlns="http://www.w3.org/2000/svg" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -396,7 +403,7 @@ $navMenus = [
                         <button type="submit" id="registerSubmitBtn" class="w-full btn-primary py-3 text-xs">Daftar Sekarang</button>
                     </div>
                 </form>
-                <p class="mt-4 text-sm text-slate-500 text-center">Sudah punya akun? <button type="button" class="font-semibold text-[#2E5CE6] hover:underline" data-switch-modal="loginModal">Login di sini</button></p>
+                <p class="mt-4 text-sm text-slate-500 text-center">Sudah punya akun? <button type="button" class="font-semibold text-[#2E5CE6] hover:underline" data-switch-modal="loginModal">Masuk di sini</button></p>
             </div>
         </div>
     <?php endif; ?>
@@ -494,7 +501,7 @@ $navMenus = [
                         loginPasswordInput.type = isHidden ? 'text' : 'password';
                         loginEyeShow.classList.toggle('hidden', isHidden);
                         loginEyeHide.classList.toggle('hidden', !isHidden);
-                        loginPasswordToggle.setAttribute('aria-label', isHidden ? 'Sembunyikan password' : 'Tampilkan password');
+                        loginPasswordToggle.setAttribute('aria-label', isHidden ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
                     });
                 }
 
@@ -513,7 +520,7 @@ $navMenus = [
                             window.location.href = data.redirect || '<?= site_url('dashboard') ?>';
                             return;
                         }
-                        showAlert(loginAlert, data.message || 'Login gagal.', false);
+                        showAlert(loginAlert, data.message || 'Gagal masuk.', false);
                     } catch (err) {
                         showAlert(loginAlert, 'Terjadi kesalahan jaringan. Silakan coba lagi.', false);
                     } finally {
@@ -540,8 +547,8 @@ $navMenus = [
                     document.getElementById('regPasswordToggle'),
                     document.getElementById('regEyeShow'),
                     document.getElementById('regEyeHide'),
-                    'Tampilkan password',
-                    'Sembunyikan password'
+                    'Tampilkan kata sandi',
+                    'Sembunyikan kata sandi'
                 );
 
                 setupPasswordToggle(
@@ -549,8 +556,8 @@ $navMenus = [
                     document.getElementById('regPasswordConfirmToggle'),
                     document.getElementById('regConfirmEyeShow'),
                     document.getElementById('regConfirmEyeHide'),
-                    'Tampilkan konfirmasi password',
-                    'Sembunyikan konfirmasi password'
+                    'Tampilkan konfirmasi kata sandi',
+                    'Sembunyikan konfirmasi kata sandi'
                 );
 
                 const regPhoneInput = document.getElementById('reg_no_telp');

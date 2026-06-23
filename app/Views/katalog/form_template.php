@@ -66,11 +66,11 @@
  * @var string                            $title
  */
 $fieldTypeLabels = [
-    'text'     => 'Text',
-    'date'     => 'Date',
-    'time'     => 'Time',
-    'textarea' => 'Textarea',
-    'file'     => 'File',
+    'text'     => 'Teks',
+    'date'     => 'Tanggal',
+    'time'     => 'Waktu',
+    'textarea' => 'Area Teks',
+    'file'     => 'Berkas',
 ];
 $readOnly = (bool) ($readOnly ?? false);
 ?>
@@ -80,11 +80,11 @@ $readOnly = (bool) ($readOnly ?? false);
     <span class="mx-1">›</span>
     <span class="text-slate-500"><?= esc($katalog['nama_produk'] ?? '-') ?></span>
     <span class="mx-1">›</span>
-    <span class="text-slate-500"><?= $readOnly ? 'Form Template' : 'Kelola Form' ?></span>
+    <span class="text-slate-500"><?= $readOnly ? 'Template Formulir' : 'Kelola Form' ?></span>
 </div>
 
 <h2 class="text-2xl font-extrabold text-[#051747] mb-2">
-    <?= $readOnly ? 'Form Template' : 'Kelola Form' ?>: <?= esc($katalog['nama_produk'] ?? '-') ?>
+    <?= $readOnly ? 'Template Formulir' : 'Kelola Form' ?>: <?= esc($katalog['nama_produk'] ?? '-') ?>
 </h2>
 <?php if (!$readOnly): ?>
 <p class="text-sm text-slate-500 mb-6">
@@ -226,7 +226,7 @@ $readOnly = (bool) ($readOnly ?? false);
                                         type="button"
                                         onclick="toggleEdit(<?= $idTemplate ?>)"
                                         class="text-xs px-2 py-1 border border-slate-300 rounded hover:bg-slate-50">
-                                        Edit
+                                        Ubah
                                     </button>
                                     <button
                                         type="button"
@@ -314,10 +314,10 @@ $readOnly = (bool) ($readOnly ?? false);
         </div>
         <div class="mt-6 flex gap-3">
             <button type="button" data-close-delete-field-modal class="btn-delete-field-cancel flex-1 h-11 text-sm">
-                Cancel
+                Batal
             </button>
             <button type="button" id="deleteFieldConfirmBtn" class="btn-delete-field-confirm flex-1 h-11 text-sm">
-                Yes, Hapus
+                Ya, Hapus
             </button>
         </div>
     </div>

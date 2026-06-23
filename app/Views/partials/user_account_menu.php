@@ -10,7 +10,7 @@ $roleLabels = [
     'admin'     => 'Admin',
     'keuangan'  => 'Keuangan',
     'produksi'  => 'Produksi',
-    'owner'     => 'Owner',
+    'owner'     => 'Pemilik',
 ];
 $roleLabel = $roleLabels[$role] ?? ucfirst($role);
 ?>

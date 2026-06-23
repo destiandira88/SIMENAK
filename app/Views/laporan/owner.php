@@ -100,12 +100,12 @@ $cards = [
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('title') ?>Laporan<?= $this->endSection() ?>
-<?= $this->section('page_title') ?>Laporan Owner<?= $this->endSection() ?>
+<?= $this->section('page_title') ?>Laporan Pemilik<?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 
 <div class="mb-6">
-    <h2 class="text-2xl font-extrabold text-[#051747]">Laporan Owner</h2>
+    <h2 class="text-2xl font-extrabold text-[#051747]">Laporan Pemilik</h2>
     <p class="mt-1 text-sm text-slate-500">
         Ringkasan performa bisnis Z'Plack <?= esc((string) ($period['label'] ?? '-')) ?>
     </p>

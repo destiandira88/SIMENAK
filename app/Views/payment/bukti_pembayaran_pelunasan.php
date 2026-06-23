@@ -222,7 +222,7 @@
                 <div>
                     <div class="meta-label">Informasi Pembayaran</div>
                     <div class="meta-value">
-                        Kode Order: <?= esc($kodeOrder) ?><br>
+                        Kode Pesanan: <?= esc($kodeOrder) ?><br>
                         Jenis: Pelunasan
                         <?php if ($tglUpload !== ''): ?>
                             <br>Tgl Transfer: <?= esc(date('d M Y H:i', strtotime($tglUpload))) ?>

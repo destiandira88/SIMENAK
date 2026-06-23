@@ -197,7 +197,7 @@ $cards = [
                         Kode Bayar<span class="sort-icon">↕</span>
                     </th>
                     <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kodeorder">
-                        Kode Order<span class="sort-icon">↕</span>
+                        Kode Pesanan<span class="sort-icon">↕</span>
                     </th>
                     <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="pelanggan">
                         Pelanggan<span class="sort-icon">↕</span>
@@ -212,7 +212,7 @@ $cards = [
                         Status<span class="sort-icon">↕</span>
                     </th>
                     <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="upload">
-                        Tgl Upload<span class="sort-icon">↕</span>
+                        Tgl Unggah<span class="sort-icon">↕</span>
                     </th>
                     <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="verifikasi">
                         Tgl Verifikasi<span class="sort-icon">↕</span>

@@ -17,7 +17,7 @@ $entryOptions  = $entryOptions ?? null;
 ?>
 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-slate-100">
     <div class="flex items-center gap-2 text-sm text-slate-600">
-        <label for="<?= esc($entriesId) ?>" class="whitespace-nowrap">Show</label>
+        <label for="<?= esc($entriesId) ?>" class="whitespace-nowrap">Tampilkan</label>
         <select id="<?= esc($entriesId) ?>" class="entries-select">
             <?php if ($entryOptions === null): ?>
                 <option value="5">5</option>
@@ -32,7 +32,7 @@ $entryOptions  = $entryOptions ?? null;
                 <?php endforeach; ?>
             <?php endif; ?>
         </select>
-        <span class="whitespace-nowrap">entries</span>
+        <span class="whitespace-nowrap">data</span>
     </div>
     <p id="<?= esc($entriesInfoId) ?>" class="text-xs text-slate-500"></p>
 </div>

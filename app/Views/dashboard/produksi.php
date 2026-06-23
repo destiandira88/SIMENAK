@@ -9,8 +9,8 @@
 ?>
 <?= $this->extend('layouts/main') ?>
 
-<?= $this->section('title') ?>Dashboard<?= $this->endSection() ?>
-<?= $this->section('page_title') ?>Dashboard Produksi<?= $this->endSection() ?>
+<?= $this->section('title') ?>Beranda<?= $this->endSection() ?>
+<?= $this->section('page_title') ?>Beranda Produksi<?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
@@ -52,7 +52,7 @@
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
                     <th class="px-4 py-3 text-left font-semibold">No</th>
-                    <th class="px-4 py-3 text-left font-semibold">Kode Order</th>
+                    <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
                     <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
                     <th class="px-4 py-3 text-left font-semibold">Produk</th>
                     <th class="px-4 py-3 text-left font-semibold">Sisa Kuota</th>

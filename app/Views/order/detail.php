@@ -199,7 +199,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
             <?php elseif ($role === 'produksi'): ?>
                 <a href="<?= site_url('antrian-desain') ?>" class="hover:text-[#051747]">Antrian Desain</a>
             <?php else: ?>
-                <a href="<?= site_url('dashboard') ?>" class="hover:text-[#051747]">Dashboard</a>
+                <a href="<?= site_url('dashboard') ?>" class="hover:text-[#051747]">Beranda</a>
             <?php endif; ?>
             <span class="mx-1">/</span>
             <span class="text-slate-500"><?= esc($kodeOrder) ?></span>
@@ -237,7 +237,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
     <?php else: ?>
         <a href="<?= site_url('dashboard') ?>"
            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
-            ← Dashboard
+            ← Beranda
         </a>
     <?php endif; ?>
 </div>
@@ -801,7 +801,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                     'menunggu'      => ['class' => 'bg-amber-100 text-amber-800', 'label' => 'Menunggu Verifikasi'],
                     'terverifikasi' => ['class' => 'bg-green-100 text-green-800', 'label' => '✓ Terverifikasi'],
                     'ditolak'       => ['class' => 'bg-red-100 text-red-800', 'label' => '✗ Ditolak'],
-                    default         => ['class' => 'bg-slate-100 text-slate-500', 'label' => 'Belum Upload'],
+                    default         => ['class' => 'bg-slate-100 text-slate-500', 'label' => 'Belum Diunggah'],
                 };
                 ?>
                 <div class="border border-slate-200 rounded-xl p-4 mb-3">
@@ -821,11 +821,11 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                             <div class="flex items-center gap-2 mb-2">
                                 <span id="dpDeadlineIcon" class="text-base">⏰</span>
                                 <p id="dpDeadlineTitle" class="font-bold text-amber-800 text-sm">
-                                    Batas Upload Bukti DP
+                                    Batas Unggah Bukti DP
                                 </p>
                             </div>
                             <p class="text-xs text-amber-700 mb-1">
-                                Upload sebelum:
+                                Unggah sebelum:
                                 <strong><?= esc($deadlineTampil) ?></strong>
                             </p>
                             <p id="countdownDp"
@@ -882,7 +882,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                             enctype="multipart/form-data"
                             class="mt-3 scroll-mt-24">
                             <div class="bg-white border border-slate-200 rounded-xl p-5">
-                                <h3 class="font-bold text-[#051747] mb-4">Upload Bukti Transfer DP</h3>
+                                <h3 class="font-bold text-[#051747] mb-4">Unggah Bukti Transfer DP</h3>
                                 <div class="bg-slate-50 rounded-lg p-3 mb-4">
                                     <p class="text-sm font-semibold text-[#051747]">
                                         Nominal DP (50%): Rp <?= esc(number_format($nominalSetengah, 0, ',', '.')) ?>
@@ -903,7 +903,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                                 <button
                                     type="submit"
                                     class="mt-4 bg-[#051747] text-white text-xs font-bold uppercase px-5 py-2.5 rounded-full hover:bg-[#2E5CE6] transition-colors">
-                                    Upload Bukti DP
+                                    Unggah Bukti DP
                                 </button>
                             </div>
                         </form>
@@ -959,7 +959,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                         class="mt-3">
                         <?= csrf_field() ?>
                         <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Upload Bukti Pelunasan</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Unggah Bukti Pelunasan</label>
                         <input
                             type="file"
                             name="bukti_tf"
@@ -970,7 +970,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                         <button
                             type="submit"
                             class="mt-3 bg-[#051747] text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#2E5CE6] transition-colors">
-                            Upload Bukti Pelunasan
+                            Unggah Bukti Pelunasan
                         </button>
                     </form>
                 <?php elseif (!$canUploadLunas && $lunasRecord === null): ?>
@@ -1131,7 +1131,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                 if (diff <= 0) {
                     setStateExpired();
                     elCountdown.textContent = 'Batas waktu telah terlewat.';
-                    elTitle.textContent = 'Segera Upload atau Hubungi Admin';
+                    elTitle.textContent = 'Segera Unggah atau Hubungi Admin';
                     elNote.textContent = 'Batas waktu terlewat. Pesanan dapat dibatalkan otomatis.';
                     return;
                 }
@@ -1147,11 +1147,11 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
 
                 if (diff < 3 * 3600000) {
                     setStateUrgent();
-                    elTitle.textContent = '🚨 Segera Upload Bukti DP!';
+                    elTitle.textContent = '🚨 Segera Unggah Bukti DP!';
                     elNote.textContent = 'Kurang dari 3 jam lagi. Pesanan dibatalkan otomatis jika terlewat.';
                 } else {
                     setStateNormal();
-                    elTitle.textContent = 'Batas Upload Bukti DP';
+                    elTitle.textContent = 'Batas Unggah Bukti DP';
                     elNote.textContent = 'Jika melewati batas waktu, pesanan dapat dibatalkan otomatis.';
                 }
             }

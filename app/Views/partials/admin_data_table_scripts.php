@@ -255,11 +255,11 @@
 
             if (entriesInfo) {
                 if (totalMatched === 0) {
-                    entriesInfo.textContent = 'Showing 0 entries';
+                    entriesInfo.textContent = 'Menampilkan 0 data';
                 } else {
                     const from = startIndex + 1;
                     const to = Math.min(endIndex, totalMatched);
-                    entriesInfo.textContent = `Showing ${from} to ${to} of ${totalMatched} entries`;
+                    entriesInfo.textContent = `Menampilkan ${from} sampai ${to} dari ${totalMatched} data`;
                 }
             }
 

@@ -66,7 +66,7 @@
 
     <div>
         <label for="password" class="block text-sm font-semibold mb-1.5" style="color:var(--navy);">
-            Password
+            Kata Sandi
         </label>
         <input
             type="password"
@@ -81,7 +81,7 @@
 
     <div>
         <label for="password_confirm" class="block text-sm font-semibold mb-1.5" style="color:var(--navy);">
-            Konfirmasi Password
+            Konfirmasi Kata Sandi
         </label>
         <input
             type="password"
@@ -89,7 +89,7 @@
             name="password_confirm"
             required
             autocomplete="new-password"
-            placeholder="Ulangi password"
+            placeholder="Ulangi kata sandi"
             class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]"
         >
     </div>

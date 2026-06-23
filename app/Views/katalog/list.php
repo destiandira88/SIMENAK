@@ -130,7 +130,7 @@ $resolveGambarUrl = static function (array $item): ?string {
 <?= $this->section('content') ?>
 
 <div>
-    <p class="text-[11px] uppercase tracking-[0.2em] text-[#2E5CE6] font-bold">Our Digital Store</p>
+    <p class="text-[11px] uppercase tracking-[0.2em] text-[#2E5CE6] font-bold">Toko Digital Kami</p>
     <h2 class="mt-2 text-3xl sm:text-4xl font-extrabold text-[#051747]">Katalog Percetakan</h2>
     <p class="mt-2 text-sm text-slate-500">Pilih paket produk andalan kami, lalu lakukan pesanan secara digital.</p>
 </div>
@@ -263,14 +263,14 @@ $resolveGambarUrl = static function (array $item): ?string {
 
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-slate-100">
             <div class="flex items-center gap-2 text-sm text-slate-600">
-                <label for="entriesSelect" class="whitespace-nowrap">Show</label>
+                <label for="entriesSelect" class="whitespace-nowrap">Tampilkan</label>
                 <select id="entriesSelect" class="entries-select">
                     <option value="5">5</option>
                     <option value="10" selected>10</option>
                     <option value="25">25</option>
                     <option value="50">50</option>
                 </select>
-                <span class="whitespace-nowrap">entries</span>
+                <span class="whitespace-nowrap">data</span>
             </div>
             <p id="entriesInfo" class="text-xs text-slate-500"></p>
         </div>
@@ -363,11 +363,11 @@ $resolveGambarUrl = static function (array $item): ?string {
 
             if (entriesInfo) {
                 if (totalMatched === 0) {
-                    entriesInfo.textContent = 'Showing 0 entries';
+                    entriesInfo.textContent = 'Menampilkan 0 data';
                 } else {
                     const from = startIndex + 1;
                     const to = Math.min(endIndex, totalMatched);
-                    entriesInfo.textContent = `Showing ${from} to ${to} of ${totalMatched} entries`;
+                    entriesInfo.textContent = `Menampilkan ${from} sampai ${to} dari ${totalMatched} data`;
                 }
             }
 

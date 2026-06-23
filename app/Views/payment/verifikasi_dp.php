@@ -31,10 +31,10 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-[#051747] text-white text-xs uppercase">
-                        <th class="px-4 py-3 text-left font-semibold">Kode Order</th>
+                        <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
                         <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
                         <th class="px-4 py-3 text-left font-semibold">Nominal DP</th>
-                        <th class="px-4 py-3 text-left font-semibold">Tgl Upload</th>
+                        <th class="px-4 py-3 text-left font-semibold">Tgl Unggah</th>
                         <th class="px-4 py-3 text-left font-semibold">Umur</th>
                         <th class="px-4 py-3 text-left font-semibold">Bukti</th>
                         <th class="px-4 py-3 text-left font-semibold">Aksi</th>

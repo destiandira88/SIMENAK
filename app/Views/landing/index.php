@@ -28,53 +28,54 @@ $tabLabels = [
                 <button type="button" data-open-modal="<?= $isLoggedIn ? '' : 'loginModal' ?>" onclick="<?= $isLoggedIn ? "window.location.href='" . site_url('katalog') . "'" : '' ?>" class="btn-primary px-6 py-3 text-xs">Pesan Sekarang</button>
                 <a href="#services" class="btn-outline px-6 py-3 text-xs">Pelajari Layanan</a>
             </div>
-            <div class="mt-10 grid grid-cols-3 gap-5 max-w-md">
-                <div>
+            <div class="mt-10 grid grid-cols-3 gap-4 max-w-md">
+                <div class="rounded-xl border border-[#E2E8F0] bg-white px-3 py-4 shadow-sm">
                     <p class="text-3xl font-extrabold text-[#051747]">0.01mm</p>
-                    <p class="text-[10px] uppercase tracking-[0.14em] text-slate-500 font-semibold">Ultra Precision</p>
+                    <p class="text-[10px] uppercase tracking-[0.14em] text-slate-500 font-semibold">Presisi Ultra</p>
                 </div>
-                <div>
-                    <p class="text-3xl font-extrabold text-[#051747]">5-Star</p>
-                    <p class="text-[10px] uppercase tracking-[0.14em] text-slate-500 font-semibold">Quality Control</p>
+                <div class="rounded-xl border border-[#E2E8F0] bg-white px-3 py-4 shadow-sm">
+                    <p class="text-3xl font-extrabold text-[#051747]">Bintang 5</p>
+                    <p class="text-[10px] uppercase tracking-[0.14em] text-slate-500 font-semibold">Kontrol Kualitas</p>
                 </div>
-                <div>
+                <div class="rounded-xl border border-[#E2E8F0] bg-white px-3 py-4 shadow-sm">
                     <p class="text-3xl font-extrabold text-[#051747]">100%</p>
                     <p class="text-[10px] uppercase tracking-[0.14em] text-slate-500 font-semibold">Kepuasan Desain</p>
                 </div>
             </div>
         </div>
-        <div class="relative overflow-visible pb-8 sm:pb-10">
-            <div class="card relative overflow-visible p-3 md:p-4">
-                <div class="relative h-[280px] sm:h-[320px] md:h-[380px] rounded-2xl overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/80 shadow-[0_8px_30px_rgba(5,23,71,0.12)] ring-1 ring-slate-200/60">
-                    <?php
-                    $heroFiles = [
-                        'illustration.png',
-                        'ilustrastion.png',
-                        'illustration2.png',
-                        'ilustrastion2.png',
-                        'illustration.jpg',
-                        'illustration.svg',
-                    ];
-                    $heroUrl = null;
+        <div class="relative overflow-visible pb-8 sm:pb-10 flex items-center justify-center lg:justify-end">
+            <div class="relative w-full max-w-lg">
+                <div class="relative overflow-hidden rounded-2xl border border-[#E2E8F0] bg-gradient-to-br from-[#F0F2F8] via-white to-[#E8EEF8] shadow-[0_12px_40px_rgba(5,23,71,0.08)] ring-1 ring-white/70 h-72 sm:h-80">
+                <?php
+                $heroFiles = [
+                    'illustration.png',
+                    'ilustrastion.png',
+                    'illustration2.png',
+                    'ilustrastion2.png',
+                    '3.png',
+                    'illustration.jpg',
+                    'illustration.svg',
+                ];
+                $heroUrl = null;
 
-                    foreach ($heroFiles as $heroFile) {
-                        if (is_file(FCPATH . 'assets/' . $heroFile)) {
-                            $heroUrl = base_url('assets/' . $heroFile);
-                            break;
-                        }
+                foreach ($heroFiles as $heroFile) {
+                    if (is_file(FCPATH . 'assets/' . $heroFile)) {
+                        $heroUrl = base_url('assets/' . $heroFile);
+                        break;
                     }
-                    ?>
-                    <?php if ($heroUrl !== null): ?>
-                        <img
-                            src="<?= esc($heroUrl) ?>"
-                            alt="Ilustrasi Custom Printing"
-                            class="absolute inset-0 w-full h-full object-cover object-center" />
-                    <?php else: ?>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center text-slate-400 px-4">
-                            <span class="text-sm">Gambar ilustrasi tidak ditemukan.</span>
-                            <span class="mt-1 text-xs text-slate-400">Simpan sebagai <code class="font-mono">public/assets/illustration.png</code></span>
-                        </div>
-                    <?php endif; ?>
+                }
+                ?>
+                <?php if ($heroUrl !== null): ?>
+                    <img
+                        src="<?= esc($heroUrl) ?>"
+                        alt="Ilustrasi Percetakan Kustom"
+                        class="w-full h-full object-cover object-center" />
+                <?php else: ?>
+                    <div class="flex h-full flex-col items-center justify-center border border-dashed border-slate-200 bg-white/60 text-center text-slate-400 px-4">
+                        <span class="text-sm">Gambar ilustrasi tidak ditemukan.</span>
+                        <span class="mt-1 text-xs text-slate-400">Simpan sebagai <code class="font-mono">public/assets/illustration.png</code></span>
+                    </div>
+                <?php endif; ?>
                 </div>
 
                 <div class="absolute z-20 -bottom-4 -left-3 sm:-bottom-5 sm:-left-5 max-w-[260px] flex items-start gap-3 rounded-2xl bg-[#051747] px-4 py-3.5 text-white shadow-[0_12px_32px_rgba(5,23,71,0.28)] ring-1 ring-white/10">
@@ -98,7 +99,7 @@ $tabLabels = [
         <div class="grid md:grid-cols-2 gap-10 items-center">
             <!-- LEFT: TEKSTUAL -->
             <div class="max-w-2xl">
-                <p class="uppercase text-[11px] tracking-[0.2em] font-bold" style="color:#2E5CE6;">WHO WE ARE</p>
+                <p class="uppercase text-[11px] tracking-[0.2em] font-bold" style="color:#2E5CE6;">SIAPA KAMI</p>
                 <h2 class="mt-2 text-4xl font-extrabold text-[#051747]">SIMENAK Z'Plack</h2>
                 <h3 class="mt-2 text-2xl md:text-4xl font-extrabold bg-gradient-to-r from-[#051747] via-[#2E5CE6] via-60% to-[#83A2CD] bg-clip-text text-transparent" style="text-shadow: 0 2px 12px #83A2CD40;">
                     <span style="background: linear-gradient(90deg, #051747 0%, #2E5CE6 30%, #83A2CD 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
@@ -128,7 +129,7 @@ $tabLabels = [
                     <div class="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-4 flex flex-col h-full">
                         <div class="flex items-center gap-2 mb-1">
                             <span class="text-[#2E5CE6] text-lg font-bold leading-none">✦</span>
-                            <span class="text-[15px] font-bold" style="color:#051747;">Tracking Status Real-Time</span>
+                            <span class="text-[15px] font-bold" style="color:#051747;">Pelacakan Status Real-Time</span>
                         </div>
                         <p class="text-[13px] text-slate-500 mt-1">
                             Pelanggan dapat memantau progres pesanan kapan saja tanpa perlu menghubungi admin.
@@ -158,7 +159,7 @@ $tabLabels = [
             </div>
             <!-- RIGHT: VISUAL MOCKUP -->
             <div class="relative flex items-center justify-center">
-                <div class="relative bg-[#F0F2F8] rounded-2xl shadow-lg p-6 md:p-8 flex flex-col items-center justify-center w-full h-[360px] min-w-[290px]">
+                <div class="relative bg-[#F0F2F8] rounded-2xl border border-[#E2E8F0] shadow-lg p-6 md:p-8 flex flex-col items-center justify-center w-full h-[360px] min-w-[290px] ring-1 ring-white/80">
                     <div class="flex flex-col items-center justify-center h-full">
                         <span class="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200 mb-3">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none"
@@ -169,7 +170,7 @@ $tabLabels = [
                             </svg>
                         </span>
                         <span class="block text-center font-bold text-lg md:text-xl text-slate-400 tracking-wide">
-                            Dashboard SIMENAK
+                            Beranda SIMENAK
                         </span>
                     </div>
                     <div class="absolute left-5 bottom-5 bg-[#051747] rounded-xl px-4 py-3 flex items-center shadow-md">
@@ -187,9 +188,9 @@ $tabLabels = [
     <div class="max-w-7xl mx-auto">
         <!-- Heading Area -->
         <div class="text-center mb-12">
-            <p class="text-[10px] md:text-[11px] uppercase tracking-[0.17em] text-[#2E5CE6] font-bold mb-1" style="letter-spacing:0.2em;">SERVICES WE PROVIDE</p>
+            <p class="text-[10px] md:text-[11px] uppercase tracking-[0.17em] text-[#2E5CE6] font-bold mb-1" style="letter-spacing:0.2em;">LAYANAN KAMI</p>
             <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#162044] mb-2 tracking-wide"
-                style="letter-spacing:.03em;">PRINTING FOR BUSINESS & PERSONAL NEEDS</h2>
+                style="letter-spacing:.03em;">CETAK UNTUK BISNIS & KEBUTUHAN PRIBADI</h2>
             <p class="text-center text-[13px] md:text-[14px] text-[#71809e] font-normal max-w-2xl mx-auto mb-0"
                 style="line-height:1.75">
                 Didukung proses kerja yang terstruktur untuk menghasilkan kualitas cetak yang optimal.
@@ -205,13 +206,13 @@ $tabLabels = [
                     </svg>
                 </span>
                 <span class="inline-block bg-[#f5f8fd] text-[#767e95] rounded-full text-[11px] tracking-wide uppercase font-semibold px-3 py-1 mb-3"
-                    style="font-size:11px; letter-spacing:0.1em;">Most Popular</span>
+                    style="font-size:11px; letter-spacing:0.1em;">Paling Populer</span>
                 <h4 class="text-[#081735] font-bold text-[15px] mb-2">Undangan & Kartu Cetak</h4>
                 <p class="text-[#757da5] text-[13px]">
                     Cetak undangan pernikahan, khitanan, dan kartu nama dengan pilihan material dan finishing sesuai kebutuhan.
                 </p>
                 <div class="service-card-track flex items-center gap-1 mt-5 text-xs text-[#9ba6be] font-semibold tracking-wide transition-all duration-300 ease-out group-hover:translate-x-2 group-hover:tracking-wider">
-                    <span>EXCLUSIVE CARD</span>
+                    <span>KARTU EKSKLUSIF</span>
                     <span class="ml-auto transition-transform duration-300 ease-out group-hover:translate-x-0.5">&rsaquo;</span>
                 </div>
             </div>
@@ -223,13 +224,13 @@ $tabLabels = [
                     </svg>
                 </span>
                 <span class="inline-block bg-[#f5f8fd] text-[#767e95] rounded-full text-[11px] tracking-wide uppercase font-semibold px-3 py-1 mb-3"
-                    style="font-size:11px; letter-spacing:0.1em;">High Volume Production</span>
+                    style="font-size:11px; letter-spacing:0.1em;">Produksi Volume Tinggi</span>
                 <h4 class="text-[#081735] font-bold text-[15px] mb-2">Cetak Offset</h4>
                 <p class="text-[#757da5] text-[13px]">
                     Produksi massal untuk brosur, map, kop surat, kalender, dan kebutuhan cetak korporat dengan hasil yang konsisten.
                 </p>
                 <div class="service-card-track flex items-center gap-1 mt-5 text-xs text-[#9ba6be] font-semibold tracking-wide transition-all duration-300 ease-out group-hover:translate-x-2 group-hover:tracking-wider">
-                    <span>OFFSET PRINTING</span>
+                    <span>CETAK OFFSET</span>
                     <span class="ml-auto transition-transform duration-300 ease-out group-hover:translate-x-0.5">&rsaquo;</span>
                 </div>
             </div>
@@ -241,13 +242,13 @@ $tabLabels = [
                     </svg>
                 </span>
                 <span class="inline-block bg-[#f5f8fd] text-[#767e95] rounded-full text-[11px] tracking-wide uppercase font-semibold px-3 py-1 mb-3"
-                    style="font-size:11px; letter-spacing:0.1em;">Fast Turnaround</span>
+                    style="font-size:11px; letter-spacing:0.1em;">Pengerjaan Cepat</span>
                 <h4 class="text-[#081735] font-bold text-[15px] mb-2">Cetak Digital</h4>
                 <p class="text-[#757da5] text-[13px]">
                     Stiker, poster, banner, dan media promosi dengan kualitas detail tinggi serta proses pengerjaan yang cepat.
                 </p>
                 <div class="service-card-track flex items-center gap-1 mt-5 text-xs text-[#9ba6be] font-semibold tracking-wide transition-all duration-300 ease-out group-hover:translate-x-2 group-hover:tracking-wider">
-                    <span>DIGITAL PRINTING</span>
+                    <span>CETAK DIGITAL</span>
                     <span class="ml-auto transition-transform duration-300 ease-out group-hover:translate-x-0.5">&rsaquo;</span>
                 </div>
             </div>
@@ -259,13 +260,13 @@ $tabLabels = [
                     </svg>
                 </span>
                 <span class="inline-block bg-[#f5f8fd] text-[#767e95] rounded-full text-[11px] tracking-wide uppercase font-semibold px-3 py-1 mb-3"
-                    style="font-size:11px; letter-spacing:0.1em;">Creative Custom</span>
+                    style="font-size:11px; letter-spacing:0.1em;">Kustom Kreatif</span>
                 <h4 class="text-[#081735] font-bold text-[15px] mb-2">Desain Grafis & Media Promosi</h4>
                 <p class="text-[#757da5] text-[13px]">
                     Layanan desain dan produksi media promosi yang disesuaikan dengan identitas visual dan kebutuhan bisnis.
                 </p>
                 <div class="service-card-track flex items-center gap-1 mt-5 text-xs text-[#9ba6be] font-semibold tracking-wide transition-all duration-300 ease-out group-hover:translate-x-2 group-hover:tracking-wider">
-                    <span>CREATIVE DESIGN</span>
+                    <span>DESAIN KREATIF</span>
                     <span class="ml-auto transition-transform duration-300 ease-out group-hover:translate-x-0.5">&rsaquo;</span>
                 </div>
             </div>
@@ -275,7 +276,7 @@ $tabLabels = [
 <section id="process" class="bg-white px-10 py-20 sm:px-12 md:px-20" style="padding:80px 40px;">
     <div class="max-w-6xl mx-auto">
         <div class="text-center mb-10">
-            <p class="uppercase text-[11px] font-bold tracking-[0.2em]" style="color:#4A5568;">HOW IT WORKS</p>
+            <p class="uppercase text-[11px] font-bold tracking-[0.2em]" style="color:#4A5568;">CARA KERJANYA</p>
             <h2 class="mt-3 text-3xl sm:text-4xl font-extrabold text-[#051747]">
                 Dari Pemilihan Produk Hingga Pesanan di Tangan
             </h2>
@@ -360,14 +361,14 @@ $tabLabels = [
 <section id="portfolio" class="py-16">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-            <p class="text-[11px] uppercase tracking-[0.2em] text-[#2E5CE6] font-bold">Client Work Evidence</p>
+            <p class="text-[11px] uppercase tracking-[0.2em] text-[#2E5CE6] font-bold">Bukti Karya Klien</p>
             <h3 class="mt-2 text-4xl font-extrabold text-[#051747]">Telah Dipercaya Oleh</h3>
         </div>
         <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="h-36 rounded-2xl bg-gradient-to-br from-teal-800 to-cyan-600"></div>
-            <div class="h-36 rounded-2xl bg-gradient-to-br from-neutral-900 to-neutral-700"></div>
-            <div class="h-36 rounded-2xl bg-gradient-to-br from-slate-600 to-slate-400"></div>
-            <div class="h-36 rounded-2xl bg-gradient-to-br from-blue-700 to-indigo-500"></div>
+            <div class="h-36 rounded-2xl border border-[#E2E8F0] shadow-sm bg-gradient-to-br from-teal-800 to-cyan-600"></div>
+            <div class="h-36 rounded-2xl border border-[#E2E8F0] shadow-sm bg-gradient-to-br from-neutral-900 to-neutral-700"></div>
+            <div class="h-36 rounded-2xl border border-[#E2E8F0] shadow-sm bg-gradient-to-br from-slate-600 to-slate-400"></div>
+            <div class="h-36 rounded-2xl border border-[#E2E8F0] shadow-sm bg-gradient-to-br from-blue-700 to-indigo-500"></div>
         </div>
     </div>
 </section>
@@ -375,7 +376,7 @@ $tabLabels = [
 <section id="catalog" class="py-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div>
-            <p class="text-[11px] uppercase tracking-[0.2em] text-[#2E5CE6] font-bold">Our Digital Store</p>
+            <p class="text-[11px] uppercase tracking-[0.2em] text-[#2E5CE6] font-bold">Toko Digital Kami</p>
             <h3 class="mt-2 text-4xl font-extrabold text-[#051747]">Katalog Percetakan</h3>
             <p class="mt-2 text-sm text-slate-500">Pilih paket produk andalan kami, lalu pesan secara digital.</p>
         </div>
@@ -520,7 +521,7 @@ $tabLabels = [
         <div class="card p-8 md:p-10 bg-[#051747] text-white border-[#051747]">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                 <div>
-                    <p class="text-xs uppercase tracking-[0.2em] text-white/70 font-bold">Premium Printing Experience</p>
+                    <p class="text-xs uppercase tracking-[0.2em] text-white/70 font-bold">Pengalaman Cetak Premium</p>
                     <h3 class="mt-2 text-3xl md:text-4xl font-extrabold">Wujudkan Kebutuhan Cetak Anda Bersama Kami</h3>
                     <p class="mt-3 text-sm text-white/80 max-w-2xl">Diskusikan kebutuhan detail desain, material, dan estimasi pesanan. Tim kami siap membantu dari konsep sampai produk jadi.</p>
                 </div>

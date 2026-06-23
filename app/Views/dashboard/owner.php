@@ -10,8 +10,8 @@
 ?>
 <?= $this->extend('layouts/main') ?>
 
-<?= $this->section('title') ?>Dashboard<?= $this->endSection() ?>
-<?= $this->section('page_title') ?>Dashboard Owner<?= $this->endSection() ?>
+<?= $this->section('title') ?>Beranda<?= $this->endSection() ?>
+<?= $this->section('page_title') ?>Beranda Pemilik<?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
@@ -21,7 +21,7 @@
 
 <div class="mb-6">
     <h2 class="text-2xl font-extrabold text-[#051747]">
-        Selamat Datang, Owner 👋
+        Selamat Datang, Pemilik 👋
     </h2>
     <p class="mt-1 text-sm text-slate-500">
         Ringkasan performa bisnis Z'Plack · <?= esc(date('d F Y')) ?>

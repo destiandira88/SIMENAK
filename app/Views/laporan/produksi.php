@@ -217,7 +217,7 @@ $aktivitasCards = [
                 <tr class="bg-[#051747] text-white text-xs uppercase">
                     <th class="px-4 py-3 text-left font-semibold">No</th>
                     <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kode">
-                        Kode Order<span class="sort-icon">↕</span>
+                        Kode Pesanan<span class="sort-icon">↕</span>
                     </th>
                     <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="pelanggan">
                         Pelanggan<span class="sort-icon">↕</span>

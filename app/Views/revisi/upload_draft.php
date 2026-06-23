@@ -24,15 +24,15 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
 ?>
 <?= $this->extend('layouts/main') ?>
 
-<?= $this->section('title') ?><?= esc($title ?? 'Upload Draft') ?><?= $this->endSection() ?>
-<?= $this->section('page_title') ?><?= esc($page_title ?? 'Upload Draft') ?><?= $this->endSection() ?>
+<?= $this->section('title') ?><?= esc($title ?? 'Unggah Draf') ?><?= $this->endSection() ?>
+<?= $this->section('page_title') ?><?= esc($page_title ?? 'Unggah Draf') ?><?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 
 <p class="text-xs text-slate-400 mb-4">
     <a href="<?= esc(site_url('antrian-desain')) ?>" class="hover:text-[#051747]">Antrian Desain</a>
     <span class="mx-1">/</span>
-    <span class="text-slate-500">Upload Draft</span>
+    <span class="text-slate-500">Unggah Draf</span>
     <span class="mx-1">/</span>
     <span class="font-semibold text-[#051747]"><?= esc($kodeOrder) ?></span>
 </p>
@@ -42,7 +42,7 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
         <div class="rounded-xl p-5 text-white" style="background:var(--navy);">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div>
-                    <p class="text-white/60 text-xs uppercase font-semibold mb-1">Kode Order</p>
+                    <p class="text-white/60 text-xs uppercase font-semibold mb-1">Kode Pesanan</p>
                     <p class="font-mono font-bold text-lg"><?= esc($kodeOrder) ?></p>
                 </div>
                 <div>
@@ -72,7 +72,7 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
         <?php endif; ?>
 
         <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
-            <h3 class="font-bold text-[#051747] mb-4">Upload Draft Baru</h3>
+            <h3 class="font-bold text-[#051747] mb-4">Unggah Draf Baru</h3>
             <form method="post"
                 action="<?= esc(site_url('manajemen-desain/' . $idOrder . '/upload')) ?>"
                 enctype="multipart/form-data"
@@ -80,7 +80,7 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
                 <?= csrf_field() ?>
 
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">File Draft <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Berkas Draf <span class="text-red-500">*</span></label>
                     <div id="dropZone"
                         class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#2E5CE6] hover:bg-blue-50/30 transition-colors">
                         <input type="file" name="file_draft" id="fileDraft" accept=".jpg,.jpeg,.png" class="sr-only" required>
@@ -108,7 +108,7 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
 
                 <button type="submit"
                     class="w-full bg-[#051747] text-white py-3 rounded-full font-bold text-sm uppercase hover:bg-[#2E5CE6] transition-colors">
-                    Upload Draft →
+                    Unggah Draf →
                 </button>
             </form>
         </div>
@@ -116,7 +116,7 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
 
     <div class="lg:col-span-2">
         <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
-            <h3 class="font-bold text-[#051747] mb-4 pb-3 border-b border-slate-100">Riwayat Draft</h3>
+            <h3 class="font-bold text-[#051747] mb-4 pb-3 border-b border-slate-100">Riwayat Draf</h3>
             <?php if ($revisList === []): ?>
                 <p class="text-sm text-slate-400 text-center py-6">Belum ada draft.</p>
             <?php else: ?>

@@ -441,7 +441,7 @@ $kategoriBadges = [
                                                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                 </svg>
-                                                Edit
+                                                Ubah
                                             </a>
                                             <a href="<?= site_url('form-template/' . $idKatalog) ?>" role="menuitem">
                                                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
@@ -494,14 +494,14 @@ $kategoriBadges = [
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-slate-100">
         <div class="flex items-center gap-2 text-sm text-slate-600">
-            <label for="entriesSelect" class="whitespace-nowrap">Show</label>
+            <label for="entriesSelect" class="whitespace-nowrap">Tampilkan</label>
             <select id="entriesSelect" class="entries-select">
                 <option value="5">5</option>
                 <option value="10" selected>10</option>
                 <option value="25">25</option>
                 <option value="50">50</option>
             </select>
-            <span class="whitespace-nowrap">entries</span>
+            <span class="whitespace-nowrap">data</span>
         </div>
         <p id="entriesInfo" class="text-xs text-slate-500"></p>
     </div>
@@ -538,7 +538,7 @@ $kategoriBadges = [
         </div>
         <div class="mt-6 flex gap-3">
             <button type="button" data-close-katalog-confirm class="btn-katalog-confirm-cancel flex-1 h-11 text-sm">
-                Cancel
+                Batal
             </button>
             <button type="button" id="katalogConfirmSubmitBtn" class="btn-katalog-confirm-submit flex-1 h-11 text-sm"></button>
         </div>
@@ -711,11 +711,11 @@ $kategoriBadges = [
 
             if (entriesInfo) {
                 if (totalMatched === 0) {
-                    entriesInfo.textContent = 'Showing 0 entries';
+                    entriesInfo.textContent = 'Menampilkan 0 data';
                 } else {
                     const from = startIndex + 1;
                     const to = Math.min(endIndex, totalMatched);
-                    entriesInfo.textContent = `Showing ${from} to ${to} of ${totalMatched} entries`;
+                    entriesInfo.textContent = `Menampilkan ${from} sampai ${to} dari ${totalMatched} data`;
                 }
             }
 
@@ -816,7 +816,7 @@ $kategoriBadges = [
             hapus: {
                 title: 'Hapus Produk?',
                 verb: 'hapus',
-                submit: 'Yes, Hapus',
+                submit: 'Ya, Hapus',
                 url: '<?= site_url('katalog/hapus/') ?>',
                 note: 'Produk dengan riwayat pesanan akan dinonaktifkan.',
                 iconWrapClass: 'bg-red-50 border-red-100',
@@ -826,7 +826,7 @@ $kategoriBadges = [
             nonaktif: {
                 title: 'Nonaktifkan Produk?',
                 verb: 'nonaktifkan',
-                submit: 'Yes, Nonaktifkan',
+                submit: 'Ya, Nonaktifkan',
                 url: '<?= site_url('katalog/toggle/') ?>',
                 iconWrapClass: 'bg-amber-50 border-amber-100',
                 iconClass: 'text-amber-500',
@@ -835,7 +835,7 @@ $kategoriBadges = [
             aktif: {
                 title: 'Aktifkan Produk?',
                 verb: 'aktifkan',
-                submit: 'Yes, Aktifkan',
+                submit: 'Ya, Aktifkan',
                 url: '<?= site_url('katalog/toggle/') ?>',
                 iconWrapClass: 'bg-emerald-50 border-emerald-100',
                 iconClass: 'text-emerald-500',

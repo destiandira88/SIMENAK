@@ -11,7 +11,7 @@
         <table class="w-full text-sm">
             <thead>
                 <tr class="text-left text-white text-xs uppercase tracking-wider" style="background:var(--navy);">
-                    <th class="px-6 py-3 font-semibold">Kode Order</th>
+                    <th class="px-6 py-3 font-semibold">Kode Pesanan</th>
                     <th class="px-6 py-3 font-semibold">Pelanggan</th>
                     <th class="px-6 py-3 font-semibold">Jenis</th>
                     <th class="px-6 py-3 font-semibold">Nominal</th>

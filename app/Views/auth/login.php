@@ -34,7 +34,7 @@
 
     <div>
         <label for="password" class="block text-sm font-semibold mb-1.5" style="color:var(--navy);">
-            Password
+            Kata Sandi
         </label>
         <div class="relative">
             <input
@@ -43,14 +43,14 @@
                 name="password"
                 required
                 autocomplete="current-password"
-                placeholder="Masukkan password"
+                placeholder="Masukkan kata sandi"
                 class="input-field w-full px-4 py-2.5 pr-11 text-sm text-[#051747] placeholder:text-[#8896A5]"
             >
             <button
                 type="button"
                 id="togglePassword"
                 class="absolute inset-y-0 right-0 flex items-center px-3 text-[#8896A5] hover:text-[#2E5CE6] transition-colors"
-                aria-label="Tampilkan password"
+                aria-label="Tampilkan kata sandi"
             >
                 <svg id="iconEye" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -95,7 +95,7 @@
             passwordInput.type = isHidden ? 'text' : 'password';
             iconEye.classList.toggle('hidden', isHidden);
             iconEyeOff.classList.toggle('hidden', !isHidden);
-            toggleBtn.setAttribute('aria-label', isHidden ? 'Sembunyikan password' : 'Tampilkan password');
+            toggleBtn.setAttribute('aria-label', isHidden ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
         });
     })();
 </script>

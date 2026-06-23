@@ -89,7 +89,7 @@
         </div>
 
         <p class="text-center text-xs mt-6" style="color:var(--text-muted);">
-            &copy; <?= date('Y') ?> Z'Plack. All rights reserved.
+            &copy; <?= date('Y') ?> Z'Plack. Hak cipta dilindungi.
         </p>
     </div>
 

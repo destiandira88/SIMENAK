@@ -225,7 +225,7 @@
                     <div class="meta-label">Informasi Tagihan</div>
                     <div class="meta-value">
                         Tgl Tagihan: <?= esc(date('d M Y')) ?><br>
-                        Kode Order: <?= esc($kodeOrder) ?>
+                        Kode Pesanan: <?= esc($kodeOrder) ?>
                     </div>
                 </div>
             </div>

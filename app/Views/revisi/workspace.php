@@ -29,8 +29,8 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
 ?>
 <?= $this->extend('layouts/main') ?>
 
-<?= $this->section('title') ?><?= esc($title ?? 'Workspace Produksi') ?><?= $this->endSection() ?>
-<?= $this->section('page_title') ?><?= esc($page_title ?? 'Workspace Produksi') ?><?= $this->endSection() ?>
+<?= $this->section('title') ?><?= esc($title ?? 'Ruang Kerja Produksi') ?><?= $this->endSection() ?>
+<?= $this->section('page_title') ?><?= esc($page_title ?? 'Ruang Kerja Produksi') ?><?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 
@@ -40,7 +40,7 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
     </a>
     <span class="mx-1">/</span>
     <span class="font-semibold text-[#051747]">
-        <?= $readOnly ? 'Detail-' : 'Workspace-' ?><?= esc($kodeOrder) ?>
+        <?= $readOnly ? 'Detail-' : 'Ruang Kerja-' ?><?= esc($kodeOrder) ?>
     </span>
 </p>
 
@@ -62,7 +62,7 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
 
         <?php if (!$readOnly): ?>
         <div id="upload" class="bg-white rounded-xl border border-slate-100 shadow-sm p-6 scroll-mt-4">
-            <h3 class="font-bold text-[#051747] mb-1">Upload Draft Baru</h3>
+            <h3 class="font-bold text-[#051747] mb-1">Unggah Draf Baru</h3>
             <p class="text-xs text-slate-500 mb-4">Unggah versi draft terbaru untuk direview pelanggan.</p>
 
             <?php if ($canUpload): ?>
@@ -73,7 +73,7 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
                     <?= csrf_field() ?>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">File Draft <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Berkas Draf <span class="text-red-500">*</span></label>
                         <div id="dropZone"
                             class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#2E5CE6] hover:bg-blue-50/30 transition-colors">
                             <input type="file" name="file_draft" id="fileDraft" accept=".jpg,.jpeg,.png" class="sr-only" required>
@@ -101,7 +101,7 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
 
                     <button type="submit"
                         class="w-full bg-[#051747] text-white py-3 rounded-full font-bold text-sm uppercase hover:bg-[#2E5CE6] transition-colors">
-                        Upload Draft →
+                        Unggah Draf →
                     </button>
                 </form>
             <?php else: ?>
@@ -111,7 +111,7 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
                     <?php elseif ($status === 'terverifikasi'): ?>
                         Siap upload draft pertama setelah pesanan masuk antrian desain.
                     <?php else: ?>
-                        Upload draft tidak tersedia-menunggu review atau ACC pelanggan pada draft sebelumnya.
+                        Unggah draf tidak tersedia—menunggu review atau persetujuan pelanggan pada draf sebelumnya.
                     <?php endif; ?>
                 </div>
             <?php endif; ?>

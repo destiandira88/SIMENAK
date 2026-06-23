@@ -8,8 +8,8 @@
 ?>
 <?= $this->extend('layouts/main') ?>
 
-<?= $this->section('title') ?>Dashboard<?= $this->endSection() ?>
-<?= $this->section('page_title') ?>Dashboard Pelanggan<?= $this->endSection() ?>
+<?= $this->section('title') ?>Beranda<?= $this->endSection() ?>
+<?= $this->section('page_title') ?>Beranda Pelanggan<?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>

@@ -2,7 +2,7 @@
 
 <?php
 $readOnly = (bool) ($readOnly ?? false);
-$pageTitle = $readOnly ? 'Detail Produk' : 'Edit Produk';
+$pageTitle = $readOnly ? 'Detail Produk' : 'Ubah Produk';
 ?>
 
 <?= $this->section('title') ?><?= esc($title ?? $pageTitle) ?><?= $this->endSection() ?>
@@ -267,7 +267,7 @@ $hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
                         src="<?= base_url('uploads/katalog/' . esc($katalog['gambar'])) ?>"
                         alt="Gambar produk"
                         class="w-24 h-24 object-cover rounded-xl border border-slate-200">
-                    <p class="text-sm text-slate-500">Gambar saat ini. Upload baru untuk mengganti.</p>
+                    <p class="text-sm text-slate-500">Gambar saat ini. Unggah baru untuk mengganti.</p>
                 </div>
             <?php endif; ?>
 

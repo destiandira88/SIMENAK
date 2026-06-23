@@ -11,8 +11,8 @@ $pendingVerif  = (int) ($pendingVerifikasiPerusahaan ?? 0);
 ?>
 <?= $this->extend('layouts/main') ?>
 
-<?= $this->section('title') ?>Dashboard<?= $this->endSection() ?>
-<?= $this->section('page_title') ?>Dashboard Admin<?= $this->endSection() ?>
+<?= $this->section('title') ?>Beranda<?= $this->endSection() ?>
+<?= $this->section('page_title') ?>Beranda Admin<?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>

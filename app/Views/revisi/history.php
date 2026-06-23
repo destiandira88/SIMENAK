@@ -67,7 +67,7 @@ $backLabel = $role === 'pelanggan' ? '← Detail Pesanan' : '← Antrian Desain'
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 mb-6" style="background:var(--navy); color:#fff; border:none;">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-5">
             <div>
-                <p class="text-white/60 text-xs uppercase font-semibold mb-1">Kode Order</p>
+                <p class="text-white/60 text-xs uppercase font-semibold mb-1">Kode Pesanan</p>
                 <p class="font-mono font-bold text-lg"><?= esc($kodeOrder) ?></p>
             </div>
             <div>
