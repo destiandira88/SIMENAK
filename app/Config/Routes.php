@@ -11,6 +11,7 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'LandingController::index');
 
 $routes->get('login', 'AuthController::login');
+$routes->get('portal', 'AuthController::login');
 $routes->post('login', 'AuthController::loginProcess');
 $routes->post('login-ajax', 'AuthController::loginAjax');
 $routes->get('register', 'AuthController::register');
@@ -25,6 +26,11 @@ $routes->get('tracking/(:segment)', 'TrackingController::show/$1');
 $routes->group('', ['filter' => 'auth'], static function ($routes) {
 
     $routes->get('dashboard', 'DashboardController::index');
+    $routes->get('admin/dashboard', 'DashboardController::index');
+    $routes->get('keuangan/dashboard', 'DashboardController::index');
+    $routes->get('produksi/dashboard', 'DashboardController::index');
+    $routes->get('owner/dashboard', 'DashboardController::index');
+    $routes->get('pelanggan/dashboard', 'DashboardController::index');
     $routes->post('logout', 'AuthController::logout');
     $routes->get('notifikasi', 'DashboardController::notifikasi');
     $routes->get('notifikasi/list', 'NotificationController::list');

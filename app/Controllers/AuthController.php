@@ -14,10 +14,16 @@ class AuthController extends BaseController
     public function login()
     {
         if (session()->get('isLoggedIn')) {
-            return redirect()->to($this->dashboardPathForRole((string) session()->get('role')));
+            $role = (string) session()->get('role');
+
+            if ($role === 'pelanggan') {
+                return redirect()->to(site_url('/'));
+            }
+
+            return redirect()->to($this->dashboardPathForRole($role));
         }
 
-        return redirect()->to('/');
+        return view('auth/login');
     }
 
     public function loginProcess()
@@ -42,6 +48,13 @@ class AuthController extends BaseController
             return redirect()->back()
                 ->withInput()
                 ->with('error', $result['message']);
+        }
+
+        if ($result['role'] === 'pelanggan') {
+            session()->destroy();
+
+            return redirect()->to(site_url('/'))
+                ->with('error', 'Akun pelanggan silakan masuk melalui halaman utama.');
         }
 
         return redirect()->to($result['redirect']);
@@ -73,6 +86,14 @@ class AuthController extends BaseController
             return $this->jsonResponse(false, $result['message'], [], 401);
         }
 
+        if ($this->isInternalRole($result['role'])) {
+            session()->destroy();
+
+            return $this->jsonResponse(false, 'Akun internal silakan masuk melalui Portal Login.', [
+                'redirect' => site_url('login'),
+            ], 403);
+        }
+
         return $this->jsonResponse(true, 'Login berhasil.', [
             'redirect' => $result['redirect'],
             'role'     => $result['role'],
@@ -83,7 +104,13 @@ class AuthController extends BaseController
     public function register()
     {
         if (session()->get('isLoggedIn')) {
-            return redirect()->to($this->dashboardPathForRole((string) session()->get('role')));
+            $role = (string) session()->get('role');
+
+            if ($role === 'pelanggan') {
+                return redirect()->to(site_url('/'));
+            }
+
+            return redirect()->to($this->dashboardPathForRole($role));
         }
 
         return redirect()->to('/');
@@ -141,15 +168,19 @@ class AuthController extends BaseController
 
     public function logout()
     {
+        $wasInternal = $this->isInternalRole((string) session()->get('role'));
+
         session()->destroy();
+
+        $redirectTo = $wasInternal ? site_url('login') : site_url('/');
 
         if ($this->request->isAJAX()) {
             return $this->jsonResponse(true, 'Anda telah keluar dari akun.', [
-                'redirect' => site_url('/'),
+                'redirect' => $redirectTo,
             ]);
         }
 
-        return redirect()->to('/')
+        return redirect()->to($redirectTo)
             ->with('success', 'Anda telah keluar dari akun.');
     }
 
@@ -277,12 +308,17 @@ class AuthController extends BaseController
     {
         return match ($role) {
             'pelanggan' => site_url('dashboard'),
-            'admin'     => site_url('dashboard'),
-            'keuangan'  => site_url('dashboard'),
-            'produksi'  => site_url('dashboard'),
-            'owner'     => site_url('dashboard'),
+            'admin'     => site_url('admin/dashboard'),
+            'keuangan'  => site_url('keuangan/dashboard'),
+            'produksi'  => site_url('produksi/dashboard'),
+            'owner'     => site_url('owner/dashboard'),
             default     => site_url('dashboard'),
         };
+    }
+
+    private function isInternalRole(string $role): bool
+    {
+        return in_array($role, ['admin', 'keuangan', 'produksi', 'owner'], true);
     }
 
     /**

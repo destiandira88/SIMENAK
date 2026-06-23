@@ -1,16 +1,34 @@
 <?= $this->extend('layouts/auth') ?>
 
-<?= $this->section('title') ?>Masuk<?= $this->endSection() ?>
+<?= $this->section('title') ?>Portal Internal<?= $this->endSection() ?>
+
+<?= $this->section('styles') ?>
+<style>
+    body {
+        background: var(--navy);
+    }
+
+    body .text-center.mb-8 a span {
+        color: #fff !important;
+    }
+
+    body .text-center.text-xs.mt-6 {
+        color: rgba(255, 255, 255, 0.55) !important;
+    }
+</style>
+<?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 
 <div class="mb-6">
-    <h1 class="text-2xl font-extrabold tracking-tight" style="color:var(--navy);">
-        Selamat datang 👋
-    </h1>
-    <p class="mt-1.5 text-sm" style="color:var(--text-muted);">
-        Masuk ke akun SIMENAK Anda
-    </p>
+    <center>
+        <h1 class="mt-4 text-2xl font-extrabold tracking-tight" style="color:var(--navy);">
+            Masuk Portal Internal
+        </h1>
+        <p class="mt-1.5 text-sm" style="color:var(--text-muted);">
+            Halaman ini khusus untuk Admin, Keuangan, Produksi, dan Owner.
+        </p>
+        <center>
 </div>
 
 <form action="<?= site_url('login') ?>" method="post" class="space-y-5">
@@ -27,9 +45,8 @@
             value="<?= esc(old('email')) ?>"
             required
             autocomplete="email"
-            placeholder="nama@email.com"
-            class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]"
-        >
+            placeholder="nama@zplack.com"
+            class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]">
     </div>
 
     <div>
@@ -44,20 +61,18 @@
                 required
                 autocomplete="current-password"
                 placeholder="Masukkan kata sandi"
-                class="input-field w-full px-4 py-2.5 pr-11 text-sm text-[#051747] placeholder:text-[#8896A5]"
-            >
+                class="input-field w-full px-4 py-2.5 pr-11 text-sm text-[#051747] placeholder:text-[#8896A5]">
             <button
                 type="button"
                 id="togglePassword"
                 class="absolute inset-y-0 right-0 flex items-center px-3 text-[#8896A5] hover:text-[#2E5CE6] transition-colors"
-                aria-label="Tampilkan kata sandi"
-            >
+                aria-label="Tampilkan kata sandi">
                 <svg id="iconEye" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
                 <svg id="iconEyeOff" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858 3.03a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858 3.03a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                 </svg>
             </button>
         </div>
@@ -65,32 +80,32 @@
 
     <button
         type="submit"
-        class="btn-primary w-full py-3 text-white text-sm mt-2"
-    >
+        class="btn-primary w-full py-3 text-white text-sm mt-2">
         Masuk ke Portal
     </button>
 </form>
 
 <p class="text-center text-sm mt-6" style="color:var(--text-muted);">
-    Belum punya akun?
-    <a href="<?= site_url('register') ?>" class="font-semibold hover:underline" style="color:var(--blue-accent);">
-        Daftar
+    Pelanggan?
+    <a href="<?= site_url('/') ?>" class="font-semibold hover:underline" style="color:var(--blue-accent);">
+        Pesan melalui halaman utama
     </a>
 </p>
+
 
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
 <script>
-    (function () {
+    (function() {
         const passwordInput = document.getElementById('password');
-        const toggleBtn     = document.getElementById('togglePassword');
-        const iconEye       = document.getElementById('iconEye');
-        const iconEyeOff    = document.getElementById('iconEyeOff');
+        const toggleBtn = document.getElementById('togglePassword');
+        const iconEye = document.getElementById('iconEye');
+        const iconEyeOff = document.getElementById('iconEyeOff');
 
         if (!passwordInput || !toggleBtn) return;
 
-        toggleBtn.addEventListener('click', function () {
+        toggleBtn.addEventListener('click', function() {
             const isHidden = passwordInput.type === 'password';
             passwordInput.type = isHidden ? 'text' : 'password';
             iconEye.classList.toggle('hidden', isHidden);

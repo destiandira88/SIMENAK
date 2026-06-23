@@ -203,7 +203,10 @@ $navMenus = [
                         <button type="button" data-open-logout-modal class="btn-outline px-4 py-2 text-xs hidden md:inline-flex">Keluar</button>
                     </div>
                 <?php else: ?>
-                    <button type="button" data-open-modal="loginModal" class="btn-primary px-5 py-2 text-[10px] md:text-xs">Masuk</button>
+                    <div class="flex items-center gap-2 md:gap-3">
+                        <button type="button" data-open-modal="registerModal" class="btn-outline px-4 py-2 text-[10px] md:text-xs">Daftar</button>
+                        <button type="button" data-open-modal="loginModal" class="btn-primary px-5 py-2 text-[10px] md:text-xs">Masuk</button>
+                    </div>
                 <?php endif; ?>
             </nav>
         </div>
@@ -253,7 +256,7 @@ $navMenus = [
                     </div>
                     <h4 class="text-2xl md:text-[28px] font-extrabold text-[#051747] leading-tight">Selamat Datang 👋</h4>
                     <p class="mt-2 text-sm text-slate-500 leading-relaxed px-2">
-                        Masuk ke SIMENAK Z'Plack Portal untuk melakukan pemesanan
+                        Masuk sebagai pelanggan untuk melakukan pemesanan di SIMENAK Z'Plack
                     </p>
                 </div>
 
@@ -521,6 +524,11 @@ $navMenus = [
                             return;
                         }
                         showAlert(loginAlert, data.message || 'Gagal masuk.', false);
+                        if (data.redirect) {
+                            setTimeout(() => {
+                                window.location.href = data.redirect;
+                            }, 2200);
+                        }
                     } catch (err) {
                         showAlert(loginAlert, 'Terjadi kesalahan jaringan. Silakan coba lagi.', false);
                     } finally {
