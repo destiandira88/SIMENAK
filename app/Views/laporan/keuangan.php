@@ -130,6 +130,7 @@ $cards = [
         <table class="w-full text-sm">
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
+                    <th class="px-4 py-3 text-left font-semibold w-12">No</th>
                     <th class="px-4 py-3 text-left font-semibold">Jenis</th>
                     <th class="px-4 py-3 text-left font-semibold">Jumlah</th>
                     <th class="px-4 py-3 text-left font-semibold">Total Nominal</th>
@@ -139,13 +140,14 @@ $cards = [
             <tbody>
                 <?php if ($rekapJenis === []): ?>
                     <tr>
-                        <td colspan="4" class="py-12 text-center text-slate-500 text-sm">
+                        <td colspan="5" class="py-12 text-center text-slate-500 text-sm">
                             Tidak ada pemasukan terverifikasi pada periode ini.
                         </td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($rekapJenis as $row): ?>
+                    <?php foreach ($rekapJenis as $index => $row): ?>
                         <tr class="border-b border-slate-100 hover:bg-[#F8FAFF]">
+                            <td class="px-4 py-3 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3 font-medium text-[#051747]"><?= esc((string) ($row['label'] ?? '-')) ?></td>
                             <td class="px-4 py-3 text-slate-600"><?= esc((string) ($row['jumlah'] ?? 0)) ?></td>
                             <td class="px-4 py-3 font-semibold text-[#051747]">
@@ -157,6 +159,7 @@ $cards = [
                         </tr>
                     <?php endforeach; ?>
                     <tr class="border-t-2 border-[#051747] bg-[#F8FAFF] font-extrabold text-[#051747]">
+                        <td class="px-4 py-3"></td>
                         <td class="px-4 py-3">Total</td>
                         <td class="px-4 py-3"><?= esc((string) ($rekapTotals['jumlah'] ?? 0)) ?></td>
                         <td class="px-4 py-3">

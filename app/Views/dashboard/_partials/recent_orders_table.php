@@ -33,7 +33,7 @@ $nextPageId        = $nextPageId ?? 'nextPageBtn';
 $pageInfoId        = $pageInfoId ?? 'pageInfo';
 $isAdmin           = $variant === 'admin';
 $isOwner           = $variant === 'owner';
-$colspan           = $isAdmin ? 9 : ($isOwner ? 5 : 7);
+$colspan           = $isAdmin ? 9 : ($isOwner ? 6 : 7);
 ?>
 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
     <h3 class="text-base font-bold text-[#051747]"><?= esc($sectionTitle) ?></h3>
@@ -83,6 +83,7 @@ $colspan           = $isAdmin ? 9 : ($isOwner ? 5 : 7);
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
                     <?php if ($isOwner): ?>
+                        <th class="px-4 py-3 text-left font-semibold w-12">No</th>
                         <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kode">
                             Kode Pesanan<span class="sort-icon">↕</span>
                         </th>
@@ -177,6 +178,7 @@ $colspan           = $isAdmin ? 9 : ($isOwner ? 5 : 7);
                             data-total="<?= esc((string) $totalHarga) ?>"
                             <?php endif; ?>>
                             <?php if ($isOwner): ?>
+                                <td class="row-num px-4 py-3.5 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                                 <td class="px-4 py-3.5 font-mono text-sm font-semibold text-[#051747] whitespace-nowrap">
                                     <?php if ($kodeOrder !== ''): ?>
                                         <a href="<?= esc($detailUrl) ?>" class="hover:text-[#2E5CE6] hover:underline">

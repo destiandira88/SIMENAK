@@ -1,5 +1,7 @@
 -- Tier perusahaan + field verifikasi MOU
 -- Jalankan di database SIMENAK
+-- CATATAN: tier_perusahaan sudah dihapus oleh 2026-06-09_drop_tier_perusahaan.sql (legacy).
+-- File ini disimpan untuk riwayat migrasi; jangan jalankan ulang di DB baru.
 
 ALTER TABLE `pelanggan`
   ADD COLUMN `tier_perusahaan` ENUM('pemula','terpercaya') DEFAULT NULL AFTER `is_verified`,

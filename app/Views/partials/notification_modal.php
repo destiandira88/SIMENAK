@@ -3,7 +3,7 @@
 }
 
 $csrfHeader = config('Security')->headerName;
-$csrfCookie = config('Security')->cookieName;
+$csrfField  = config('Security')->tokenName;
 ?>
 <style>
     #notifModal {
@@ -168,7 +168,7 @@ $csrfCookie = config('Security')->cookieName;
     const notifMarkAllBtn = document.getElementById('notifMarkAllBtn');
     const bellBadge = document.getElementById('notifBellBadge');
     const csrfHeader = <?= json_encode($csrfHeader) ?>;
-    const csrfCookie = <?= json_encode($csrfCookie) ?>;
+    const csrfField = <?= json_encode($csrfField) ?>;
 
     if (!notifModal) {
         return;
@@ -177,20 +177,58 @@ $csrfCookie = config('Security')->cookieName;
     const listUrl = <?= json_encode(site_url('notifikasi/list')) ?>;
     const markAllUrl = <?= json_encode(site_url('notifikasi/read-all')) ?>;
     const markReadBase = <?= json_encode(site_url('notifikasi/read')) ?>;
+    const csrfSyncUrl = <?= json_encode(site_url('csrf-sync')) ?>;
 
     let closeTimer = null;
     let loadedOnce = false;
 
     const getCsrfToken = () => {
-        const match = document.cookie.match(new RegExp('(?:^|; )' + csrfCookie.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '=([^;]*)'));
-        return match ? decodeURIComponent(match[1]) : '';
+        const input = document.querySelector(`input[name="${csrfField}"]`);
+        if (input?.value) {
+            return input.value;
+        }
+        return document.querySelector('meta[name="csrf-token"]')?.content || '';
     };
 
-    const fetchJson = async (url, method = 'GET') => {
+    const applyCsrfToken = (token) => {
+        if (!token) {
+            return;
+        }
+
+        document.querySelectorAll(`input[name="${csrfField}"]`).forEach((input) => {
+            input.value = token;
+        });
+
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) {
+            meta.content = token;
+        }
+    };
+
+    const refreshCsrfToken = async () => {
+        try {
+            const res = await fetch(csrfSyncUrl, {
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!res.ok) {
+                return false;
+            }
+            const data = await res.json();
+            if (data?.token) {
+                applyCsrfToken(data.token);
+                return true;
+            }
+        } catch (e) {
+            /* ignore */
+        }
+        return false;
+    };
+
+    const fetchJson = async (url, method = 'GET', isRetry = false) => {
         const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-        const token = getCsrfToken();
-        if (token) {
-            headers[csrfHeader] = token;
+        if (method !== 'GET') {
+            headers[csrfHeader] = getCsrfToken();
         }
 
         const res = await fetch(url, {
@@ -198,6 +236,15 @@ $csrfCookie = config('Security')->cookieName;
             headers,
             credentials: 'same-origin',
         });
+
+        const headerToken = res.headers.get(csrfHeader);
+        if (headerToken) {
+            applyCsrfToken(headerToken);
+        }
+
+        if (method !== 'GET' && res.status === 403 && !isRetry && await refreshCsrfToken()) {
+            return fetchJson(url, method, true);
+        }
 
         return res.json();
     };

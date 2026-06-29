@@ -19,6 +19,12 @@ $sisaKuota   = (int) ($order['sisa_kuota'] ?? 0);
 $kuotaRevisi = (int) ($order['kuota_revisi'] ?? 0);
 $requireDp   = (int) ($order['require_dp'] ?? 0) === 1;
 $isCustom    = (int) ($order['is_custom'] ?? 0) === 1;
+$deadlineDiajukan = trim((string) ($order['deadline_diajukan'] ?? ''));
+$deadlineProduksi = trim((string) ($order['deadline_produksi'] ?? ''));
+$deadlineLabelInfo = $role === 'pelanggan' ? 'Deadline Pengerjaan' : 'Deadline Produksi';
+$deadlineTampilInfo = $role === 'pelanggan'
+    ? ($deadlineProduksi !== '' ? $deadlineProduksi : $deadlineDiajukan)
+    : $deadlineProduksi;
 
 $kategoriLabel = match ($kategoriKey) {
     'desain_grafis' => 'Desain Grafis',
@@ -82,18 +88,20 @@ $canUploadDp = $status === 'menunggu_verifikasi_dp'
     && ($dpRecord === null || ($dpRecord['status'] ?? '') === 'ditolak');
 
 helper('notification');
-$tierPerusahaan       = (string) ($order['tier_perusahaan'] ?? 'pemula');
-$pelangganCtx         = ['tier_perusahaan' => $tierPerusahaan];
-$pelunasanSebelumKirim = isPelunasanSebelumKirim($order, $pelangganCtx);
-$canUploadLunas       = canUploadPelunasan($order, $pelangganCtx)
+$pelunasanSebelumKirim = isPelunasanSebelumKirim($order);
+$canUploadLunas       = canUploadPelunasan($order)
     && ($lunasRecord === null || ($lunasRecord['status'] ?? '') === 'ditolak');
-$canViewNota          = canViewNotaTagihan($order, $pelangganCtx);
+$canViewNota          = canViewNotaTagihan($order);
 $canViewBuktiPelunasan = canViewBuktiPembayaranPelunasan($lunasRecord);
 $metodePengiriman     = (string) ($order['metode_pengiriman'] ?? 'kurir');
 $lunasMenungguVerif   = ($lunasRecord['status'] ?? '') === 'menunggu';
 $labelMenungguLunas   = $status === 'menunggu_verifikasi_lunas' && $lunasMenungguVerif
     ? 'Bukti Pelunasan-Menunggu Verifikasi'
     : ($pelunasanSebelumKirim ? 'Menunggu Pembayaran Pelunasan' : 'Nota Tagihan-Menunggu Pembayaran');
+$pelangganMenungguVerifKeuangan = $role === 'pelanggan' && (
+    ($status === 'menunggu_verifikasi_dp' && $hasBuktiDp)
+    || ($status === 'menunggu_verifikasi_lunas' && $lunasMenungguVerif)
+);
 
 if ($jenisPelanggan === 'perusahaan' && !$pelunasanSebelumKirim) {
     $statusList = [
@@ -211,32 +219,32 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
     </div>
     <?php if ($role === 'pelanggan'): ?>
         <a href="<?= site_url('order') ?>"
-           class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
+            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
             ← Pesanan Saya
         </a>
     <?php elseif ($role === 'admin'): ?>
         <a href="<?= site_url('list-pemesanan') ?>"
-           class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
+            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
             ← List Pemesanan
         </a>
     <?php elseif ($role === 'owner'): ?>
         <a href="<?= site_url('list-pemesanan') ?>"
-           class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
+            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
             ← Pesanan
         </a>
     <?php elseif ($role === 'keuangan'): ?>
         <a href="<?= site_url('verifikasi-dp') ?>"
-           class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
+            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
             ← Verifikasi Pembayaran
         </a>
     <?php elseif ($role === 'produksi'): ?>
         <a href="<?= site_url('antrian-desain') ?>"
-           class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
+            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
             ← Antrian Desain
         </a>
     <?php else: ?>
         <a href="<?= site_url('dashboard') ?>"
-           class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
+            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
             ← Beranda
         </a>
     <?php endif; ?>
@@ -287,9 +295,9 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                     </div>
                 <?php endif; ?>
                 <div>
-                    <p class="text-xs font-semibold uppercase text-slate-400 mb-1">Deadline Produksi</p>
+                    <p class="text-xs font-semibold uppercase text-slate-400 mb-1"><?= esc($deadlineLabelInfo) ?></p>
                     <p class="text-slate-700">
-                        <?= !empty($order['deadline']) ? esc(date('d M Y', strtotime((string) $order['deadline']))) : '-' ?>
+                        <?= $deadlineTampilInfo !== '' ? esc(date('d M Y', strtotime($deadlineTampilInfo))) : '-' ?>
                     </p>
                     <p class="text-[11px] text-slate-400 mt-0.5 leading-snug">
                         Barang selesai dikerjakan (belum termasuk pengiriman).
@@ -381,7 +389,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
             </div>
             <?php if ($revisList !== []): ?>
                 <a href="<?= esc(site_url('revisi/history/' . $kodeOrder)) ?>"
-                   class="inline-block text-xs text-[#2E5CE6] hover:underline mb-4">
+                    class="inline-block text-xs text-[#2E5CE6] hover:underline mb-4">
                     Lihat riwayat lengkap →
                 </a>
             <?php endif; ?>
@@ -392,9 +400,9 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
             <?php endif; ?>
 
             <?php if ($pilihDraftUntukCetak): ?>
-                <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-                    <p class="font-bold text-red-800 text-sm mb-1">Kuota revisi habis</p>
-                    <p class="text-xs text-red-700 mb-4">
+                <div class="notice-danger rounded-xl p-4 mb-4">
+                    <p class="font-bold text-sm mb-1">Kuota revisi habis</p>
+                    <p class="text-xs mb-4">
                         Pilih salah satu versi draft di bawah yang akan diproses cetak oleh produksi.
                     </p>
                     <form method="post" action="<?= esc(site_url('revisi/acc')) ?>" class="space-y-3">
@@ -574,7 +582,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                         <?php $noTelp = trim((string) ($order['no_telp'] ?? '')); ?>
                         <?php if ($noTelp !== ''): ?>
                             <a href="tel:<?= esc(preg_replace('/\D+/', '', $noTelp) ?: $noTelp) ?>"
-                               class="text-[#2E5CE6] font-semibold hover:underline">
+                                class="text-[#2E5CE6] font-semibold hover:underline">
                                 <?= esc($noTelp) ?>
                             </a>
                         <?php else: ?>
@@ -588,55 +596,74 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
         <?php if ($isCustom && $status === 'menunggu_konfirmasi_harga' && $role === 'admin'): ?>
             <?php
             helper('deadline');
-            $deadlinePelanggan = (string) ($order['deadline'] ?? '');
+            $deadlinePelanggan = $deadlineDiajukan;
             $deadlinePelangganLabel = $deadlinePelanggan !== ''
                 ? formatTanggalId($deadlinePelanggan)
                 : '-';
+            $deadlineProduksiAwal = $deadlineProduksi !== ''
+                ? $deadlineProduksi
+                : ($deadlineDiajukan !== '' ? $deadlineDiajukan : date('Y-m-d'));
+            $estimasiHariAwal = countHariKerjaSampaiDeadline($deadlineProduksiAwal);
+            $estimasiAwal = formatEstimasiHariKerjaExact($estimasiHariAwal);
             ?>
             <div class="bg-white border border-slate-200 rounded-xl p-5 mb-5 shadow-sm">
-                <p class="font-bold text-[#051747] mb-1">⭐ Set Penawaran Harga Custom</p>
+                <p class="font-bold text-[#051747] mb-1 flex items-center gap-2">
+                    <svg class="h-5 w-5 shrink-0 text-amber-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                    Konfirmasi Harga Pesanan Custom
+                </p>
                 <p class="text-sm text-slate-500 mb-4">
-                    Tetapkan harga, estimasi, dan deadline produksi. Tinjau ajuan deadline pelanggan — sesuaikan jika tidak sanggup.
+                    Tentukan harga dan estimasi produksi berdasarkan spesifikasi pelanggan. <b>Apabila deadline yang diajukan tidak memungkinkan, tetapkan deadline produksi yang sesuai.</b>
                 </p>
                 <?php if (!empty($order['catatan_custom'])): ?>
-                    <div class="bg-slate-50 rounded-xl p-3 mb-4 text-sm text-slate-700">
-                        <span class="font-semibold">Catatan pelanggan:</span>
-                        <?= esc((string) $order['catatan_custom']) ?>
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 shadow-sm">
+                        <p class="text-xs font-bold uppercase tracking-wide text-amber-800 mb-2">Catatan Pelanggan</p>
+                        <p class="text-sm text-amber-900 leading-relaxed whitespace-pre-line"><?= esc((string) $order['catatan_custom']) ?></p>
                     </div>
                 <?php endif; ?>
                 <form method="post"
                     action="<?= esc(site_url('list-pemesanan/set-harga')) ?>"
-                    class="space-y-3 js-action-confirm-form"
+                    class="space-y-3 js-action-confirm-form js-custom-set-harga-form"
                     data-confirm-variant="offer"
                     data-confirm-kode="<?= esc($kodeOrder) ?>">
                     <?= csrf_field() ?>
                     <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Harga Ditawarkan (Rp)</label>
-                        <input type="number" name="harga_custom" min="1" step="1" required
-                            onwheel="this.blur()"
+                        <label class="block text-sm font-semibold text-slate-700 mb-1" for="hargaCustomInput">Total Harga Dikonfirmasi (Rp)</label>
+                        <input type="text"
+                            name="harga_custom"
+                            id="hargaCustomInput"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            required
                             class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"
-                            placeholder="Contoh: 350000">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Estimasi Pengerjaan</label>
-                        <input type="text" name="estimasi_custom" id="estimasiCustomAdmin" required
-                            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"
-                            placeholder="Contoh: 5-7 hari kerja (setelah ACC desain)">
-                        <p class="text-xs text-slate-400 mt-1">Dihitung setelah pelanggan menyetujui desain.</p>
+                            placeholder="Rp 0">
                     </div>
                     <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
                         <p class="text-xs text-slate-500 mb-2">
-                            Diajukan pelanggan: <strong class="text-slate-700"><?= esc($deadlinePelangganLabel) ?></strong>
+                            Diajukan pelanggan: <strong class="text-[#2E5CE6] font-semibold"><?= esc($deadlinePelangganLabel) ?></strong>
                         </p>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Deadline Produksi Penawaran</label>
-                        <input type="date" name="deadline" id="deadlinePenawaranAdmin" required
+                        <label class="block text-sm font-semibold text-slate-700 mb-1" for="deadlineKonfirmasiAdmin">Deadline Produksi</label>
+                        <input type="date" name="deadline_produksi" id="deadlineKonfirmasiAdmin" required
                             min="<?= esc(date('Y-m-d')) ?>"
-                            value="<?= esc($deadlinePelanggan !== '' ? $deadlinePelanggan : date('Y-m-d')) ?>"
+                            value="<?= esc($deadlineProduksiAwal) ?>"
+                            data-deadline-produksi
                             class="w-full max-w-xs border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
                         <p class="text-xs text-slate-400 mt-1.5">
                             Barang selesai dikerjakan — belum termasuk pengiriman kurir.
                         </p>
+                    </div>
+                    <div>
+                        <p class="block text-sm font-semibold text-slate-700 mb-1">Estimasi Pengerjaan</p>
+                        <div class="rounded-xl bg-slate-50 border border-slate-100 px-3.5 py-2.5" data-estimasi-display>
+                            <p class="text-sm text-slate-500" data-estimasi-text><?= esc($estimasiAwal) ?></p>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1.5">
+                            Estimasi dihitung otomatis dari hari ini sampai deadline produksi (Senin-Jumat, tidak termasuk Sabtu &amp; Minggu).
+                        </p>
+                        <input type="hidden" name="estimasi_hari" data-estimasi-hari-value value="<?= esc((string) $estimasiHariAwal) ?>">
+                        <input type="hidden" name="estimasi_custom" id="estimasiCustomAdmin" data-estimasi-hidden value="<?= esc($estimasiAwal) ?>">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Catatan untuk Pelanggan</label>
@@ -646,7 +673,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                     </div>
                     <button type="submit"
                         class="bg-[#051747] text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-[#2E5CE6] transition-colors">
-                        Kirim Penawaran ke Pelanggan
+                        Konfirmasi Harga
                     </button>
                 </form>
             </div>
@@ -655,17 +682,23 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                 <p class="font-bold text-amber-800">⏳ Menunggu Konfirmasi Harga</p>
                 <p class="text-sm text-amber-700 mt-1">
                     Admin sedang meninjau spesifikasi custom Anda.
+                    Estimasi kisaran harga akan diinformasikan maksimal 2 hari kerja setelah pengajuan pesanan custom diterima.
                     Anda akan mendapat notifikasi saat harga sudah ditetapkan.
                 </p>
             </div>
         <?php elseif ($isCustom && $status === 'menunggu_konfirmasi_pelanggan' && $role === 'pelanggan'): ?>
             <?php helper('deadline'); ?>
             <div class="bg-blue-50 border border-blue-300 rounded-xl p-5 mb-5">
-                <p class="font-bold text-[#051747] mb-3">💰 Penawaran dari Admin</p>
+                <p class="font-bold text-[#051747] mb-3 flex items-center gap-2">
+                    <svg class="h-5 w-5 shrink-0 text-emerald-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.57 1.03-2.75 2.93-3.07V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.63 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z" />
+                    </svg>
+                    Konfirmasi Harga dari Admin
+                </p>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                     <div>
-                        <p class="text-xs font-bold uppercase text-slate-500">Harga Ditawarkan</p>
+                        <p class="text-xs font-bold uppercase text-slate-500">Harga Dikonfirmasi</p>
                         <p class="text-2xl font-bold text-[#051747]">
                             Rp <?= esc(number_format((float) ($order['harga_custom'] ?? 0), 0, ',', '.')) ?>
                         </p>
@@ -680,7 +713,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                     <div>
                         <p class="text-xs font-bold uppercase text-slate-500">Deadline Produksi</p>
                         <p class="text-lg font-semibold text-[#051747]">
-                            <?= !empty($order['deadline']) ? esc(formatTanggalId((string) $order['deadline'])) : '-' ?>
+                            <?= $deadlineProduksi !== '' ? esc(formatTanggalId($deadlineProduksi)) : '-' ?>
                         </p>
                         <p class="text-[11px] text-slate-500 mt-0.5">Barang selesai, belum termasuk pengiriman</p>
                     </div>
@@ -707,7 +740,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                         data-confirm-kode="<?= esc($kodeOrder) ?>"
                         data-confirm-harga="<?= esc((string) (int) ($order['harga_custom'] ?? 0)) ?>"
                         data-confirm-estimasi="<?= esc((string) ($order['estimasi_custom'] ?? '-')) ?>"
-                        data-confirm-deadline="<?= esc(!empty($order['deadline']) ? formatTanggalId((string) $order['deadline']) : '-') ?>">
+                        data-confirm-deadline="<?= esc($deadlineProduksi !== '' ? formatTanggalId($deadlineProduksi) : '-') ?>">
                         <?= csrf_field() ?>
                         <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
                         <button
@@ -727,7 +760,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                         <button
                             type="submit"
                             class="bg-red-100 text-red-700 px-5 py-2.5 rounded-full font-bold text-sm hover:bg-red-200 transition-colors">
-                            ✗ Tolak Penawaran
+                            ✗ Tolak & Batalkan Pesanan
                         </button>
                     </form>
                 </div>
@@ -735,11 +768,27 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
         <?php elseif ($isCustom && $status === 'menunggu_konfirmasi_pelanggan' && $role === 'admin'): ?>
             <?php helper('deadline'); ?>
             <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-5">
-                <p class="font-bold text-[#051747]">Penawaran terkirim-menunggu konfirmasi pelanggan</p>
+                <p class="font-bold text-[#051747]">Konfirmasi harga terkirim — menunggu persetujuan pelanggan</p>
                 <p class="text-sm text-slate-600 mt-2">
                     Harga: <strong>Rp <?= esc(number_format((float) ($order['harga_custom'] ?? 0), 0, ',', '.')) ?></strong>
                     · Estimasi: <strong><?= esc((string) ($order['estimasi_custom'] ?? '-')) ?></strong> (setelah ACC desain)
-                    · Deadline produksi: <strong><?= !empty($order['deadline']) ? esc(formatTanggalId((string) $order['deadline'])) : '-' ?></strong>
+                    · Deadline produksi: <strong><?= $deadlineProduksi !== '' ? esc(formatTanggalId($deadlineProduksi)) : '-' ?></strong>
+                </p>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($pelangganMenungguVerifKeuangan): ?>
+            <?php
+            $verifKeuanganJudul = $status === 'menunggu_verifikasi_dp'
+                ? 'Bukti DP Sedang Diverifikasi'
+                : 'Bukti Pelunasan Sedang Diverifikasi';
+            ?>
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-5">
+                <p class="font-bold text-amber-800">⏳ <?= esc($verifKeuanganJudul) ?></p>
+                <p class="text-sm text-amber-700 mt-1">
+                    Bukti transfer Anda sedang ditinjau tim keuangan.
+                    Verifikasi dilakukan maksimal <strong>1 hari kerja</strong> (Senin–Jumat, tidak termasuk Sabtu &amp; Minggu).
+                    Anda akan mendapat notifikasi setelah verifikasi selesai.
                 </p>
             </div>
         <?php endif; ?>
@@ -866,9 +915,9 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                     <?php endif; ?>
 
                     <?php if ($dpDitolak): ?>
-                        <div class="bg-red-50 border border-red-200 rounded-xl p-4 mt-3">
-                            <p class="font-bold text-red-700 text-sm">❌ Bukti DP Ditolak</p>
-                            <p class="text-xs text-red-600 mt-1">
+                        <div class="notice-danger rounded-xl p-4 mt-3">
+                            <p class="font-bold text-sm">❌ Bukti DP Ditolak</p>
+                            <p class="text-xs mt-1">
                                 Alasan: <?= esc((string) ($dpRecord['catatan_tolak'] ?? '-')) ?>
                             </p>
                         </div>
@@ -880,7 +929,9 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                             method="post"
                             action="<?= esc(site_url('order/' . $kodeOrder . '/upload-dp')) ?>"
                             enctype="multipart/form-data"
-                            class="mt-3 scroll-mt-24">
+                            class="mt-3 scroll-mt-24 js-action-confirm-form"
+                            data-confirm-variant="upload-bukti">
+                            <?= csrf_field() ?>
                             <div class="bg-white border border-slate-200 rounded-xl p-5">
                                 <h3 class="font-bold text-[#051747] mb-4">Unggah Bukti Transfer DP</h3>
                                 <div class="bg-slate-50 rounded-lg p-3 mb-4">
@@ -956,7 +1007,8 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                         method="post"
                         action="<?= esc(site_url('order/' . $kodeOrder . '/upload-pelunasan')) ?>"
                         enctype="multipart/form-data"
-                        class="mt-3">
+                        class="mt-3 js-action-confirm-form"
+                        data-confirm-variant="upload-bukti">
                         <?= csrf_field() ?>
                         <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Unggah Bukti Pelunasan</label>
@@ -1009,12 +1061,12 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                         </div>
                     <?php endif; ?>
                     <?php
-                        $statusKirimLabels = [
-                            'dikirim'  => ['label' => 'Dalam Pengiriman', 'class' => 'bg-blue-100 text-blue-800'],
-                            'diterima' => ['label' => 'Diterima',         'class' => 'bg-emerald-100 text-emerald-800'],
-                            'diambil'  => ['label' => 'Diambil',          'class' => 'bg-emerald-100 text-emerald-800'],
-                        ];
-                        $skInfo = $statusKirimLabels[$pengiriman['status_kirim'] ?? ''] ?? null;
+                    $statusKirimLabels = [
+                        'dikirim'  => ['label' => 'Dalam Pengiriman', 'class' => 'bg-blue-100 text-blue-800'],
+                        'diterima' => ['label' => 'Diterima',         'class' => 'bg-emerald-100 text-emerald-800'],
+                        'diambil'  => ['label' => 'Diambil',          'class' => 'bg-emerald-100 text-emerald-800'],
+                    ];
+                    $skInfo = $statusKirimLabels[$pengiriman['status_kirim'] ?? ''] ?? null;
                     ?>
                     <?php if (!empty($pengiriman['no_resi'])): ?>
                         <p class="text-sm text-slate-700">
@@ -1110,18 +1162,18 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
             }
 
             function setStateUrgent() {
-                elCard.className = 'rounded-xl p-4 mb-4 border transition-colors duration-500 bg-red-50 border-red-300';
-                elCountdown.className = 'text-sm font-bold font-mono text-red-700 mb-1 animate-pulse';
-                elTitle.className = 'font-bold text-red-700 text-sm';
-                elNote.className = 'text-xs text-red-600';
+                elCard.className = 'notice-danger rounded-xl p-4 mb-4 transition-colors duration-500';
+                elCountdown.className = 'text-sm font-bold font-mono mb-1 animate-pulse';
+                elTitle.className = 'font-bold text-sm';
+                elNote.className = 'text-xs';
                 elIcon.textContent = '🚨';
             }
 
             function setStateExpired() {
-                elCard.className = 'rounded-xl p-4 mb-4 border bg-red-50 border-red-300';
-                elCountdown.className = 'text-sm font-bold font-mono text-red-700 mb-1';
-                elTitle.className = 'font-bold text-red-700 text-sm';
-                elNote.className = 'text-xs text-red-600 font-semibold';
+                elCard.className = 'notice-danger rounded-xl p-4 mb-4';
+                elCountdown.className = 'text-sm font-bold font-mono mb-1';
+                elTitle.className = 'font-bold text-sm';
+                elNote.className = 'text-xs font-semibold';
                 elIcon.textContent = '⛔';
             }
 
@@ -1160,5 +1212,42 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
             setInterval(updateCountdown, 1000);
         })();
     </script>
+<?php endif; ?>
+<?php if ($isCustom && $status === 'menunggu_konfirmasi_harga' && $role === 'admin'): ?>
+    <script>
+        (function() {
+            const input = document.getElementById('hargaCustomInput');
+            if (!input) {
+                return;
+            }
+
+            const formatRupiahDisplay = (digits) => {
+                if (!digits) {
+                    return '';
+                }
+
+                const num = parseInt(digits, 10);
+                if (Number.isNaN(num) || num <= 0) {
+                    return '';
+                }
+
+                return 'Rp ' + num.toLocaleString('id-ID');
+            };
+
+            const applyFormat = () => {
+                const digits = input.value.replace(/\D/g, '').replace(/^0+/, '');
+                const formatted = formatRupiahDisplay(digits);
+                input.value = formatted;
+
+                if (formatted) {
+                    input.setSelectionRange(formatted.length, formatted.length);
+                }
+            };
+
+            input.addEventListener('input', applyFormat);
+            input.addEventListener('blur', applyFormat);
+        })();
+    </script>
+    <?= view('partials/custom_estimasi_deadline_sync_script') ?>
 <?php endif; ?>
 <?= $this->endSection() ?>

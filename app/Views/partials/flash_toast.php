@@ -9,9 +9,9 @@ $flashMap = [
         'iconSvg' => '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>',
     ],
     'error' => [
-        'bg'      => 'bg-red-50',
-        'border'  => 'border-red-200/80',
-        'text'    => 'text-red-900',
+        'bg'      => 'bg-[#FEE2E2]',
+        'border'  => 'border-[#FECACA]',
+        'text'    => 'text-[#991B1B]',
         'iconBg'  => 'bg-red-500',
         'bar'     => 'bg-red-500',
         'iconSvg' => '<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>',

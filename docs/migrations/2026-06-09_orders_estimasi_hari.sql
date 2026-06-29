@@ -1,0 +1,5 @@
+-- DEPRECATED — gunakan migration resmi CodeIgniter 4:
+--   php spark migrate
+-- File: app/Database/Migrations/2026-06-27-111854_AddEstimasiHariToOrders.php
+--
+-- Jangan jalankan ALTER TABLE manual. Riwayat skema tercatat di tabel `migrations`.

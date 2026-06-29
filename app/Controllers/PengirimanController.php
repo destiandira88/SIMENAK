@@ -21,7 +21,7 @@ class PengirimanController extends BaseController
             ->select('o.id_order, o.kode_order, o.status, o.jenis_pelanggan,
                       o.metode_pengiriman, o.alamat_kirim, o.total_harga, o.require_dp,
                       u.nama as nama_pelanggan, u.email as email_pelanggan,
-                      k.nama_produk, p.tier_perusahaan, '
+                      k.nama_produk, '
                       . sqlLatestOrderStatusPaymentFields('o.id_order'))
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
@@ -31,10 +31,7 @@ class PengirimanController extends BaseController
             ->groupEnd()
             ->orGroupStart()
                 ->where('o.status', 'menunggu_verifikasi_lunas')
-                ->groupStart()
-                    ->where('o.jenis_pelanggan', 'perseorangan')
-                    ->orWhere('p.tier_perusahaan', 'pemula')
-                ->groupEnd()
+                ->where('o.jenis_pelanggan', 'perseorangan')
             ->groupEnd()
             ->orderBy('o.created_at', 'ASC')
             ->get()->getResultArray();
@@ -76,7 +73,7 @@ class PengirimanController extends BaseController
         $aksi = (string) $this->request->getPost('aksi');
 
         $order = $db->table('orders o')
-            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email, pl.tier_perusahaan')
+            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
             ->join('pelanggan pl', 'pl.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = pl.id_user')
             ->where('o.id_order', $idOrder)
@@ -89,8 +86,7 @@ class PengirimanController extends BaseController
         $currentStatus   = (string) $order['status'];
         $kodeOrder       = (string) $order['kode_order'];
         $idUserPelanggan = (int) $order['id_user_pelanggan'];
-        $pelangganCtx    = ['tier_perusahaan' => $order['tier_perusahaan'] ?? null];
-        $beforeShip      = isPelunasanSebelumKirim($order, $pelangganCtx);
+        $beforeShip      = isPelunasanSebelumKirim($order);
 
         try {
             $db->transStart();
@@ -283,7 +279,7 @@ class PengirimanController extends BaseController
         $db          = \Config\Database::connect();
 
         $order = $db->table('orders o')
-            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email, pl.tier_perusahaan')
+            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
             ->join('pelanggan pl', 'pl.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = pl.id_user')
             ->where('o.id_order', $idOrder)
@@ -301,8 +297,7 @@ class PengirimanController extends BaseController
 
         $kodeOrder       = (string) $order['kode_order'];
         $idUserPelanggan = (int) $order['id_user_pelanggan'];
-        $pelangganCtx    = ['tier_perusahaan' => $order['tier_perusahaan'] ?? null];
-        $beforeShip      = isPelunasanSebelumKirim($order, $pelangganCtx);
+        $beforeShip      = isPelunasanSebelumKirim($order);
 
         try {
             $db->transStart();

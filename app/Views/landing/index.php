@@ -506,7 +506,7 @@ $tabLabels = [
                         Rp <?= esc(number_format((float) ($item['harga_dasar'] ?? 0), 0, ',', '.')) ?>
                         <span class="text-sm font-semibold text-slate-400">/<?= esc((string) ($item['satuan'] ?? 'pcs')) ?></span>
                     </p>
-                    <button type="button" data-open-modal="<?= $isLoggedIn ? '' : 'loginModal' ?>" onclick="<?= $isLoggedIn ? "window.location.href='" . site_url('pesanan/buat/' . ((int) ($item['id_katalog'] ?? 0))) . "'" : '' ?>" class="mt-4 w-full btn-outline py-2 text-[10px]">Pilih &amp; Pesan Sekarang</button>
+                    <button type="button" data-open-modal="<?= $isLoggedIn ? '' : 'loginModal' ?>" onclick="<?= $isLoggedIn ? "window.location.href='" . site_url('order/create/' . ((int) ($item['id_katalog'] ?? 0))) . "'" : '' ?>" class="mt-4 w-full btn-outline py-2 text-[10px]">Pilih &amp; Pesan Sekarang</button>
                 </article>
             <?php endforeach; ?>
         </div>

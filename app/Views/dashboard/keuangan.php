@@ -120,7 +120,7 @@
                         <tr
                             class="data-table-row border-b border-slate-100 hover:bg-[#F8FAFF] transition-colors"
                             data-search="<?= esc($searchText) ?>">
-                            <td class="px-4 py-3 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
+                            <td class="row-num px-4 py-3 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3 font-mono text-sm font-semibold text-[#051747]">
                                 <?= esc($kodePayment) ?>
                             </td>

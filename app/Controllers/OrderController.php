@@ -8,7 +8,7 @@ use CodeIgniter\HTTP\RedirectResponse;
 
 class OrderController extends BaseController
 {
-    protected $helpers = ['form', 'url'];
+    protected $helpers = ['form', 'url', 'notification'];
 
     public function index()
     {
@@ -29,9 +29,9 @@ class OrderController extends BaseController
 
     public function create(int $idKatalog)
     {
-        $pelangganCheck = $this->ensurePelanggan();
-        if ($pelangganCheck !== null) {
-            return $pelangganCheck;
+        $orderCheck = $this->ensureCanCreateOrder();
+        if ($orderCheck !== null) {
+            return $orderCheck;
         }
 
         $katalogModel = model(KatalogModel::class);
@@ -70,12 +70,16 @@ class OrderController extends BaseController
             return redirect()->to(site_url('dashboard'));
         }
 
+        $orderCheck = $this->ensureCanCreateOrder();
+        if ($orderCheck !== null) {
+            return $orderCheck;
+        }
+
         $rules = [
             'id_katalog'        => 'required|integer',
             'jenis_pelanggan'   => 'required|in_list[perseorangan,perusahaan]',
             'jumlah_order'      => 'required|integer|greater_than[0]',
-            'detail_pesanan'    => 'required|min_length[5]',
-            'deadline'          => 'required|valid_date',
+            'deadline_diajukan' => 'required|valid_date',
             'metode_pengiriman' => 'required|in_list[kurir,ambil_sendiri]',
         ];
 
@@ -84,10 +88,21 @@ class OrderController extends BaseController
             $rules['alamat_kirim'] = 'required|min_length[10]';
         }
 
+        $isCustom = (int) $this->request->getPost('is_custom');
+        $rules['detail_pesanan'] = 'permit_empty';
+        if ($isCustom === 1) {
+            $rules['catatan_custom'] = 'required|min_length[10]';
+        }
+
         if (!$this->validate($rules)) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', implode(' ', $this->validator->getErrors()));
+            $idKatalog = (int) $this->request->getPost('id_katalog');
+            $formStep  = $this->resolveOrderFormStepFromErrors($this->validator->getErrors());
+
+            return $this->redirectOrderCreateFail(
+                $idKatalog,
+                implode(' ', $this->validator->getErrors()),
+                $formStep
+            );
         }
 
         $idKatalog = (int) $this->request->getPost('id_katalog');
@@ -99,16 +114,16 @@ class OrderController extends BaseController
 
         $jumlahOrder = (int) $this->request->getPost('jumlah_order');
         if ($jumlahOrder < (int) $katalog['min_order']) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', "Minimum order {$katalog['min_order']} {$katalog['satuan']}.");
+            return $this->redirectOrderCreateFail(
+                $idKatalog,
+                "Minimum order {$katalog['min_order']} {$katalog['satuan']}.",
+                1
+            );
         }
 
         $formError = $this->validateFormTemplateFields($idKatalog);
         if ($formError !== null) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', $formError);
+            return $this->redirectOrderCreateFail($idKatalog, $formError, 1);
         }
 
         $db          = \Config\Database::connect();
@@ -118,7 +133,7 @@ class OrderController extends BaseController
             ->get()
             ->getRowArray();
 
-        $jenisDiminta = (string) $this->request->getPost('jenis_pelanggan');
+        $jenisDiminta = resolveJenisPelangganFromAkun($pelanggan ?? []);
         $isCustom     = (int) $this->request->getPost('is_custom');
         helper('notification');
 
@@ -139,25 +154,42 @@ class OrderController extends BaseController
 
         $referensiPath = null;
         $file          = $this->request->getFile('referensi_desain');
-        if ($file !== null && $file->isValid() && !$file->hasMoved()) {
+
+        if ($isCustom === 1) {
+            if ($file === null || ! $file->isValid() || $file->getError() === UPLOAD_ERR_NO_FILE) {
+                return $this->redirectOrderCreateFail(
+                    $idKatalog,
+                    'Referensi desain wajib diunggah untuk pesanan custom.',
+                    1
+                );
+            }
+        }
+
+        if ($file !== null && $file->isValid() && ! $file->hasMoved()) {
             $allowed = ['jpg', 'jpeg', 'png', 'pdf'];
             $ext     = strtolower($file->getExtension());
             if (!in_array($ext, $allowed, true)) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Format referensi tidak valid. Gunakan JPG, PNG, atau PDF.');
+                return $this->redirectOrderCreateFail(
+                    $idKatalog,
+                    'Format referensi tidak valid. Gunakan JPG, PNG, atau PDF.',
+                    1
+                );
             }
             if ($file->getSize() > 2 * 1024 * 1024) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Ukuran referensi maksimal 2MB.');
+                return $this->redirectOrderCreateFail(
+                    $idKatalog,
+                    'Ukuran referensi maksimal 2MB.',
+                    1
+                );
             }
 
             $uploadDir = FCPATH . 'uploads/referensi/';
             if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Folder upload tidak tersedia.');
+                return $this->redirectOrderCreateFail(
+                    $idKatalog,
+                    'Folder upload tidak tersedia.',
+                    1
+                );
             }
 
             $newName = time() . '_' . $file->getClientName();
@@ -171,6 +203,8 @@ class OrderController extends BaseController
 
         $db->transStart();
 
+        $deadlineDiajukan = (string) $this->request->getPost('deadline_diajukan');
+
         try {
             $db->table('orders')->insert([
                 'kode_order'        => $kodeOrder,
@@ -182,7 +216,8 @@ class OrderController extends BaseController
                 'catatan_custom'    => $isCustom === 1 ? $this->request->getPost('catatan_custom') : null,
                 'referensi_desain'  => $referensiPath,
                 'detail_pesanan'    => $this->request->getPost('detail_pesanan'),
-                'deadline'          => $this->request->getPost('deadline'),
+                'deadline_diajukan' => $deadlineDiajukan,
+                'deadline_produksi' => $isCustom === 1 ? null : $deadlineDiajukan,
                 'metode_pengiriman' => $metodePengiriman,
                 'alamat_kirim'      => $metodePengiriman === 'kurir'
                     ? trim((string) $this->request->getPost('alamat_kirim'))
@@ -248,9 +283,11 @@ class OrderController extends BaseController
             $db->transRollback();
             log_message('error', '[OrderController::store] {msg}', ['msg' => $e->getMessage()]);
 
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Gagal menyimpan pesanan. Silakan coba lagi.');
+            return $this->redirectOrderCreateFail(
+                $idKatalog,
+                'Gagal menyimpan pesanan. Silakan coba lagi.',
+                (int) $this->request->getPost('form_step') === 2 ? 2 : 1
+            );
         }
 
         if ($isCustom === 1) {
@@ -281,7 +318,8 @@ class OrderController extends BaseController
         }
 
         return redirect()->to(site_url('order/detail/' . $kodeOrder))
-            ->with('success', "Pesanan {$kodeOrder} berhasil dibuat!");
+            ->with('success', "Pesanan {$kodeOrder} berhasil dibuat!")
+            ->with('clear_order_draft_katalog', $idKatalog);
     }
 
     public function redirectPesananSaya(): RedirectResponse
@@ -321,7 +359,7 @@ class OrderController extends BaseController
                 'o.*, k.nama_produk, k.kategori, k.estimasi_hari, '
                 . 'k.gambar AS gambar_katalog, k.satuan, k.min_order, '
                 . 'k.kuota_revisi_default, u.nama AS nama_pelanggan, u.email AS email_pelanggan, '
-                . 'p.no_telp, p.is_verified, p.tier_perusahaan, p.is_suspended'
+                . 'p.no_telp, p.is_verified, p.is_suspended'
             )
             ->join('katalog k', 'k.id_katalog = o.id_katalog')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
@@ -516,8 +554,33 @@ class OrderController extends BaseController
         return null;
     }
 
+    private function ensureCanCreateOrder(): ?RedirectResponse
+    {
+        $pelangganCheck = $this->ensurePelanggan();
+        if ($pelangganCheck !== null) {
+            return $pelangganCheck;
+        }
+
+        $db = \Config\Database::connect();
+        $pelanggan = $db->table('pelanggan')
+            ->where('id_pelanggan', (int) session()->get('id_pelanggan'))
+            ->get()
+            ->getRowArray();
+
+        if (!pelangganCanCreateOrder($pelanggan)) {
+            return redirect()->to(site_url('dashboard'))
+                ->with('warning', 'Data pelanggan tidak ditemukan.');
+        }
+
+        return null;
+    }
+
     private function validateFormTemplateFields(int $idKatalog): ?string
     {
+        if ((int) $this->request->getPost('is_custom') === 1) {
+            return null;
+        }
+
         $db = \Config\Database::connect();
 
         $templates = $db->table('form_templates')
@@ -559,5 +622,38 @@ class OrderController extends BaseController
         }
 
         return null;
+    }
+
+    /**
+     * @param array<string, string> $errors
+     */
+    private function resolveOrderFormStepFromErrors(array $errors): int
+    {
+        if ($errors === []) {
+            return (int) $this->request->getPost('form_step') === 2 ? 2 : 1;
+        }
+
+        $step2Fields = ['deadline_diajukan', 'metode_pengiriman', 'alamat_kirim'];
+        foreach (array_keys($errors) as $key) {
+            if (! in_array($key, $step2Fields, true)) {
+                return 1;
+            }
+        }
+
+        return 2;
+    }
+
+    private function redirectOrderCreateFail(?int $idKatalog, string $error, int $formStep = 1): RedirectResponse
+    {
+        if ($idKatalog === null || $idKatalog <= 0) {
+            return redirect()->back()->withInput()->with('error', $error);
+        }
+
+        $url = site_url('order/create/' . $idKatalog);
+        if ($formStep === 2) {
+            $url .= '#pengiriman';
+        }
+
+        return redirect()->to($url)->withInput()->with('error', $error);
     }
 }

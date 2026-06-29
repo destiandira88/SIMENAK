@@ -48,9 +48,23 @@ class KatalogController extends BaseController
             $katalog = [];
         }
 
+        $canCreateOrder = true;
+
+        if ((string) session()->get('role') === 'pelanggan' && (int) session()->get('id_pelanggan') > 0) {
+            helper('notification');
+            $pelanggan = \Config\Database::connect()
+                ->table('pelanggan')
+                ->where('id_pelanggan', (int) session()->get('id_pelanggan'))
+                ->get()
+                ->getRowArray();
+
+            $canCreateOrder = pelangganCanCreateOrder($pelanggan);
+        }
+
         return view('katalog/list', [
-            'katalog' => $katalog,
-            'title'   => 'Katalog Produk',
+            'katalog'        => $katalog,
+            'title'          => 'Katalog Produk',
+            'canCreateOrder' => $canCreateOrder,
         ]);
     }
 
@@ -193,18 +207,11 @@ class KatalogController extends BaseController
         }
 
         try {
-            $katalogModel->update($id, [
-                'nama_produk'          => $this->request->getPost('nama_produk'),
-                'kategori'             => $this->request->getPost('kategori'),
-                'harga_dasar'          => $this->request->getPost('harga_dasar'),
-                'kuota_revisi_default' => $this->request->getPost('kuota_revisi_default'),
-                'min_order'            => $this->request->getPost('min_order'),
-                'satuan'               => $this->request->getPost('satuan'),
-                'estimasi_hari'        => $this->request->getPost('estimasi_hari'),
-                'deskripsi'            => $this->request->getPost('deskripsi'),
-                'is_active'            => $isActive,
-                'gambar'               => $uploadResult['path'],
-            ]);
+            $payload = $this->buildKatalogDataFromPost();
+            $katalogModel->update($id, array_merge($payload, [
+                'is_active' => $isActive,
+                'gambar'    => $uploadResult['path'],
+            ]));
         } catch (\Throwable $e) {
             log_message('error', 'Katalog update: {message}', ['message' => $e->getMessage()]);
 
@@ -329,7 +336,7 @@ class KatalogController extends BaseController
             'kuota_revisi_default' => 'required|integer|greater_than[0]|less_than_equal_to[10]',
             'min_order'            => 'required|integer|greater_than[0]',
             'satuan'               => 'required|max_length[30]',
-            'estimasi_hari'        => 'required|max_length[50]',
+            'estimasi_hari'        => 'required|integer|greater_than[0]|less_than_equal_to[180]',
             'deskripsi'            => 'permit_empty|max_length[500]',
         ];
     }
@@ -381,6 +388,9 @@ class KatalogController extends BaseController
      */
     private function buildKatalogDataFromPost(): array
     {
+        helper('deadline');
+        $estimasiHari = (int) $this->request->getPost('estimasi_hari');
+
         return [
             'nama_produk'          => $this->request->getPost('nama_produk'),
             'kategori'             => $this->request->getPost('kategori'),
@@ -388,7 +398,7 @@ class KatalogController extends BaseController
             'kuota_revisi_default' => $this->request->getPost('kuota_revisi_default'),
             'min_order'            => $this->request->getPost('min_order'),
             'satuan'               => $this->request->getPost('satuan'),
-            'estimasi_hari'        => $this->request->getPost('estimasi_hari'),
+            'estimasi_hari'        => formatEstimasiHariKerja($estimasiHari),
             'deskripsi'            => $this->request->getPost('deskripsi'),
         ];
     }

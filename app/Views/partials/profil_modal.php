@@ -1,11 +1,14 @@
 <?php
-if (($profilData ?? null) === null) {
+/** @var array<string, mixed>|null $profilData */
+if (! is_array($profilData ?? null)) {
     return;
 }
 
-$user              = $profilData['user'];
-$pelanggan         = $profilData['pelanggan'];
-$verifikasiTerbaru = $profilData['verifikasiTerbaru'] ?? null;
+$user              = is_array($profilData['user'] ?? null) ? $profilData['user'] : [];
+$pelanggan         = is_array($profilData['pelanggan'] ?? null) ? $profilData['pelanggan'] : [];
+$verifikasiTerbaru = is_array($profilData['verifikasiTerbaru'] ?? null) ? $profilData['verifikasiTerbaru'] : null;
+helper('notification');
+$isKerjasamaProfil = pelangganIsKerjasamaPerusahaan($pelanggan);
 ?>
 <style>
     #profilModal {
@@ -56,7 +59,7 @@ $verifikasiTerbaru = $profilData['verifikasiTerbaru'] ?? null;
         <div class="flex items-start justify-between gap-4 border-b border-[#E2E8F0] px-5 py-4 sm:px-6">
             <div>
                 <h4 id="profilModalTitle" class="text-lg sm:text-xl font-extrabold text-[#051747]">Profil Saya</h4>
-                <p class="mt-0.5 text-sm text-slate-500">Kelola data akun dan verifikasi perusahaan</p>
+                <p class="mt-0.5 text-sm text-slate-500"><?= $isKerjasamaProfil ? 'Kelola data akun dan skema pembayaran' : 'Kelola data akun Anda' ?></p>
             </div>
             <button type="button"
                 data-close-profil-modal

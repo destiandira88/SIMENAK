@@ -55,11 +55,21 @@ if ($role === 'pelanggan' && $idUser > 0) {
                     ->get()
                     ->getRowArray();
 
+                if (
+                    trim((string) ($profilPelanggan['alamat'] ?? '')) === ''
+                    && ! empty($verifikasiTerbaru['alamat_kantor'])
+                ) {
+                    $alamatKantor = mb_substr(trim((string) $verifikasiTerbaru['alamat_kantor']), 0, 150);
+                    $dbProfil->table('pelanggan')
+                        ->where('id_pelanggan', $idPelanggan)
+                        ->update(['alamat' => $alamatKantor]);
+                    $profilPelanggan['alamat'] = $alamatKantor;
+                }
+
                 $profilData = [
                     'user'              => $profilUser,
                     'pelanggan'         => $profilPelanggan,
                     'verifikasiTerbaru' => $verifikasiTerbaru ?: null,
-                    'orderLancarCount'  => countOrderLancarPerusahaan($idPelanggan),
                 ];
             }
         } catch (\Throwable $e) {
@@ -79,7 +89,6 @@ $menusByRole = [
         ['label' => 'List Pemesanan',         'url' => 'list-pemesanan',         'icon' => 'clipboard'],
         ['label' => 'Katalog',                'url' => 'katalog/kelola',                'icon' => 'grid'],
         ['label' => 'Pengguna',               'url' => 'pengguna',               'icon' => 'users'],
-        ['label' => 'Verifikasi Perusahaan',  'url' => 'verifikasi-perusahaan',  'icon' => 'shield'],
         ['label' => 'Pengiriman',             'url' => 'pengiriman',             'icon' => 'truck'],
         ['label' => 'Laporan',                'url' => 'laporan-admin',          'icon' => 'chart'],
     ],
@@ -99,6 +108,7 @@ $menusByRole = [
         ['label' => 'Beranda',          'url' => 'dashboard',          'icon' => 'home'],
         ['label' => 'Pesanan',            'url' => 'list-pemesanan',     'icon' => 'clipboard'],
         ['label' => 'Katalog',            'url' => 'katalog/kelola',     'icon' => 'grid'],
+        ['label' => 'Pengguna',           'url' => 'pengguna',           'icon' => 'users'],
         ['label' => 'Riwayat Pembayaran', 'url' => 'riwayat-pembayaran', 'icon' => 'clock'],
         ['label' => 'Manajemen Desain',   'url' => 'manajemen-desain',   'icon' => 'edit'],
         [
@@ -164,6 +174,7 @@ $iconSvg = static function (string $icon): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?= view('partials/csrf_meta') ?>
     <title><?= esc($this->renderSection('title') ?: 'SIMENAK') ?>-Z'Plack</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -299,16 +310,92 @@ $iconSvg = static function (string $icon): string {
             transform: translateY(-2px);
         }
 
-        .input-field {
+        .input-field,
+        .form-input {
             border: 1.5px solid var(--border);
             border-radius: var(--radius-md);
             font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 13px;
+            color: var(--navy);
         }
 
-        .input-field:focus {
+        .input-field:focus,
+        .form-input:focus {
             border-color: var(--blue-accent);
             outline: none;
             box-shadow: 0 0 0 3px rgba(46, 92, 230, .1);
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+
+        .form-section-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+
+        .form-hint {
+            font-size: 11px;
+            line-height: 1.5;
+            color: #94a3b8;
+            margin-top: 6px;
+        }
+
+        .form-affix {
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .form-note {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        .form-choice {
+            font-size: 13px;
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .form-upload-text {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .form-upload-hint {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .form-hint-error {
+            font-size: 11px;
+            line-height: 1.5;
+            color: #ef4444;
+            margin-top: 6px;
+        }
+
+        /* Info/warning merah — referensi .quota-info.danger */
+        .notice-danger {
+            background-color: #FEE2E2;
+            border: 1px solid #FECACA;
+            color: #991B1B;
+        }
+
+        .notice-danger svg {
+            color: #991B1B;
         }
 
         .glass-topbar {

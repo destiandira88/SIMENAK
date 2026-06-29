@@ -166,7 +166,7 @@ class PaymentController extends BaseController
         $idPelanggan = (int) session()->get('id_pelanggan');
 
         $order = $db->table('orders o')
-            ->select('o.*, u.nama, u.email, p.tier_perusahaan, p.is_suspended')
+            ->select('o.*, u.nama, u.email, p.is_suspended')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
             ->where('o.kode_order', $kodeOrder)
@@ -178,11 +178,7 @@ class PaymentController extends BaseController
             return redirect()->back()->with('error', 'Pesanan tidak ditemukan.');
         }
 
-        $pelanggan = [
-            'tier_perusahaan' => $order['tier_perusahaan'] ?? null,
-        ];
-
-        if (!canUploadPelunasan($order, $pelanggan)) {
+        if (!canUploadPelunasan($order)) {
             return redirect()->to(site_url('order/detail/' . $kodeOrder))
                 ->with('error', 'Upload pelunasan tidak tersedia pada tahap ini.');
         }
@@ -343,7 +339,7 @@ class PaymentController extends BaseController
         }
 
         $order = $db->table('orders o')
-            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email, p.tier_perusahaan')
+            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
             ->where('o.id_order', (int) $payment['id_order'])
@@ -424,7 +420,7 @@ class PaymentController extends BaseController
         }
 
         $order = $db->table('orders o')
-            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email, p.tier_perusahaan')
+            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
             ->where('o.id_order', (int) $payment['id_order'])
@@ -512,7 +508,7 @@ class PaymentController extends BaseController
         }
 
         $order = $db->table('orders o')
-            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email, p.tier_perusahaan')
+            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
             ->where('o.id_order', (int) $payment['id_order'])
@@ -527,8 +523,7 @@ class PaymentController extends BaseController
         $kodeOrder       = (string) $order['kode_order'];
         $idUserPelanggan = (int) $order['id_user_pelanggan'];
         $idOrder         = (int) $order['id_order'];
-        $pelanggan       = ['tier_perusahaan' => $order['tier_perusahaan'] ?? null];
-        $newOrderStatus  = accPelunasanTargetStatus($order, $pelanggan);
+        $newOrderStatus  = accPelunasanTargetStatus($order);
         $selesaiLangsung = $newOrderStatus === 'selesai';
 
         try {
@@ -624,7 +619,7 @@ class PaymentController extends BaseController
         }
 
         $order = $db->table('orders o')
-            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email, p.tier_perusahaan')
+            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
             ->where('o.id_order', (int) $payment['id_order'])
@@ -636,7 +631,6 @@ class PaymentController extends BaseController
         }
 
         $kodeOrder = (string) $order['kode_order'];
-        $pelanggan = ['tier_perusahaan' => $order['tier_perusahaan'] ?? null];
 
         try {
             $db->transStart();
@@ -649,7 +643,7 @@ class PaymentController extends BaseController
             ]);
 
             $db->table('orders')->where('id_order', (int) $order['id_order'])->update([
-                'status' => revertStatusAfterPelunasanDitolak($order, $pelanggan),
+                'status' => revertStatusAfterPelunasanDitolak($order),
             ]);
 
             $db->transComplete();
@@ -689,7 +683,7 @@ class PaymentController extends BaseController
         $role = (string) session()->get('role');
 
         $order = $db->table('orders o')
-            ->select('o.*, u.nama, u.email, p.no_telp, p.nama_perusahaan, p.tier_perusahaan, p.is_verified, k.nama_produk, k.satuan')
+            ->select('o.*, u.nama, u.email, p.no_telp, p.nama_perusahaan, p.is_verified, k.nama_produk, k.satuan')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
             ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
@@ -701,9 +695,7 @@ class PaymentController extends BaseController
             return redirect()->to(site_url('dashboard'))->with('error', 'Pesanan tidak ditemukan.');
         }
 
-        $pelangganCtx = ['tier_perusahaan' => $order['tier_perusahaan'] ?? null];
-
-        if (!canViewNotaTagihan($order, $pelangganCtx)) {
+        if (!canViewNotaTagihan($order)) {
             return redirect()->to(site_url('order/detail/' . $kodeOrder))
                 ->with('error', 'Nota tagihan belum tersedia untuk pesanan ini.');
         }
@@ -722,7 +714,7 @@ class PaymentController extends BaseController
         $nominalPelunasan = nominalPelunasanFromOrder($totalHarga, $requireDp);
         $isPerusahaan     = ($order['jenis_pelanggan'] ?? '') === 'perusahaan'
             && (int) ($order['is_verified'] ?? 0) === 1;
-        $sebelumKirim     = isPelunasanSebelumKirim($order, $pelangganCtx);
+        $sebelumKirim     = isPelunasanSebelumKirim($order);
 
         return view('payment/nota_tagihan', [
             'title'            => 'Nota Tagihan',
@@ -742,7 +734,7 @@ class PaymentController extends BaseController
         $role = (string) session()->get('role');
 
         $order = $db->table('orders o')
-            ->select('o.*, u.nama, u.email, p.no_telp, p.nama_perusahaan, p.tier_perusahaan, p.is_verified, k.nama_produk, k.satuan')
+            ->select('o.*, u.nama, u.email, p.no_telp, p.nama_perusahaan, p.is_verified, k.nama_produk, k.satuan')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
             ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')

@@ -1,7 +1,7 @@
 -- ============================================================
 -- MIGRASI + SEED: Uji Pengiriman & Pelunasan
 -- Jalankan sekali di phpMyAdmin (database SIMENAK)
--- Prasyarat: 2026-06-06_tier_perusahaan.sql sudah dijalankan
+-- Prasyarat: migration pelanggan (is_suspended, verifikasi MOU) sudah dijalankan
 -- ============================================================
 
 -- ── BAGIAN 1: PERBAIKAN ENUM ─────────────────────────────────
@@ -38,15 +38,14 @@ ALTER TABLE `pengiriman`
   ) DEFAULT 'siap_kirim';
 
 
--- ── BAGIAN 2: SETUP PELANGGAN TERPERCAYA (SKN-003) ───────────
+-- ── BAGIAN 2: SETUP PELANGGAN KERJASAMA (SKN-003) ───────────
 
--- Jadikan John Doe (id_pelanggan=4) sebagai perusahaan terpercaya
+-- Jadikan John Doe (id_pelanggan=4) sebagai kerja sama perusahaan
 UPDATE `pelanggan`
 SET
   `jenis`           = 'perusahaan',
   `nama_perusahaan` = 'CV. Maju Bersama',
-  `is_verified`     = 1,
-  `tier_perusahaan` = 'terpercaya'
+  `is_verified`     = 1
 WHERE `id_pelanggan` = 4;
 
 

@@ -96,14 +96,14 @@ CREATE TABLE `katalog` (
 --
 
 INSERT INTO `katalog` (`id_katalog`, `nama_produk`, `kategori`, `harga_dasar`, `kuota_revisi_default`, `min_order`, `satuan`, `estimasi_hari`, `deskripsi`, `gambar`, `is_active`) VALUES
-(1, 'Undangan Pernikahan Softcover', 'cetak_digital', 150000.00, 3, 100, 'pcs', '3-7 hari kerja', 'Undangan pernikahan softcover full color', NULL, 1),
-(2, 'Undangan Khitanan', 'cetak_digital', 100000.00, 2, 50, 'pcs', '3-5 hari kerja', 'Undangan khitanan full color', NULL, 1),
-(3, 'Spanduk / Banner', 'media_promosi', 50000.00, 2, 1, 'pcs', '1-3 hari kerja', 'Cetak spanduk dan banner berbagai ukuran', NULL, 1),
-(4, 'Brosur A5', 'cetak_digital', 75000.00, 2, 100, 'lembar', '2-4 hari kerja', 'Brosur A5 full color bolak-balik', NULL, 1),
-(5, 'Kartu Nama', 'cetak_digital', 30000.00, 2, 100, 'pcs', '2-3 hari kerja', 'Kartu nama full color 2 sisi', NULL, 1),
-(6, 'Kalender Dinding', 'cetak_offset', 200000.00, 2, 1, 'pcs', '7-14 hari kerja', 'Kalender dinding 13 lembar full color', NULL, 1),
-(7, 'Nota / Kwitansi', 'cetak_offset', 80000.00, 1, 1, 'buku', '5-7 hari kerja', 'Nota kwitansi 2 rangkap NCR', NULL, 1),
-(8, 'Desain Logo', 'desain_grafis', 300000.00, 4, 1, 'desain', '1-3 hari kerja', 'Jasa desain logo profesional', '1780282595_logo.jpg', 1);
+(1, 'Undangan Pernikahan Softcover', 'cetak_digital', 150000.00, 3, 100, 'pcs', '5 hari kerja', 'Undangan pernikahan softcover full color', NULL, 1),
+(2, 'Undangan Khitanan', 'cetak_digital', 100000.00, 2, 50, 'pcs', '4 hari kerja', 'Undangan khitanan full color', NULL, 1),
+(3, 'Spanduk / Banner', 'media_promosi', 50000.00, 2, 1, 'pcs', '2 hari kerja', 'Cetak spanduk dan banner berbagai ukuran', NULL, 1),
+(4, 'Brosur A5', 'cetak_digital', 75000.00, 2, 100, 'lembar', '3 hari kerja', 'Brosur A5 full color bolak-balik', NULL, 1),
+(5, 'Kartu Nama', 'cetak_digital', 30000.00, 2, 100, 'pcs', '3 hari kerja', 'Kartu nama full color 2 sisi', NULL, 1),
+(6, 'Kalender Dinding', 'cetak_offset', 200000.00, 2, 1, 'pcs', '10 hari kerja', 'Kalender dinding 13 lembar full color', NULL, 1),
+(7, 'Nota / Kwitansi', 'cetak_offset', 80000.00, 1, 1, 'buku', '6 hari kerja', 'Nota kwitansi 2 rangkap NCR', NULL, 1),
+(8, 'Desain Logo', 'desain_grafis', 300000.00, 4, 1, 'desain', '2 hari kerja', 'Jasa desain logo profesional', '1780282595_logo.jpg', 1);
 
 -- --------------------------------------------------------
 
@@ -124,6 +124,20 @@ CREATE TABLE `notifications` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `password_resets`
+--
+
+CREATE TABLE `password_resets` (
+  `id` int(11) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `token` varchar(64) NOT NULL COMMENT 'SHA-256 hash dari token plain di URL email',
+  `expired_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `orders`
 --
 
@@ -139,7 +153,8 @@ CREATE TABLE `orders` (
   `harga_custom` decimal(12,2) DEFAULT NULL,
   `referensi_desain` varchar(255) DEFAULT NULL,
   `detail_pesanan` text DEFAULT NULL,
-  `deadline` date DEFAULT NULL,
+  `deadline_diajukan` date DEFAULT NULL,
+  `deadline_produksi` date DEFAULT NULL,
   `metode_pengiriman` enum('kurir','ambil_sendiri') NOT NULL,
   `alamat_kirim` text DEFAULT NULL,
   `kuota_revisi` int(11) NOT NULL,
@@ -310,6 +325,15 @@ ALTER TABLE `katalog`
   ADD PRIMARY KEY (`id_katalog`);
 
 --
+-- Indexes for table `password_resets`
+--
+ALTER TABLE `password_resets`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_password_resets_email` (`email`),
+  ADD KEY `idx_password_resets_token` (`token`),
+  ADD KEY `idx_password_resets_expired_at` (`expired_at`);
+
+--
 -- Indexes for table `notifications`
 --
 ALTER TABLE `notifications`
@@ -394,6 +418,12 @@ ALTER TABLE `form_templates`
 --
 ALTER TABLE `katalog`
   MODIFY `id_katalog` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT for table `password_resets`
+--
+ALTER TABLE `password_resets`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `notifications`

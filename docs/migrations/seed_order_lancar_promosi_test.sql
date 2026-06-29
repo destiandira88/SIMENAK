@@ -1,5 +1,5 @@
 -- =============================================================================
--- SEED UJI CEPAT: 3 order perusahaan "lancar" untuk tombol Promosikan (3/3)
+-- SEED UJI CEPAT: 3 order perusahaan selesai (contoh data historis tier promosi — fitur dihapus)
 -- Database: simenak_db
 -- Jalankan via phpMyAdmin (tab SQL) atau:
 --   c:\xampp\mysql\bin\mysql.exe -u root simenak_db -e "SOURCE c:/xampp/htdocs/SIMENAK/docs/migrations/seed_order_lancar_promosi_test.sql"
@@ -8,16 +8,15 @@
 -- =============================================================================
 
 -- 1) Cek pelanggan terverifikasi (opsional)
--- SELECT p.id_pelanggan, u.nama, u.email, p.is_verified, p.tier_perusahaan, p.nama_perusahaan
+-- SELECT p.id_pelanggan, u.nama, u.email, p.is_verified, p.nama_perusahaan
 -- FROM pelanggan p JOIN users u ON u.id_user = p.id_user;
 
-SET @id_pelanggan = 3;   -- << GANTI: id_pelanggan yang tier Pemula & is_verified=1
+SET @id_pelanggan = 3;   -- << GANTI: id_pelanggan kerja sama perusahaan (is_verified=1)
 
--- 2) Pastikan akun siap uji promosi (tier Pemula, terverifikasi, tidak suspend)
+-- 2) Pastikan akun siap uji (kerja sama perusahaan aktif)
 UPDATE pelanggan
 SET is_verified     = 1,
     jenis           = 'perusahaan',
-    tier_perusahaan = 'pemula',
     is_suspended    = 0,
     nama_perusahaan = COALESCE(NULLIF(nama_perusahaan, ''), 'PT Uji Promosi SIMENAK')
 WHERE id_pelanggan = @id_pelanggan;
@@ -26,25 +25,25 @@ WHERE id_pelanggan = @id_pelanggan;
 -- Catatan: kode_order max 25 karakter — pakai kode pendek
 INSERT INTO orders (
     kode_order, id_pelanggan, id_katalog, jenis_pelanggan, jumlah_order,
-    detail_pesanan, deadline, metode_pengiriman,
+    detail_pesanan, deadline_diajukan, deadline_produksi, metode_pengiriman,
     kuota_revisi, sisa_kuota, total_harga, require_dp, status, created_at
 ) VALUES
 (
     CONCAT('TST-L', DATE_FORMAT(NOW(), '%m%d'), '01'),
     @id_pelanggan, 1, 'perusahaan', 100,
-    'Order uji promosi tier 1/3', DATE_ADD(CURDATE(), INTERVAL 7 DAY), 'ambil_sendiri',
+    'Order uji kerjasama 1/3', DATE_ADD(CURDATE(), INTERVAL 7 DAY), DATE_ADD(CURDATE(), INTERVAL 7 DAY), 'ambil_sendiri',
     2, 2, 2500000.00, 1, 'selesai', DATE_SUB(NOW(), INTERVAL 30 DAY)
 ),
 (
     CONCAT('TST-L', DATE_FORMAT(NOW(), '%m%d'), '02'),
     @id_pelanggan, 2, 'perusahaan', 50,
-    'Order uji promosi tier 2/3', DATE_ADD(CURDATE(), INTERVAL 7 DAY), 'ambil_sendiri',
+    'Order uji kerjasama 2/3', DATE_ADD(CURDATE(), INTERVAL 7 DAY), DATE_ADD(CURDATE(), INTERVAL 7 DAY), 'ambil_sendiri',
     2, 2, 1800000.00, 1, 'selesai', DATE_SUB(NOW(), INTERVAL 20 DAY)
 ),
 (
     CONCAT('TST-L', DATE_FORMAT(NOW(), '%m%d'), '03'),
     @id_pelanggan, 3, 'perusahaan', 10,
-    'Order uji promosi tier 3/3', DATE_ADD(CURDATE(), INTERVAL 7 DAY), 'kurir',
+    'Order uji kerjasama 3/3', DATE_ADD(CURDATE(), INTERVAL 7 DAY), DATE_ADD(CURDATE(), INTERVAL 7 DAY), 'kurir',
     2, 2, 3200000.00, 1, 'selesai', DATE_SUB(NOW(), INTERVAL 10 DAY)
 );
 
@@ -82,8 +81,7 @@ SELECT
     p.id_pelanggan,
     u.nama,
     p.nama_perusahaan,
-    p.tier_perusahaan,
-    COUNT(DISTINCT o.id_order) AS order_lancar
+    COUNT(DISTINCT o.id_order) AS order_selesai
 FROM pelanggan p
 JOIN users u ON u.id_user = p.id_user
 JOIN orders o ON o.id_pelanggan = p.id_pelanggan
@@ -93,9 +91,9 @@ JOIN payments pay ON pay.id_order = o.id_order
     AND pay.jenis = 'pelunasan'
     AND pay.status = 'terverifikasi'
 WHERE p.id_pelanggan = @id_pelanggan
-GROUP BY p.id_pelanggan, u.nama, p.nama_perusahaan, p.tier_perusahaan;
+GROUP BY p.id_pelanggan, u.nama, p.nama_perusahaan;
 
--- Setelah ini: login Admin → Pengguna → tombol "Promosikan" harus muncul.
+-- Verifikasi: hitungan order_selesai harus = 3 untuk @id_pelanggan.
 
 -- =============================================================================
 -- OPSIONAL: Hapus data uji (jalan terpisah jika mau reset)

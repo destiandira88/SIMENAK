@@ -30,6 +30,7 @@
 
 <?= view('dashboard/_partials/summary_cards', ['cards' => $cards]) ?>
 
+
 <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-6">
     <h3 class="text-base font-bold text-[#051747] mb-4">Pesanan 7 Hari Terakhir</h3>
     <canvas id="ordersChart" height="100"></canvas>

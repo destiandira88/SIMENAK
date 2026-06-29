@@ -127,6 +127,7 @@ foreach ($payments as $p) {
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-[#051747] text-white text-xs uppercase">
+                        <th class="px-4 py-3 text-left font-semibold w-12">No</th>
                         <th class="px-4 py-3 text-left font-semibold">Kode Pembayaran</th>
                         <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
                         <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
@@ -140,13 +141,14 @@ foreach ($payments as $p) {
                     </tr>
                 </thead>
                 <tbody id="riwayatTableBody">
-                    <?php foreach ($filtered as $p): ?>
+                    <?php foreach ($filtered as $index => $p): ?>
                         <?php
                         $jenis   = (string) ($p['jenis'] ?? '');
                         $status  = (string) ($p['status'] ?? '');
                         $buktiTf = (string) ($p['bukti_tf'] ?? '');
                         ?>
                         <tr class="data-table-row border-b border-slate-100 hover:bg-[#F8FAFF]">
+                            <td class="row-num px-4 py-3 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3 font-mono text-xs text-slate-500">
                                 <?= esc((string) ($p['kode_payment'] ?? '-')) ?>
                             </td>

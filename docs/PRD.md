@@ -190,7 +190,7 @@ catatan_custom TEXT
 harga_custom DECIMAL(12,2)
 referensi_desain VARCHAR(255)            -- path: uploads/referensi/
 detail_pesanan TEXT                      -- untuk produk tanpa form_templates
-deadline DATE
+deadline_diajukan DATE, deadline_produksi DATE
 metode_pengiriman ENUM('kurir','ambil_sendiri') NOT NULL
 alamat_kirim TEXT
 kuota_revisi INT NOT NULL
@@ -405,7 +405,7 @@ status=(jenis === 'perusahaan') ? 'terverifikasi' : 'menunggu_verifikasi_dp';
 is_custom = 1 → status = 'menunggu_konfirmasi_harga'
 → INSERT notifications (Admin): "Pesanan custom baru: [kode_order]"
 → Admin set harga → status = 'menunggu_konfirmasi_pelanggan'
-→ Email ke pelanggan: penawaran harga
+→ Email ke pelanggan: konfirmasi harga
 → Pelanggan setuju → lanjut flow normal (Rule 3)
 → Pelanggan tolak → status = 'dibatalkan'
 → INSERT notifications (Admin): "Pesanan custom [kode_order] dibatalkan"
@@ -484,7 +484,7 @@ Pelanggan:
 - Desain di-ACC (lanjut cetak)
 - Pesanan siap kirim / siap diambil
 - Pesanan dikirim + nomor resi
-- Penawaran harga custom dari Admin
+- Konfirmasi harga custom dari Admin
 - Verifikasi perusahaan disetujui/ditolak
 - Pelunasan dikonfirmasi (selesai)
   Keuangan:

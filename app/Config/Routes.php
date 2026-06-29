@@ -17,7 +17,15 @@ $routes->post('login-ajax', 'AuthController::loginAjax');
 $routes->get('register', 'AuthController::register');
 $routes->post('register', 'AuthController::registerProcess');
 $routes->post('register-ajax', 'AuthController::registerAjax');
+$routes->post('lupa-sandi', 'AuthController::processForgotPassword');
+$routes->get('atur-ulang-sandi', 'AuthController::showResetPasswordForm');
+$routes->post('atur-ulang-sandi', 'AuthController::processResetPassword');
+// Alias lama (link email / bookmark sebelumnya)
+$routes->post('forgot-password', 'AuthController::processForgotPassword');
+$routes->get('reset-password', 'AuthController::showResetPasswordForm');
+$routes->post('reset-password', 'AuthController::processResetPassword');
 $routes->get('check-session', 'AuthController::checkSession');
+$routes->get('csrf-sync', 'AuthController::csrfSync');
 $routes->get('logout', 'AuthController::logout');
 
 $routes->get('tracking/(:segment)', 'TrackingController::show/$1');
@@ -43,7 +51,6 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
 
     // Order (pelanggan)
     $routes->get('order', 'OrderController::index');
-    $routes->get('order/buat/(:num)', 'OrderController::create/$1');
     $routes->post('order/simpan', 'OrderController::store');
     $routes->get('order/detail/(:segment)', 'OrderController::detail/$1');
     $routes->post('order/(:segment)/upload-dp', 'PaymentController::uploadDp/$1');
@@ -75,31 +82,38 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->group('', ['filter' => 'role:pelanggan'], static function ($routes) {
         $routes->get('pesanan-saya', 'OrderController::redirectPesananSaya');
         $routes->get('pesanan-saya/(:segment)', 'OrderController::redirectPesananSayaDetail/$1');
-        $routes->get('pesanan/buat/(:num)', 'OrderController::create/$1');
-        $routes->post('pesanan/buat/(:num)', 'OrderController::store/$1');
         $routes->get('profil', 'ProfilController::index');
         $routes->post('profil', 'ProfilController::update');
-        $routes->post('profil/verifikasi-perusahaan', 'ProfilController::verifikasiPerusahaan');
         $routes->post('revisi/acc', 'RevisiController::acc');
         $routes->post('revisi/ajukan', 'RevisiController::ajukan');
         $routes->post('pesanan/konfirmasi-diterima', 'PengirimanController::konfirmasiDiterimaPelanggan');
     });
 
-    // ─── Admin + Owner (baca pemesanan) ────────────────────────────────────────
+    // ─── Admin + Owner: lihat Manajemen Pengguna ───────────────────────────────
     $routes->group('', ['filter' => 'role:admin,owner'], static function ($routes) {
         $routes->get('list-pemesanan', 'OrderController::listPemesanan');
         $routes->get('list-pemesanan/(:num)', 'OrderController::detailById/$1');
+        $routes->get('pengguna', 'ProfilController::pengguna');
+        $routes->post('pengguna/simpan', 'ProfilController::simpanPengguna');
+    });
+
+    // ─── Admin only: kelola pelanggan (Owner view-only di controller) ──────────
+    $routes->group('', ['filter' => 'role:admin'], static function ($routes) {
+        $routes->post('pengguna/pelanggan/update/(:num)', 'ProfilController::updatePelanggan/$1');
+        $routes->post('pengguna/pelanggan/(:num)/toggle-status', 'ProfilController::toggleStatusPelanggan/$1');
+        $routes->post('pengguna/(:num)/tetapkan-kerjasama', 'ProfilController::tetapkanKerjasamaPerusahaan/$1');
+        $routes->post('pengguna/(:num)/cabut-kerjasama', 'ProfilController::cabutKerjasamaPerusahaan/$1');
+    });
+
+    // ─── Owner only: kelola staff internal (Admin read-only di controller) ─────
+    $routes->group('', ['filter' => 'role:owner'], static function ($routes) {
+        $routes->post('pengguna/staff/update/(:num)', 'ProfilController::updateStaffInternal/$1');
+        $routes->post('pengguna/(:num)/toggle-status', 'ProfilController::toggleStatusStaff/$1');
     });
 
     // ─── Admin ─────────────────────────────────────────────────────────────────
     $routes->group('', ['filter' => 'role:admin'], static function ($routes) {
         $routes->post('list-pemesanan/(:num)/status', 'OrderController::updateStatus/$1');
-        $routes->get('pengguna', 'ProfilController::pengguna');
-        $routes->post('pengguna/(:num)/promosikan', 'ProfilController::promosikanTerpercaya/$1');
-        $routes->post('pengguna/(:num)/suspend', 'ProfilController::toggleSuspend/$1');
-        $routes->post('pengguna/(:num)/demote', 'ProfilController::demoteTerpercaya/$1');
-        $routes->get('verifikasi-perusahaan', 'ProfilController::verifikasiPerusahaanList');
-        $routes->post('verifikasi-perusahaan/(:num)', 'ProfilController::verifikasiPerusahaanProses/$1');
         $routes->get('pesanan-custom', 'CustomOrderController::redirectToList');
         $routes->get('custom-order', 'CustomOrderController::redirectToList');
         $routes->post('list-pemesanan/set-harga', 'CustomOrderController::setHarga');

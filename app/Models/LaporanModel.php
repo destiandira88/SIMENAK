@@ -689,8 +689,8 @@ class LaporanModel
 
         $melewatiDeadline = (int) $baseOrders()
             ->whereIn('o.status', self::PRODUKSI_PIPELINE)
-            ->where('o.deadline IS NOT NULL', null, false)
-            ->where('o.deadline <', $today)
+            ->where('o.deadline_produksi IS NOT NULL', null, false)
+            ->where('o.deadline_produksi <', $today)
             ->countAllResults();
 
         $perStatus = [];
@@ -838,14 +838,14 @@ class LaporanModel
 
         $orders = $this->db()->table('orders o')
             ->select(
-                'o.id_order, o.kode_order, o.status, o.deadline, o.created_at, o.sisa_kuota, o.kuota_revisi, '
+                'o.id_order, o.kode_order, o.status, o.deadline_produksi AS deadline, o.created_at, o.sisa_kuota, o.kuota_revisi, '
                     . 'o.is_custom, k.nama_produk, k.kategori, u.nama AS nama_pelanggan'
             )
             ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan', 'left')
             ->join('users u', 'u.id_user = p.id_user', 'left')
             ->whereIn('o.id_order', $orderIds)
-            ->orderBy('o.deadline', 'ASC')
+            ->orderBy('o.deadline_produksi', 'ASC')
             ->get()
             ->getResultArray();
 
@@ -909,7 +909,7 @@ class LaporanModel
     ): array {
         $builder = $this->db()->table('orders o')
             ->select(
-                'o.id_order, o.kode_order, o.total_harga, o.created_at, o.deadline, o.status, '
+                'o.id_order, o.kode_order, o.total_harga, o.created_at, o.deadline_produksi AS deadline, o.status, '
                     . 'o.jenis_pelanggan, o.metode_pengiriman, o.is_custom, k.nama_produk, k.kategori, '
                     . 'u.nama AS nama_pelanggan, pg.tgl_diterima'
             )

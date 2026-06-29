@@ -73,7 +73,205 @@ function isValidNpwp(string $input): bool
     return normalizeNpwp($input) !== null;
 }
 
+/**
+ * Nama lengkap: huruf, spasi, titik, tanda petik, strip (3–100 karakter).
+ */
+function isValidNamaLengkap(string $nama): bool
+{
+    $nama = trim($nama);
+    $len  = mb_strlen($nama);
+
+    if ($len < 3 || $len > 100) {
+        return false;
+    }
+
+    return (bool) preg_match("/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.'\-]*$/u", $nama);
+}
+
+/**
+ * Nama perusahaan: huruf, angka, spasi, titik, koma, & (3–100 karakter).
+ */
+function isValidNamaPerusahaan(string $nama): bool
+{
+    $nama = trim($nama);
+    $len  = mb_strlen($nama);
+
+    if ($len < 3 || $len > 100) {
+        return false;
+    }
+
+    return (bool) preg_match('/^[A-Za-z0-9][A-Za-z0-9\s.,&\-]*$/', $nama);
+}
+
+/**
+ * No. telepon Indonesia: +62..., 08..., atau 022... diikuti 8–13 digit.
+ */
+function isValidNoTelepon(string $no): bool
+{
+    $no = trim($no);
+
+    return (bool) preg_match('/^(\+62|08|022)[0-9]{8,13}$/', $no);
+}
+
+/**
+ * Rules CI4 untuk data akun pelanggan (register / kelola pelanggan).
+ *
+ * @return array<string, string>
+ */
+function pelangganAkunValidationRules(?int $excludeUserId = null): array
+{
+    $emailRule = $excludeUserId === null
+        ? 'required|valid_email|is_unique[users.email]'
+        : 'required|valid_email|is_unique[users.email,id_user,' . $excludeUserId . ']';
+
+    return [
+        'nama'    => 'required|min_length[3]|max_length[100]',
+        'email'   => $emailRule,
+        'no_telp' => 'required|max_length[20]',
+        'alamat'  => 'required|min_length[10]|max_length[150]',
+    ];
+}
+
+/**
+ * Pesan validasi CI4 — selaras dengan form register.
+ *
+ * @return array<string, array<string, string>>
+ */
+function pelangganAkunValidationMessages(): array
+{
+    return [
+        'nama' => [
+            'required'   => 'Nama lengkap wajib diisi.',
+            'min_length' => 'Nama lengkap minimal 3 karakter.',
+            'max_length' => 'Nama lengkap maksimal 100 karakter.',
+        ],
+        'email' => [
+            'required'    => 'Email wajib diisi.',
+            'valid_email' => 'Format email tidak valid.',
+            'is_unique'   => 'Email sudah terdaftar. Gunakan email lain atau masuk ke akun Anda.',
+        ],
+        'no_telp' => [
+            'required'   => 'No. telepon wajib diisi.',
+            'max_length' => 'No. telepon terlalu panjang.',
+        ],
+        'alamat' => [
+            'required'   => 'Alamat wajib diisi.',
+            'min_length' => 'Alamat minimal 10 karakter.',
+            'max_length' => 'Alamat maksimal 150 karakter.',
+        ],
+        'password' => [
+            'required'   => 'Kata sandi wajib diisi.',
+            'min_length' => 'Kata sandi minimal 8 karakter.',
+        ],
+        'password_confirm' => [
+            'required' => 'Konfirmasi kata sandi wajib diisi.',
+            'matches'  => 'Konfirmasi kata sandi tidak sama.',
+        ],
+    ];
+}
+
+/**
+ * Validasi format nama & telepon pelanggan (selaras register).
+ * Mengembalikan pesan error pertama, atau null jika valid.
+ */
+function validatePelangganAkunFormat(string $nama, string $noTelp): ?string
+{
+    if (!isValidNamaLengkap(trim($nama))) {
+        return 'Nama lengkap hanya boleh berisi huruf, spasi, tanda kutip, atau titik (3–100 karakter).';
+    }
+
+    if (!isValidNoTelepon(trim($noTelp))) {
+        return 'Format no. telepon harus berupa angka dan diawali dengan 08, +62, atau 022 (Contoh: 087778965442) (8–13 digit setelah awalan).';
+    }
+
+    return null;
+}
+
 const BATAS_ORDER_TANPA_DP = 5000000;
+
+/** Akun dengan status kerja sama perusahaan aktif (ditetapkan Admin). */
+function pelangganIsKerjasamaPerusahaan(?array $pelanggan): bool
+{
+    if ($pelanggan === null || $pelanggan === []) {
+        return false;
+    }
+
+    return (string) ($pelanggan['jenis'] ?? '') === 'perusahaan'
+        && (int) ($pelanggan['is_verified'] ?? 0) === 1;
+}
+
+/** Pelanggan masih punya pesanan yang belum selesai/dibatalkan. */
+function pelangganHasActiveOrders(int $idPelanggan): bool
+{
+    if ($idPelanggan <= 0) {
+        return false;
+    }
+
+    return \Config\Database::connect()
+        ->table('orders')
+        ->where('id_pelanggan', $idPelanggan)
+        ->whereNotIn('status', ['selesai', 'dibatalkan'])
+        ->countAllResults() > 0;
+}
+
+/**
+ * @param list<int> $idPelanggans
+ * @return array<int, true> id_pelanggan yang masih punya pesanan aktif
+ */
+function pelanggansWithActiveOrdersMap(array $idPelanggans): array
+{
+    $ids = array_values(array_unique(array_filter(array_map('intval', $idPelanggans))));
+    if ($ids === []) {
+        return [];
+    }
+
+    $rows = \Config\Database::connect()
+        ->table('orders')
+        ->select('id_pelanggan')
+        ->whereIn('id_pelanggan', $ids)
+        ->whereNotIn('status', ['selesai', 'dibatalkan'])
+        ->groupBy('id_pelanggan')
+        ->get()
+        ->getResultArray();
+
+    $map = [];
+    foreach ($rows as $row) {
+        $id = (int) ($row['id_pelanggan'] ?? 0);
+        if ($id > 0) {
+            $map[$id] = true;
+        }
+    }
+
+    return $map;
+}
+
+function pelangganCanCreateOrder(?array $pelanggan): bool
+{
+    return $pelanggan !== null && $pelanggan !== [];
+}
+
+/** Jenis skema pembayaran dari profil akun (bukan pilihan manual per pesanan). */
+function resolveJenisPelangganFromAkun(?array $pelanggan): string
+{
+    return pelangganIsKerjasamaPerusahaan($pelanggan) ? 'perusahaan' : 'perseorangan';
+}
+
+function getKerjasamaPerusahaanLabel(): string
+{
+    return 'Kerja Sama Perusahaan';
+}
+
+function getLatestVerifikasiPerusahaan(int $idPelanggan): ?array
+{
+    $row = \Config\Database::connect()
+        ->table('verifikasi_perusahaan')
+        ->where('id_pelanggan', $idPelanggan)
+        ->orderBy('tgl_pengajuan', 'DESC')
+        ->get()
+        ->getRowArray();
+
+    return $row ?: null;
+}
 
 function nominalDpFromTotal(int|float $totalHarga): int
 {
@@ -94,33 +292,20 @@ function nominalPelunasanFromOrder(int|float $totalHarga, int $requireDp): int
  */
 function resolveOrderPaymentScheme(array $pelanggan, string $jenisDiminta, int $totalHarga): array
 {
-    $isVerified  = (int) ($pelanggan['is_verified'] ?? 0) === 1;
-    $isSuspended = (int) ($pelanggan['is_suspended'] ?? 0) === 1;
-    $tier        = (string) ($pelanggan['tier_perusahaan'] ?? 'pemula');
-    $warning     = null;
-    $jenisFinal  = 'perseorangan';
-    $requireDp   = 1;
-    $statusAwal  = 'menunggu_verifikasi_dp';
+    unset($jenisDiminta);
 
-    if ($jenisDiminta !== 'perusahaan') {
-        return compact('jenisFinal', 'requireDp', 'statusAwal', 'warning');
-    }
+    $warning    = null;
+    $jenisFinal = 'perseorangan';
+    $requireDp  = 1;
+    $statusAwal = 'menunggu_verifikasi_dp';
 
-    if (!$isVerified) {
-        $warning = 'Akun belum terverifikasi sebagai perusahaan. Diproses sebagai perseorangan (DP 50%).';
-
-        return compact('jenisFinal', 'requireDp', 'statusAwal', 'warning');
-    }
-
-    if ($isSuspended) {
-        $warning = 'Akun perusahaan sedang disuspend. Diproses sebagai perseorangan (DP 50%).';
-
+    if (!pelangganIsKerjasamaPerusahaan($pelanggan)) {
         return compact('jenisFinal', 'requireDp', 'statusAwal', 'warning');
     }
 
     $jenisFinal = 'perusahaan';
 
-    if ($tier === 'pemula' || $totalHarga > BATAS_ORDER_TANPA_DP) {
+    if ($totalHarga > BATAS_ORDER_TANPA_DP) {
         $requireDp  = 1;
         $statusAwal = 'menunggu_verifikasi_dp';
     } else {
@@ -131,15 +316,10 @@ function resolveOrderPaymentScheme(array $pelanggan, string $jenisDiminta, int $
     return compact('jenisFinal', 'requireDp', 'statusAwal', 'warning');
 }
 
-function isPelunasanSebelumKirim(array $order, ?array $pelanggan = null): bool
+/** Perseorangan: pelunasan sebelum kirim. Kerja sama perusahaan: selalu setelah diterima. */
+function isPelunasanSebelumKirim(array $order): bool
 {
-    if (($order['jenis_pelanggan'] ?? '') !== 'perusahaan') {
-        return true;
-    }
-
-    $tier = (string) ($pelanggan['tier_perusahaan'] ?? $order['tier_perusahaan'] ?? 'pemula');
-
-    return $tier === 'pemula';
+    return ($order['jenis_pelanggan'] ?? '') !== 'perusahaan';
 }
 
 function isMetodeAmbilSendiri(array $order): bool
@@ -152,27 +332,27 @@ function statusSiapSebelumPelunasan(array $order): string
     return isMetodeAmbilSendiri($order) ? 'siap_diambil' : 'siap_kirim';
 }
 
-function revertStatusAfterPelunasanDitolak(array $order, ?array $pelanggan = null): string
+function revertStatusAfterPelunasanDitolak(array $order): string
 {
-    if (!isPelunasanSebelumKirim($order, $pelanggan)) {
+    if (!isPelunasanSebelumKirim($order)) {
         return 'menunggu_verifikasi_lunas';
     }
 
     return statusSiapSebelumPelunasan($order);
 }
 
-function canUploadPelunasan(array $order, ?array $pelanggan = null): bool
+function canUploadPelunasan(array $order): bool
 {
     $status = (string) ($order['status'] ?? '');
 
-    if (isPelunasanSebelumKirim($order, $pelanggan)) {
+    if (isPelunasanSebelumKirim($order)) {
         return in_array($status, ['siap_kirim', 'siap_diambil'], true);
     }
 
     return $status === 'menunggu_verifikasi_lunas';
 }
 
-function canViewNotaTagihan(array $order, ?array $pelanggan = null): bool
+function canViewNotaTagihan(array $order): bool
 {
     $totalHarga = (int) round((float) ($order['total_harga'] ?? 0));
     if ($totalHarga <= 0) {
@@ -197,9 +377,9 @@ function canViewBuktiPembayaranPelunasan(?array $payment): bool
         && ($payment['status'] ?? '') === 'terverifikasi';
 }
 
-function accPelunasanTargetStatus(array $order, ?array $pelanggan = null): string
+function accPelunasanTargetStatus(array $order): string
 {
-    return isPelunasanSebelumKirim($order, $pelanggan) ? 'pelunasan_terverifikasi' : 'selesai';
+    return isPelunasanSebelumKirim($order) ? 'pelunasan_terverifikasi' : 'selesai';
 }
 
 function orderHasPendingPelunasanBukti(array $row): bool
@@ -214,57 +394,6 @@ function orderHasPendingPelunasanBukti(array $row): bool
     }
 
     return ($row['jenis'] ?? '') === 'pelunasan' && ($row['payment_status'] ?? '') === 'menunggu';
-}
-
-function countOrderLancarPerusahaan(int $idPelanggan): int
-{
-    $db = \Config\Database::connect();
-
-    return (int) $db->table('orders o')
-        ->join(
-            'payments pay',
-            'pay.id_order = o.id_order AND pay.jenis = \'pelunasan\' AND pay.status = \'terverifikasi\'',
-            'inner'
-        )
-        ->where('o.id_pelanggan', $idPelanggan)
-        ->where('o.jenis_pelanggan', 'perusahaan')
-        ->where('o.status', 'selesai')
-        ->countAllResults();
-}
-
-function canPromotePerusahaanToTerpercaya(array $pelanggan): bool
-{
-    if ((int) ($pelanggan['is_verified'] ?? 0) !== 1) {
-        return false;
-    }
-
-    if ((string) ($pelanggan['tier_perusahaan'] ?? '') === 'terpercaya') {
-        return false;
-    }
-
-    if ((int) ($pelanggan['is_suspended'] ?? 0) === 1) {
-        return false;
-    }
-
-    return countOrderLancarPerusahaan((int) $pelanggan['id_pelanggan']) >= 3;
-}
-
-function getTierPerusahaanLabel(?string $tier): string
-{
-    return match ($tier) {
-        'terpercaya' => 'Terpercaya',
-        'pemula'     => 'Pemula',
-        default      => '',
-    };
-}
-
-function getTierPerusahaanBadgeClass(?string $tier): string
-{
-    return match ($tier) {
-        'terpercaya' => 'bg-indigo-100 text-indigo-800',
-        'pemula'     => 'bg-amber-100 text-amber-800',
-        default      => 'bg-slate-100 text-slate-600',
-    };
 }
 
 function orderTotalFromKatalog(int|float $hargaDasar, int $jumlah): int
@@ -299,17 +428,150 @@ function sendNotifInApp(int $idUser, ?int $idOrder, string $judul, string $pesan
 function sendNotifEmail(string $to, string $subject, string $htmlBody): bool
 {
     try {
+        $config = config('Email');
+
+        if ($config->protocol === 'smtp' && trim((string) $config->SMTPHost) === '') {
+            log_message('error', '[sendNotifEmail] SMTPHost belum dikonfigurasi di .env / Config/Email.php');
+
+            return false;
+        }
+
+        if (! isSmtpConfigured()) {
+            log_message('error', '[sendNotifEmail] SMTP belum lengkap. Jalankan scripts/setup-gmail-smtp.bat atau isi email.SMTPUser & email.SMTPPass di .env');
+
+            return false;
+        }
+
         $email = \Config\Services::email();
+        $email->clear(true);
+
+        $fromEmail = trim((string) $config->fromEmail) ?: trim((string) $config->SMTPUser) ?: 'noreply@simenak.local';
+        $fromName  = trim((string) $config->fromName) ?: "SIMENAK Z'Plack";
+        $email->setFrom($fromEmail, $fromName);
         $email->setTo($to);
         $email->setSubject($subject);
         $email->setMessage($htmlBody);
+        $email->setMailType($config->mailType);
 
-        return $email->send();
+        $sent = $email->send(false);
+
+        if (! $sent) {
+            log_message('error', '[sendNotifEmail] gagal ke {to}: {debug}', [
+                'to'    => $to,
+                'debug' => $email->printDebugger(['headers', 'subject', 'body']),
+            ]);
+        }
+
+        return $sent;
     } catch (\Throwable $e) {
         log_message('error', '[sendNotifEmail] {msg}', ['msg' => $e->getMessage()]);
 
         return false;
     }
+}
+
+/** Kirim email setelah respons HTTP dikirim (hanya jika fastcgi_finish_request tersedia). */
+function deferNotifEmail(string $to, string $subject, string $htmlBody): void
+{
+    if (! function_exists('fastcgi_finish_request')) {
+        try {
+            sendNotifEmail($to, $subject, $htmlBody);
+        } catch (\Throwable $e) {
+            log_message('error', '[deferNotifEmail] {msg}', ['msg' => $e->getMessage()]);
+        }
+
+        return;
+    }
+
+    register_shutdown_function(static function () use ($to, $subject, $htmlBody) {
+        try {
+            sendNotifEmail($to, $subject, $htmlBody);
+        } catch (\Throwable $e) {
+            log_message('error', '[deferNotifEmail] {msg}', ['msg' => $e->getMessage()]);
+        }
+    });
+}
+
+/**
+ * Wrapper HTML email notifikasi SIMENAK (konsisten antar template).
+ */
+function buildNotifEmailHtml(string $title, string $bodyHtml, ?string $ctaUrl = null, ?string $ctaLabel = null): string
+{
+    $ctaBlock = '';
+    if ($ctaUrl !== null && $ctaUrl !== '' && $ctaLabel !== null && $ctaLabel !== '') {
+        $ctaBlock = '<p style="margin:28px 0 0;">'
+            . '<a href="' . esc($ctaUrl) . '" '
+            . 'style="display:inline-block;background:#051747;color:#ffffff;text-decoration:none;'
+            . 'font-weight:700;font-size:14px;padding:12px 28px;border-radius:999px;">'
+            . esc($ctaLabel)
+            . '</a></p>';
+    }
+
+    return '<div style="font-family:\'Segoe UI\',Arial,sans-serif;background:#F0F2F8;padding:32px 16px;">'
+        . '<div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #E2E8F0;border-radius:20px;overflow:hidden;">'
+        . '<div style="background:#051747;padding:24px 28px;">'
+        . '<p style="margin:0;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.72);">SIMENAK Z\'Plack</p>'
+        . '<h1 style="margin:8px 0 0;font-size:22px;font-weight:800;color:#ffffff;line-height:1.3;">' . esc($title) . '</h1>'
+        . '</div>'
+        . '<div style="padding:28px;color:#4A5568;font-size:14px;line-height:1.65;">'
+        . $bodyHtml
+        . $ctaBlock
+        . '<p style="margin:28px 0 0;font-size:12px;color:#94A3B8;line-height:1.6;">'
+        . 'Email ini dikirim otomatis oleh SIMENAK Z\'Plack. Jika Anda tidak merasa meminta email ini, abaikan pesan ini.'
+        . '</p>'
+        . '</div></div></div>';
+}
+
+function buildResetPasswordEmailHtml(string $nama, string $resetUrl): string
+{
+    $body = '<p>Halo <strong>' . esc($nama) . '</strong>,</p>'
+        . '<p>Kami menerima permintaan untuk mengatur ulang kata sandi akun SIMENAK Z\'Plack Anda.</p>'
+        . '<p>Klik tombol di bawah untuk membuat kata sandi baru. Link ini hanya berlaku selama <strong>30 menit</strong>.</p>'
+        . '<p style="font-size:12px;color:#94A3B8;word-break:break-all;">'
+        . 'Jika tombol tidak berfungsi, salin tautan berikut ke browser:<br>'
+        . '<a href="' . esc($resetUrl) . '" style="color:#2E5CE6;">' . esc($resetUrl) . '</a>'
+        . '</p>';
+
+    return buildNotifEmailHtml('Reset Kata Sandi', $body, $resetUrl, 'Reset Kata Sandi');
+}
+
+/** Pesan generik forgot-password — mencegah enumerasi email. */
+function forgotPasswordGenericMessage(): string
+{
+    return 'Permintaan berhasil diproses. Jika alamat email terdaftar, tautan untuk mengatur ulang kata sandi telah dikirim. Silakan periksa kotak masuk atau folder Spam.';
+}
+
+/** Apakah SMTP Gmail/kredensial sudah diisi di .env? */
+function isSmtpConfigured(): bool
+{
+    $config = config('Email');
+
+    if ((string) $config->protocol !== 'smtp') {
+        return false;
+    }
+
+    if (trim((string) $config->SMTPHost) === '') {
+        return false;
+    }
+
+    $host = strtolower(trim((string) $config->SMTPHost));
+
+    // Mailpit / SMTP lokal tanpa auth
+    if (in_array($host, ['127.0.0.1', 'localhost'], true)) {
+        return true;
+    }
+
+    return trim((string) $config->SMTPUser) !== '' && trim((string) $config->SMTPPass) !== '';
+}
+
+function hashPasswordResetToken(string $plainToken): string
+{
+    return hash('sha256', $plainToken);
+}
+
+function generatePasswordResetToken(): string
+{
+    return bin2hex(random_bytes(32));
 }
 
 function getStatusLabel(string $status, bool $hasBuktiDp = false, ?string $viewerRole = null): string
@@ -320,7 +582,7 @@ function getStatusLabel(string $status, bool $hasBuktiDp = false, ?string $viewe
     $labels = [
         'menunggu_konfirmasi_harga'     => 'Menunggu Konfirmasi Harga',
         'menunggu_konfirmasi_pelanggan' => $isPelanggan
-            ? 'Penawaran Menunggu Konfirmasi Anda'
+            ? 'Menunggu Konfirmasi Anda'
             : 'Menunggu Konfirmasi Pelanggan',
         'menunggu_verifikasi_dp'        => $hasBuktiDp
             ? 'Bukti DP Diunggah-Menunggu Verifikasi'
@@ -392,11 +654,9 @@ function getOrderStatusLabel(array $row, ?string $viewerRole = null): string
 
         $orderCtx = [
             'jenis_pelanggan' => (string) ($row['jenis_pelanggan'] ?? ''),
-            'tier_perusahaan' => $row['tier_perusahaan'] ?? null,
         ];
-        $pelangganCtx = ['tier_perusahaan' => $row['tier_perusahaan'] ?? null];
 
-        if (isPelunasanSebelumKirim($orderCtx, $pelangganCtx)) {
+        if (isPelunasanSebelumKirim($orderCtx)) {
             return 'Menunggu Pembayaran Pelunasan';
         }
 
@@ -479,7 +739,7 @@ function getNotifIconMeta(string $judul): array
         return ['icon' => '✓', 'class' => 'ni-green'];
     }
 
-    if (str_contains($j, 'custom') || str_contains($j, 'harga') || str_contains($j, 'penawaran')) {
+    if (str_contains($j, 'custom') || str_contains($j, 'harga') || str_contains($j, 'konfirmasi')) {
         return ['icon' => '★', 'class' => 'ni-amber'];
     }
 
@@ -536,10 +796,7 @@ function getNotifActionUrl(
 ): ?string {
     $j = mb_strtolower($judul);
 
-    if (str_contains($j, 'verifikasi') && str_contains($j, 'perusahaan')) {
-        if ($role === 'admin') {
-            return site_url('verifikasi-perusahaan');
-        }
+    if (str_contains($j, 'kerja sama') || (str_contains($j, 'kerjasama') && str_contains($j, 'perusahaan'))) {
         if ($role === 'pelanggan') {
             return site_url('dashboard?profil=1');
         }

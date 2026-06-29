@@ -180,9 +180,9 @@ $backLabel = $role === 'pelanggan' ? '← Detail Pesanan' : '← Antrian Desain'
     <?php endif; ?>
 
     <?php if ($pilihDraftUntukCetak): ?>
-        <div class="bg-red-50 border border-red-200 rounded-xl p-5 mb-6">
-            <h4 class="font-bold text-red-800 mb-1">Pilih draft untuk dicetak</h4>
-            <p class="text-xs text-red-700 mb-4">Kuota revisi habis. Pilih versi yang akan diproses produksi.</p>
+        <div class="notice-danger rounded-xl p-5 mb-6">
+            <h4 class="font-bold mb-1">Pilih draft untuk dicetak</h4>
+            <p class="text-xs mb-4">Kuota revisi habis. Pilih versi yang akan diproses produksi.</p>
             <form method="post" action="<?= esc(site_url('revisi/acc')) ?>" class="space-y-3">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">

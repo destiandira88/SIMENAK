@@ -6,6 +6,22 @@ use CodeIgniter\Config\BaseConfig;
 
 class App extends BaseConfig
 {
+    public function __construct()
+    {
+        parent::__construct();
+
+        if (PHP_SAPI === 'cli' || ! isset($_SERVER['HTTP_HOST'], $_SERVER['SCRIPT_NAME'])) {
+            return;
+        }
+
+        $protocol = (! empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host     = (string) $_SERVER['HTTP_HOST'];
+        $path     = str_replace('\\', '/', dirname((string) $_SERVER['SCRIPT_NAME']));
+        $path     = rtrim($path, '/') . '/';
+
+        $this->baseURL = $protocol . '://' . $host . $path;
+    }
+
     /**
      * --------------------------------------------------------------------------
      * Base Site URL
@@ -16,7 +32,7 @@ class App extends BaseConfig
      *
      * E.g., http://example.com/
      */
-    public string $baseURL = 'http://localhost:8080/';
+    public string $baseURL = 'http://localhost/SIMENAK/public/';
 
     /**
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.

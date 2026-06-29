@@ -20,6 +20,7 @@
         <table class="w-full text-sm">
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
+                    <th class="px-4 py-3 text-left font-semibold w-12">No</th>
                     <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
                     <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
                     <th class="px-4 py-3 text-left font-semibold">Jenis</th>
@@ -32,20 +33,19 @@
             <tbody>
                 <?php if (empty($orders)): ?>
                     <tr>
-                        <td colspan="7" class="py-12 text-center text-slate-500 text-sm">
+                        <td colspan="8" class="py-12 text-center text-slate-500 text-sm">
                             Tidak ada pesanan dalam antrian pengiriman.
                         </td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($orders as $o):
+                    <?php foreach ($orders as $index => $o):
                         helper('notification');
                         $idOrder      = (int) ($o['id_order'] ?? 0);
                         $status       = (string) ($o['status'] ?? '');
                         $jenis        = (string) ($o['jenis_pelanggan'] ?? 'perseorangan');
                         $metode       = (string) ($o['metode_pengiriman'] ?? 'kurir');
                         $pg           = $pengirimanByOrder[$idOrder] ?? null;
-                        $pelangganCtx = ['tier_perusahaan' => $o['tier_perusahaan'] ?? null];
-                        $beforeShip   = isPelunasanSebelumKirim($o, $pelangganCtx);
+                        $beforeShip   = isPelunasanSebelumKirim($o);
                         $ambilSendiri = $metode === 'ambil_sendiri';
                         $alamatKirim  = trim((string) ($o['alamat_kirim'] ?? ''));
                         $alamatSingkat = '';
@@ -56,6 +56,7 @@
                         }
                     ?>
                         <tr class="border-b border-slate-100 hover:bg-[#F8FAFF] transition-colors">
+                            <td class="px-4 py-3 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3 font-semibold text-[#051747]"><?= esc($o['kode_order'] ?? '') ?></td>
                             <td class="px-4 py-3 text-slate-600"><?= esc($o['nama_pelanggan'] ?? '') ?></td>
                             <td class="px-4 py-3">

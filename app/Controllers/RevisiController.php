@@ -466,7 +466,7 @@ class RevisiController extends BaseController
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
             ->whereIn('o.status', $statuses)
-            ->orderBy('o.deadline', 'ASC')
+            ->orderBy('o.deadline_produksi', 'ASC')
             ->get()
             ->getResultArray();
     }

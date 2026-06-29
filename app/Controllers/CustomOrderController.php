@@ -28,34 +28,23 @@ class CustomOrderController extends BaseController
 
         $idOrder        = (int) $this->request->getPost('id_order');
         $hargaCustom    = parseRupiahAmount($this->request->getPost('harga_custom'));
-        $estimasiCustom = trim((string) $this->request->getPost('estimasi_custom'));
         $catatanAdmin   = $this->request->getPost('catatan_admin_custom');
-        $deadline       = (string) $this->request->getPost('deadline');
+        $deadlineProduksi = (string) $this->request->getPost('deadline_produksi');
 
         if ($hargaCustom <= 0) {
             return redirect()->back()->with('error', 'Harga harus lebih dari 0.');
         }
 
-        if ($estimasiCustom === '') {
-            return redirect()->back()->with('error', 'Estimasi pengerjaan wajib diisi.');
-        }
-
-        if ($deadline === '' || strtotime($deadline) === false) {
+        if ($deadlineProduksi === '' || strtotime($deadlineProduksi) === false) {
             return redirect()->back()->with('error', 'Deadline produksi wajib diisi.');
         }
 
-        if ($deadline < date('Y-m-d')) {
+        if ($deadlineProduksi < date('Y-m-d')) {
             return redirect()->back()->with('error', 'Deadline produksi tidak boleh di masa lalu.');
         }
 
-        if (!isDeadlineValidForEstimasi($deadline, $estimasiCustom)) {
-            $minDl = formatTanggalId(minDeadlineFromEstimasi($estimasiCustom));
-
-            return redirect()->back()->with(
-                'error',
-                "Deadline terlalu cepat untuk estimasi \"{$estimasiCustom}\" (setelah ACC desain). Paling cepat: {$minDl}."
-            );
-        }
+        $estimasiHari   = countHariKerjaSampaiDeadline($deadlineProduksi);
+        $estimasiCustom = formatEstimasiHariKerjaExact($estimasiHari);
 
         $db = \Config\Database::connect();
         $order = $db->table('orders o')
@@ -71,22 +60,23 @@ class CustomOrderController extends BaseController
             return redirect()->back()->with('error', 'Pesanan tidak ditemukan atau sudah diproses.');
         }
 
-        $deadlineLabel = formatTanggalId($deadline);
+        $deadlineLabel = formatTanggalId($deadlineProduksi);
 
         $db->table('orders')->update([
             'harga_custom'         => $hargaCustom,
             'total_harga'          => $hargaCustom,
+            'estimasi_hari'        => $estimasiHari,
             'estimasi_custom'      => $estimasiCustom,
             'catatan_admin_custom' => $catatanAdmin,
-            'deadline'             => $deadline,
+            'deadline_produksi'  => $deadlineProduksi,
             'status'               => 'menunggu_konfirmasi_pelanggan',
         ], ['id_order' => $idOrder]);
 
         sendNotifEmail(
             $order['email'],
-            "Penawaran Harga Pesanan Custom-{$order['kode_order']}",
+            "Konfirmasi Harga Pesanan Custom-{$order['kode_order']}",
             "<p>Halo <strong>{$order['nama']}</strong>,</p>
-             <p>Admin Z'Plack telah menetapkan penawaran untuk pesanan custom Anda
+             <p>Admin Z'Plack telah mengonfirmasi harga untuk pesanan custom Anda
              <strong>{$order['kode_order']}</strong>:</p>
              <ul>
                <li>Harga: <strong>Rp " . number_format($hargaCustom, 0, ',', '.') . "</strong></li>
@@ -95,20 +85,20 @@ class CustomOrderController extends BaseController
                <li>Catatan Admin: {$catatanAdmin}</li>
              </ul>
              <p>Silakan login ke SIMENAK dan konfirmasi apakah Anda
-             <strong>Setuju</strong> atau <strong>Menolak</strong> penawaran ini.</p>"
+             <strong>Setuju</strong> atau <strong>Menolak</strong> harga ini.</p>"
         );
 
         sendNotifInApp(
             (int) $order['id_user_pelanggan'],
             $idOrder,
-            'Penawaran Harga Custom',
-            "Admin Z'Plack menawarkan harga Rp "
+            'Konfirmasi Harga Custom',
+            "Admin Z'Plack mengonfirmasi harga Rp "
             . number_format($hargaCustom, 0, ',', '.')
             . " untuk pesanan {$order['kode_order']}. Silakan konfirmasi."
         );
 
         return redirect()->to(site_url('list-pemesanan?tab=custom'))
-            ->with('success', 'Penawaran berhasil dikirim ke pelanggan.');
+            ->with('success', 'Konfirmasi harga berhasil dikirim ke pelanggan.');
     }
 
     public function setuju()
@@ -131,8 +121,9 @@ class CustomOrderController extends BaseController
             return redirect()->back()->with('error', 'Pesanan tidak ditemukan.');
         }
 
-        if (empty($order['deadline']) || empty($order['estimasi_custom'])) {
-            return redirect()->back()->with('error', 'Data penawaran belum lengkap. Hubungi admin.');
+        if (empty($order['deadline_produksi'])
+            || (($order['estimasi_hari'] ?? null) === null && empty($order['estimasi_custom']))) {
+            return redirect()->back()->with('error', 'Data konfirmasi harga belum lengkap. Hubungi admin.');
         }
 
         $pelanggan = $db->table('pelanggan')
@@ -158,12 +149,12 @@ class CustomOrderController extends BaseController
         $db->table('orders')->update($updateOrder, ['id_order' => $idOrder]);
 
         helper('deadline');
-        $deadlineLabel = formatTanggalId((string) $order['deadline']);
+        $deadlineLabel = formatTanggalId((string) $order['deadline_produksi']);
 
         return redirect()->to(site_url('order/detail/' . $order['kode_order']))
             ->with(
                 'success',
-                'Penawaran disetujui (harga, estimasi, deadline produksi ' . $deadlineLabel . '). '
+                'Harga disetujui (estimasi, deadline produksi ' . $deadlineLabel . '). '
                 . ($requireDp ? 'Silakan lakukan pembayaran DP.' : 'Pesanan masuk ke antrian produksi.')
             );
     }
@@ -202,13 +193,13 @@ class CustomOrderController extends BaseController
             sendNotifInApp(
                 (int) $admin['id_user'],
                 $idOrder,
-                'Penawaran Custom Ditolak',
+                'Konfirmasi Harga Ditolak',
                 "Pelanggan " . session()->get('nama')
-                . " menolak penawaran harga untuk {$order['kode_order']}."
+                . " menolak konfirmasi harga untuk {$order['kode_order']}."
             );
         }
 
         return redirect()->to(site_url('order/detail/' . $order['kode_order']))
-            ->with('info', 'Penawaran ditolak. Pesanan dibatalkan.');
+            ->with('info', 'Harga ditolak. Pesanan dibatalkan.');
     }
 }

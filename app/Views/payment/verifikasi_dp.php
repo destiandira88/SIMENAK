@@ -31,6 +31,7 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-[#051747] text-white text-xs uppercase">
+                        <th class="px-4 py-3 text-left font-semibold w-12">No</th>
                         <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
                         <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
                         <th class="px-4 py-3 text-left font-semibold">Nominal DP</th>
@@ -41,7 +42,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($payments as $p): ?>
+                    <?php foreach ($payments as $index => $p): ?>
                         <?php
                         $idPayment = (int) ($p['id_payment'] ?? 0);
                         $buktiFile = (string) ($p['bukti_tf'] ?? '');
@@ -49,6 +50,7 @@
                         $nominal   = (int) ($p['nominal'] ?? 0);
                         ?>
                         <tr class="border-b border-slate-100 hover:bg-[#F8FAFF]">
+                            <td class="px-4 py-3 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3 font-mono font-semibold text-[#051747]">
                                 <?= esc($kodeOrder) ?>
                             </td>

@@ -11,6 +11,7 @@
         <table class="w-full text-sm">
             <thead>
                 <tr class="text-left text-white text-xs uppercase tracking-wider" style="background:var(--navy);">
+                    <th class="px-6 py-3 font-semibold w-12">No</th>
                     <th class="px-6 py-3 font-semibold">Kode Pesanan</th>
                     <th class="px-6 py-3 font-semibold">Pelanggan</th>
                     <th class="px-6 py-3 font-semibold">Jenis</th>
@@ -22,14 +23,15 @@
             <tbody>
                 <?php if ($payments === []): ?>
                     <tr>
-                        <td colspan="6" class="px-6 py-8 text-center" style="color:var(--text-muted);">
+                        <td colspan="7" class="px-6 py-8 text-center" style="color:var(--text-muted);">
                             Tidak ada pembayaran menunggu verifikasi.
                         </td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($payments as $payment): ?>
+                    <?php foreach ($payments as $index => $payment): ?>
                         <?php $orderStatus = (string) ($payment['order_status'] ?? ''); ?>
                         <tr class="border-b transition-colors hover:bg-[#F8FAFF]" style="border-color:var(--border);">
+                            <td class="px-6 py-3.5 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-6 py-3.5 font-semibold" style="color:var(--navy);">
                                 <?= esc($payment['kode_order'] ?? '-') ?>
                             </td>

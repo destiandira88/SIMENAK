@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
-use App\Models\PelangganModel;
 use CodeIgniter\HTTP\RedirectResponse;
+use CodeIgniter\HTTP\ResponseInterface;
 
 class ProfilController extends BaseController
 {
@@ -72,519 +72,596 @@ class ProfilController extends BaseController
             ->with('success', 'Profil berhasil diperbarui.');
     }
 
-    public function verifikasiPerusahaan(): RedirectResponse
+    public function pengguna(): RedirectResponse|string
     {
-        if ((string) session()->get('role') !== 'pelanggan') {
-            return redirect()->to(site_url('dashboard'));
+        if ($deny = $this->denyUnlessPenggunaViewer()) {
+            return $deny;
+        }
+
+        $db         = \Config\Database::connect();
+        $segment    = (string) ($this->request->getGet('segment') ?? 'semua');
+        $jenisAkun  = (string) ($this->request->getGet('jenis') ?? '');
+
+        if (!in_array($segment, ['semua', 'pelanggan', 'internal'], true)) {
+            $segment = 'semua';
+        }
+
+        $builder = $db->table('users u')
+            ->select('u.id_user, u.nama, u.email, u.role, u.is_active, u.created_at, p.id_pelanggan, p.no_telp, p.alamat, p.jenis, p.is_verified, p.nama_perusahaan')
+            ->join('pelanggan p', 'p.id_user = u.id_user', 'left')
+            ->orderBy('u.created_at', 'DESC');
+
+        if ($segment === 'pelanggan') {
+            $builder->where('u.role', 'pelanggan');
+        } elseif ($segment === 'internal') {
+            $builder->whereIn('u.role', ['admin', 'keuangan', 'produksi', 'owner']);
+        }
+
+        if (in_array($jenisAkun, ['perseorangan', 'kerjasama'], true) && $segment !== 'internal') {
+            $builder->where('u.role', 'pelanggan');
+
+            if ($jenisAkun === 'kerjasama') {
+                $builder->where('p.jenis', 'perusahaan')
+                    ->where('p.is_verified', 1);
+            } else {
+                $builder->groupStart()
+                    ->where('p.jenis !=', 'perusahaan')
+                    ->orWhere('p.is_verified', 0)
+                    ->orWhere('p.is_verified IS NULL', null, false)
+                    ->groupEnd();
+            }
+        }
+
+        $users = $builder->get()->getResultArray();
+        $viewerRole = (string) session()->get('role');
+
+        $countSemua     = (int) $db->table('users')->countAllResults();
+        $countPelanggan = (int) $db->table('users')->where('role', 'pelanggan')->countAllResults();
+        $countInternal  = (int) $db->table('users')
+            ->whereIn('role', ['admin', 'keuangan', 'produksi', 'owner'])
+            ->countAllResults();
+
+        $pelangganIds = array_values(array_filter(array_map(
+            static fn (array $row): int => (int) ($row['id_pelanggan'] ?? 0),
+            $users
+        )));
+        $pelangganActiveOrdersMap = pelanggansWithActiveOrdersMap($pelangganIds);
+
+        return view('profil/pengguna', [
+            'title'                    => 'Pengguna',
+            'page_title'               => 'Manajemen Pengguna',
+            'users'                    => $users,
+            'filterSegment'            => $segment,
+            'filterJenis'              => $jenisAkun,
+            'countSemua'               => $countSemua,
+            'countPelanggan'           => $countPelanggan,
+            'countInternal'            => $countInternal,
+            'viewerRole'               => $viewerRole,
+            'canCreateStaff'           => $viewerRole === 'owner',
+            'canCreatePelanggan'        => $viewerRole === 'admin',
+            'canManagePelanggan'       => $viewerRole === 'admin',
+            'pelangganActiveOrdersMap' => $pelangganActiveOrdersMap,
+        ]);
+    }
+
+    public function simpanPengguna(): RedirectResponse|ResponseInterface
+    {
+        if ($deny = $this->denyUnlessPenggunaViewer()) {
+            return $deny;
+        }
+
+        $accountType = (string) ($this->request->getPost('account_type') ?? 'pelanggan');
+        if (!in_array($accountType, ['pelanggan', 'staff'], true)) {
+            $accountType = 'pelanggan';
+        }
+
+        if ($accountType === 'staff') {
+            if ((string) session()->get('role') !== 'owner') {
+                return $this->forbiddenResponse();
+            }
+
+            return $this->storeStaffInternal();
+        }
+
+        if ($deny = $this->denyUnlessAdminPelangganMutation()) {
+            return $deny;
+        }
+
+        return $this->storePelangganByAdmin();
+    }
+
+    public function updatePelanggan(int $idPelanggan): RedirectResponse|ResponseInterface
+    {
+        if ($deny = $this->denyUnlessPenggunaViewer()) {
+            return $deny;
+        }
+
+        if ($deny = $this->denyUnlessAdminPelangganMutation()) {
+            return $deny;
+        }
+
+        $pelanggan = $this->getPelangganWithUser($idPelanggan);
+        if ($pelanggan === null) {
+            return redirect()->to(site_url('pengguna'))
+                ->with('error', 'Pelanggan tidak ditemukan.');
+        }
+
+        $idUser = (int) ($pelanggan['id_user_pelanggan'] ?? 0);
+        $rules  = pelangganAkunValidationRules($idUser);
+
+        if (!$this->validate($rules, pelangganAkunValidationMessages())) {
+            return redirect()->to(site_url('pengguna'))
+                ->withInput()
+                ->with('open_edit_pelanggan', $idPelanggan)
+                ->with('error', implode(' ', $this->validator->getErrors()));
+        }
+
+        $nama   = trim((string) $this->request->getPost('nama'));
+        $email  = trim((string) $this->request->getPost('email'));
+        $noTelp = trim((string) $this->request->getPost('no_telp'));
+        $alamat = trim((string) $this->request->getPost('alamat'));
+
+        if ($formatError = validatePelangganAkunFormat($nama, $noTelp)) {
+            return redirect()->to(site_url('pengguna'))
+                ->withInput()
+                ->with('open_edit_pelanggan', $idPelanggan)
+                ->with('error', $formatError);
+        }
+
+        $db = \Config\Database::connect();
+
+        try {
+            $db->transStart();
+
+            $db->table('users')->where('id_user', $idUser)->update([
+                'nama'  => $nama,
+                'email' => $email,
+            ]);
+
+            $db->table('pelanggan')->where('id_pelanggan', $idPelanggan)->update([
+                'no_telp' => $noTelp,
+                'alamat'  => $this->truncateAlamat($alamat),
+            ]);
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                throw new \RuntimeException('Gagal memperbarui pelanggan.');
+            }
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', '[ProfilController::updatePelanggan] {msg}', ['msg' => $e->getMessage()]);
+
+            return redirect()->to(site_url('pengguna'))
+                ->withInput()
+                ->with('open_edit_pelanggan', $idPelanggan)
+                ->with('error', 'Gagal memperbarui data pelanggan.');
+        }
+
+        return redirect()->to(site_url('pengguna'))
+            ->with('success', 'Data pelanggan "' . $nama . '" berhasil diperbarui.');
+    }
+
+    public function toggleStatusPelanggan(int $idPelanggan): RedirectResponse|ResponseInterface
+    {
+        if ($deny = $this->denyUnlessPenggunaViewer()) {
+            return $deny;
+        }
+
+        if ($deny = $this->denyUnlessAdminPelangganMutation()) {
+            return $deny;
+        }
+
+        $viewerRole = (string) session()->get('role');
+        if (!$this->canViewerTogglePelanggan($viewerRole)) {
+            return $this->forbiddenResponse();
+        }
+
+        $pelanggan = $this->getPelangganWithUser($idPelanggan);
+        if ($pelanggan === null) {
+            return redirect()->to(site_url('pengguna'))
+                ->with('error', 'Pelanggan tidak ditemukan.');
+        }
+
+        $idUser   = (int) ($pelanggan['id_user_pelanggan'] ?? 0);
+        $user     = $this->getUserById($idUser);
+        if ($user === null) {
+            return redirect()->to(site_url('pengguna'))
+                ->with('error', 'Akun pelanggan tidak ditemukan.');
+        }
+
+        $isActive    = (int) ($user['is_active'] ?? 1) === 1;
+        $newIsActive = $isActive ? 0 : 1;
+        $nama        = (string) ($user['nama'] ?? 'Pelanggan');
+
+        if ($newIsActive === 0 && pelangganHasActiveOrders($idPelanggan)) {
+            return redirect()->to(site_url('pengguna'))
+                ->with('error', 'Akun "' . $nama . '" tidak dapat dinonaktifkan karena masih memiliki pesanan aktif. Tunggu hingga semua pesanan selesai atau dibatalkan.');
+        }
+
+        \Config\Database::connect()->table('users')->where('id_user', $idUser)->update([
+            'is_active' => $newIsActive,
+        ]);
+
+        $statusLabel = $newIsActive ? 'diaktifkan' : 'dinonaktifkan';
+
+        return redirect()->to(site_url('pengguna'))
+            ->with('success', 'Akun pelanggan "' . $nama . '" berhasil ' . $statusLabel . '.');
+    }
+
+    public function toggleStatusStaff(int $idUser): RedirectResponse|ResponseInterface
+    {
+        if ($deny = $this->denyUnlessPenggunaViewer()) {
+            return $deny;
+        }
+
+        if ($deny = $this->denyUnlessOwnerStaffMutation()) {
+            return $deny;
+        }
+
+        $viewerRole = (string) session()->get('role');
+        $user       = $this->getUserById($idUser);
+
+        if ($user === null) {
+            return redirect()->to(site_url('pengguna'))
+                ->with('error', 'Pengguna tidak ditemukan.');
+        }
+
+        $targetRole = (string) ($user['role'] ?? '');
+
+        if (!$this->canViewerToggleStaff($viewerRole, $targetRole)) {
+            return $this->forbiddenResponse();
+        }
+
+        $isActive    = (int) ($user['is_active'] ?? 1) === 1;
+        $newIsActive = $isActive ? 0 : 1;
+        $db          = \Config\Database::connect();
+
+        $db->table('users')->where('id_user', $idUser)->update([
+            'is_active' => $newIsActive,
+        ]);
+
+        $nama        = (string) ($user['nama'] ?? 'Staff');
+        $statusLabel = $newIsActive ? 'diaktifkan' : 'dinonaktifkan';
+
+        return redirect()->to(site_url('pengguna'))
+            ->with('success', 'Akun "' . $nama . '" berhasil ' . $statusLabel . '.');
+    }
+
+    public function updateStaffInternal(int $idUser): RedirectResponse|ResponseInterface
+    {
+        if ($deny = $this->denyUnlessPenggunaViewer()) {
+            return $deny;
+        }
+
+        if ($deny = $this->denyUnlessOwnerStaffMutation()) {
+            return $deny;
+        }
+
+        $user = $this->getUserById($idUser);
+        if ($user === null) {
+            return redirect()->to(site_url('pengguna'))
+                ->with('error', 'Pengguna tidak ditemukan.');
+        }
+
+        $targetRole = (string) ($user['role'] ?? '');
+        if (!$this->canViewerEditStaff($targetRole)) {
+            return $this->forbiddenResponse();
+        }
+
+        $rules = [
+            'nama'       => 'required|min_length[3]|max_length[100]',
+            'email'      => 'required|valid_email|is_unique[users.email,id_user,' . $idUser . ']',
+            'staff_role' => 'required|in_list[admin,keuangan,produksi]',
+        ];
+
+        if (!$this->validate($rules, $this->penggunaValidationMessages())) {
+            return redirect()->to(site_url('pengguna'))
+                ->withInput()
+                ->with('open_edit_staff', $idUser)
+                ->with('error', implode(' ', $this->validator->getErrors()));
+        }
+
+        $nama      = trim((string) $this->request->getPost('nama'));
+        $email     = trim((string) $this->request->getPost('email'));
+        $staffRole = (string) $this->request->getPost('staff_role');
+
+        if (!isValidNamaLengkap($nama)) {
+            return redirect()->to(site_url('pengguna'))
+                ->withInput()
+                ->with('open_edit_staff', $idUser)
+                ->with('error', 'Nama lengkap tidak valid (3–100 karakter, huruf/spasi/titik/kutip).');
+        }
+
+        if (!in_array($staffRole, ['admin', 'keuangan', 'produksi'], true)) {
+            return redirect()->to(site_url('pengguna'))
+                ->withInput()
+                ->with('open_edit_staff', $idUser)
+                ->with('error', 'Peran staff tidak valid.');
+        }
+
+        \Config\Database::connect()->table('users')->where('id_user', $idUser)->update([
+            'nama'  => $nama,
+            'email' => $email,
+            'role'  => $staffRole,
+        ]);
+
+        return redirect()->to(site_url('pengguna'))
+            ->with('success', 'Data staff "' . $nama . '" berhasil diperbarui.');
+    }
+
+    public function tetapkanKerjasamaPerusahaan(int $idPelanggan): RedirectResponse
+    {
+        if ($deny = $this->denyUnlessPenggunaViewer()) {
+            return $deny;
+        }
+
+        if ($deny = $this->denyUnlessAdminPelangganMutation()) {
+            return $deny;
+        }
+
+        $pelanggan = $this->getPelangganWithUser($idPelanggan);
+        if ($pelanggan === null) {
+            return redirect()->back()->with('error', 'Pelanggan tidak ditemukan.');
+        }
+
+        if (pelangganIsKerjasamaPerusahaan($pelanggan)) {
+            return redirect()->back()->with('info', 'Pelanggan sudah memiliki status kerja sama perusahaan.');
         }
 
         $rules = [
             'nama_perusahaan' => 'required|min_length[3]|max_length[150]',
-            'no_npwp'         => 'permit_empty|max_length[20]',
             'jabatan_pic'     => 'required|min_length[2]|max_length[100]',
             'wa_perusahaan'   => 'required|regex_match[/^[0-9]{10,13}$/]',
             'alamat_kantor'   => 'required|min_length[10]|max_length[255]',
+            'no_npwp'         => 'permit_empty|max_length[20]',
+            'catatan_admin'   => 'permit_empty|max_length[500]',
         ];
 
         if (!$this->validate($rules)) {
-            return $this->backProfilModal()
+            return redirect()->back()
                 ->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }
 
-        $idPelanggan = (int) session()->get('id_pelanggan');
-        $db          = \Config\Database::connect();
-
-        $pelanggan = $db->table('pelanggan')
-            ->where('id_pelanggan', $idPelanggan)
-            ->get()
-            ->getRowArray();
-
-        if ($pelanggan === null) {
-            return $this->backProfilModal()->with('error', 'Data pelanggan tidak ditemukan.');
-        }
-
-        if ((int) ($pelanggan['is_verified'] ?? 0) === 1) {
-            return $this->backProfilModal()->with('info', 'Akun Anda sudah terverifikasi sebagai perusahaan.');
-        }
-
-        $pending = $db->table('verifikasi_perusahaan')
-            ->where('id_pelanggan', $idPelanggan)
-            ->where('status', 'pending')
-            ->countAllResults();
-
-        if ($pending > 0) {
-            return $this->backProfilModal()->with('warning', 'Pengajuan verifikasi masih menunggu tinjauan admin.');
-        }
-
-        $fileNpwp = $this->request->getFile('dokumen_npwp');
-        $fileKtp  = $this->request->getFile('dokumen_ktp_pic');
-        $fileMou  = $this->request->getFile('dokumen_mou');
-
-        if ($fileNpwp === null || !$fileNpwp->isValid()) {
-            return $this->backProfilModal()->with('error', 'Dokumen NPWP wajib diunggah.');
-        }
-
-        if ($fileKtp === null || !$fileKtp->isValid()) {
-            return $this->backProfilModal()->with('error', 'Dokumen KTP PIC wajib diunggah.');
-        }
-
-        if ($fileMou === null || !$fileMou->isValid()) {
-            return $this->backProfilModal()->with('error', 'Dokumen MOU / surat kerjasama wajib diunggah.');
-        }
-
-        $allowed = ['jpg', 'jpeg', 'png', 'pdf'];
-        $maxSize = 2 * 1024 * 1024;
-
-        foreach (['npwp' => $fileNpwp, 'ktp' => $fileKtp, 'mou' => $fileMou] as $label => $file) {
-            $ext = strtolower($file->getExtension());
-            if (!in_array($ext, $allowed, true)) {
-                return $this->backProfilModal()->with('error', 'Format dokumen ' . $label . ' tidak valid. Gunakan JPG, PNG, atau PDF.');
-            }
-            if ($file->getSize() > $maxSize) {
-                return $this->backProfilModal()->with('error', 'Ukuran dokumen ' . $label . ' maksimal 2MB.');
-            }
-        }
-
-        if (strtolower($fileMou->getExtension()) !== 'pdf') {
-            return $this->backProfilModal()->with('error', 'Dokumen MOU harus berformat PDF.');
-        }
-
         $namaPerusahaan = trim((string) $this->request->getPost('nama_perusahaan'));
-        $jabatanPic     = trim((string) $this->request->getPost('jabatan_pic'));
-        $waPerusahaan   = trim((string) $this->request->getPost('wa_perusahaan'));
-        $alamatKantor   = trim((string) $this->request->getPost('alamat_kantor'));
-        $noNpwpRaw      = trim((string) $this->request->getPost('no_npwp'));
-        $noNpwp         = null;
+        if (!isValidNamaPerusahaan($namaPerusahaan)) {
+            return redirect()->back()->withInput()->with('error', 'Nama perusahaan tidak valid.');
+        }
 
+        $noNpwpRaw = trim((string) $this->request->getPost('no_npwp'));
+        $noNpwp    = null;
         if ($noNpwpRaw !== '') {
             $noNpwp = normalizeNpwp($noNpwpRaw);
             if ($noNpwp === null) {
-                return $this->backProfilModal()
-                    ->withInput()
-                    ->with('error', 'Format NPWP tidak valid. Masukkan 15 digit angka, contoh: 12.345.678.9-012.345.');
+                return redirect()->back()->withInput()->with('error', 'Format NPWP tidak valid.');
             }
         }
 
-        $namaPelanggan  = (string) session()->get('nama');
+        $uploads = $this->processKerjasamaUploads(false);
+        if (!$uploads['success']) {
+            return redirect()->back()->withInput()->with('error', $uploads['message']);
+        }
+
+        $idAdmin = (int) session()->get('id_user');
+        $db      = \Config\Database::connect();
 
         try {
-            $uploadDir = FCPATH . 'uploads/dokumen_verifikasi/';
-            if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
-                throw new \RuntimeException('Folder upload tidak tersedia.');
-            }
-
-            $this->ensureUploadIndex($uploadDir);
-
-            $npwpName = time() . '_npwp_' . $fileNpwp->getClientName();
-            $ktpName  = time() . '_ktp_' . $fileKtp->getClientName();
-            $mouName  = time() . '_mou_' . $fileMou->getClientName();
-            $fileNpwp->move($uploadDir, $npwpName);
-            $fileKtp->move($uploadDir, $ktpName);
-            $fileMou->move($uploadDir, $mouName);
-
             $db->transStart();
 
             $db->table('verifikasi_perusahaan')->insert([
                 'id_pelanggan'    => $idPelanggan,
                 'nama_perusahaan' => $namaPerusahaan,
                 'no_npwp'         => $noNpwp,
-                'jabatan_pic'     => $jabatanPic,
-                'wa_perusahaan'   => $waPerusahaan,
-                'alamat_kantor'   => $alamatKantor,
-                'dokumen_npwp'    => $npwpName,
-                'dokumen_ktp_pic' => $ktpName,
-                'dokumen_mou'     => $mouName,
-                'status'          => 'pending',
+                'jabatan_pic'     => trim((string) $this->request->getPost('jabatan_pic')),
+                'wa_perusahaan'   => trim((string) $this->request->getPost('wa_perusahaan')),
+                'alamat_kantor'   => trim((string) $this->request->getPost('alamat_kantor')),
+                'dokumen_npwp'    => $uploads['dokumen_npwp'],
+                'dokumen_ktp_pic' => $uploads['dokumen_ktp_pic'],
+                'dokumen_mou'     => $uploads['dokumen_mou'],
+                'status'          => 'verified',
+                'catatan_admin'   => trim((string) $this->request->getPost('catatan_admin')) ?: null,
                 'tgl_pengajuan'   => date('Y-m-d H:i:s'),
+                'tgl_verifikasi'  => date('Y-m-d H:i:s'),
+                'id_admin'        => $idAdmin,
             ]);
 
             $db->table('pelanggan')->where('id_pelanggan', $idPelanggan)->update([
+                'jenis'           => 'perusahaan',
+                'is_verified'     => 1,
+                'is_suspended'    => 0,
                 'nama_perusahaan' => $namaPerusahaan,
+                'alamat'          => mb_substr(trim((string) $this->request->getPost('alamat_kantor')), 0, 150),
             ]);
-
-            $adminUsers = $db->table('users')->where('role', 'admin')->get()->getResultArray();
-            $verifUrl   = site_url('verifikasi-perusahaan');
-
-            foreach ($adminUsers as $admin) {
-                sendNotifEmail(
-                    (string) $admin['email'],
-                    'Pengajuan Verifikasi Perusahaan Baru',
-                    '<p>Halo <strong>' . esc((string) $admin['nama']) . '</strong>,</p>'
-                    . '<p>Pelanggan <strong>' . esc($namaPelanggan) . '</strong> mengajukan verifikasi perusahaan '
-                    . '<strong>' . esc($namaPerusahaan) . '</strong>.</p>'
-                    . '<p><a href="' . esc($verifUrl) . '">Buka halaman verifikasi perusahaan</a></p>'
-                );
-
-                sendNotifInApp(
-                    (int) $admin['id_user'],
-                    null,
-                    'Pengajuan Verifikasi Perusahaan',
-                    "{$namaPelanggan} mengajukan verifikasi perusahaan {$namaPerusahaan}."
-                );
-            }
 
             $db->transComplete();
 
             if ($db->transStatus() === false) {
-                throw new \RuntimeException('Gagal menyimpan pengajuan verifikasi.');
-            }
-        } catch (\Throwable $e) {
-            $db->transRollback();
-            log_message('error', '[ProfilController::verifikasiPerusahaan] {msg}', ['msg' => $e->getMessage()]);
-
-            return $this->backProfilModal()->with('error', 'Gagal mengirim pengajuan verifikasi.');
-        }
-
-        return $this->backProfilModal()
-            ->with('success', 'Pengajuan verifikasi perusahaan berhasil dikirim. Menunggu tinjauan admin.');
-    }
-
-    public function verifikasiPerusahaanList(): RedirectResponse|string
-    {
-        if ((string) session()->get('role') !== 'admin') {
-            return redirect()->to(site_url('dashboard'));
-        }
-
-        $db     = \Config\Database::connect();
-        $filter = (string) ($this->request->getGet('status') ?? 'pending');
-
-        $builder = $db->table('verifikasi_perusahaan vp')
-            ->select(
-                'vp.*, u.nama AS nama_pelanggan, u.email AS email_pelanggan, '
-                . 'p.no_telp, p.is_verified, admin.nama AS nama_admin'
-            )
-            ->join('pelanggan p', 'p.id_pelanggan = vp.id_pelanggan')
-            ->join('users u', 'u.id_user = p.id_user')
-            ->join('users admin', 'admin.id_user = vp.id_admin', 'left')
-            ->orderBy('vp.tgl_pengajuan', 'DESC');
-
-        if (in_array($filter, ['pending', 'verified', 'rejected'], true)) {
-            $builder->where('vp.status', $filter);
-        }
-
-        $pengajuan = $builder->get()->getResultArray();
-
-        $counts = [
-            'pending'  => $db->table('verifikasi_perusahaan')->where('status', 'pending')->countAllResults(),
-            'verified' => $db->table('verifikasi_perusahaan')->where('status', 'verified')->countAllResults(),
-            'rejected' => $db->table('verifikasi_perusahaan')->where('status', 'rejected')->countAllResults(),
-        ];
-
-        return view('profil/verifikasi_perusahaan_list', [
-            'title'      => 'Verifikasi Perusahaan',
-            'page_title' => 'Verifikasi Perusahaan',
-            'pengajuan'  => $pengajuan,
-            'filter'     => $filter,
-            'counts'     => $counts,
-        ]);
-    }
-
-    public function verifikasiPerusahaanProses(int $idVerify): RedirectResponse
-    {
-        if ((string) session()->get('role') !== 'admin') {
-            return redirect()->to(site_url('dashboard'));
-        }
-
-        $aksi = (string) $this->request->getPost('aksi');
-        if (!in_array($aksi, ['acc', 'tolak'], true)) {
-            return redirect()->back()->with('error', 'Aksi tidak dikenal.');
-        }
-
-        $catatanAdmin = trim((string) $this->request->getPost('catatan_admin'));
-        if ($aksi === 'tolak' && $catatanAdmin === '') {
-            return redirect()->back()->with('error', 'Alasan penolakan wajib diisi.');
-        }
-
-        $db       = \Config\Database::connect();
-        $idAdmin  = (int) session()->get('id_user');
-        $pengajuan = $db->table('verifikasi_perusahaan vp')
-            ->select('vp.*, u.id_user AS id_user_pelanggan, u.nama AS nama_pelanggan, u.email AS email_pelanggan')
-            ->join('pelanggan p', 'p.id_pelanggan = vp.id_pelanggan')
-            ->join('users u', 'u.id_user = p.id_user')
-            ->where('vp.id_verify', $idVerify)
-            ->where('vp.status', 'pending')
-            ->get()
-            ->getRowArray();
-
-        if ($pengajuan === null) {
-            return redirect()->back()->with('error', 'Pengajuan verifikasi tidak ditemukan atau sudah diproses.');
-        }
-
-        $idPelanggan     = (int) $pengajuan['id_pelanggan'];
-        $idUserPelanggan = (int) $pengajuan['id_user_pelanggan'];
-        $namaPerusahaan  = (string) $pengajuan['nama_perusahaan'];
-        $namaPelanggan   = (string) $pengajuan['nama_pelanggan'];
-
-        try {
-            $db->transStart();
-
-            if ($aksi === 'acc') {
-                $db->table('verifikasi_perusahaan')->where('id_verify', $idVerify)->update([
-                    'status'           => 'verified',
-                    'catatan_admin'    => $catatanAdmin !== '' ? $catatanAdmin : null,
-                    'tgl_verifikasi'   => date('Y-m-d H:i:s'),
-                    'id_admin'         => $idAdmin,
-                ]);
-
-                $db->table('pelanggan')->where('id_pelanggan', $idPelanggan)->update([
-                    'is_verified'     => 1,
-                    'jenis'           => 'perusahaan',
-                    'nama_perusahaan' => $namaPerusahaan,
-                    'tier_perusahaan' => 'pemula',
-                    'is_suspended'    => 0,
-                ]);
-
-                sendNotifEmail(
-                    (string) $pengajuan['email_pelanggan'],
-                    '[No-Reply] Verifikasi Perusahaan Disetujui',
-                    '<p>Halo <strong>' . esc($namaPelanggan) . '</strong>,</p>'
-                    . '<p>Pengajuan verifikasi perusahaan <strong>' . esc($namaPerusahaan) . '</strong> telah <strong>disetujui</strong>.</p>'
-                    . '<p>Akun perusahaan aktif dengan tier <strong>Pemula</strong>: wajib DP setiap pesanan, pelunasan sebelum pengiriman.</p>'
-                    . '<p>Setelah 3 order lancar, admin dapat mempromosikan ke tier Terpercaya (tanpa DP untuk order ≤ Rp 5 juta).</p>'
-                );
-
-                sendNotifInApp(
-                    $idUserPelanggan,
-                    null,
-                    'Verifikasi Perusahaan Disetujui',
-                    "Verifikasi perusahaan {$namaPerusahaan} disetujui. Tier Pemula aktif."
-                );
-
-                $flashMsg = 'Verifikasi perusahaan berhasil disetujui.';
-            } else {
-                $db->table('verifikasi_perusahaan')->where('id_verify', $idVerify)->update([
-                    'status'           => 'rejected',
-                    'catatan_admin'    => $catatanAdmin,
-                    'tgl_verifikasi'   => date('Y-m-d H:i:s'),
-                    'id_admin'         => $idAdmin,
-                ]);
-
-                $db->table('pelanggan')->where('id_pelanggan', $idPelanggan)->update([
-                    'is_verified' => 0,
-                ]);
-
-                sendNotifEmail(
-                    (string) $pengajuan['email_pelanggan'],
-                    '[No-Reply] Verifikasi Perusahaan Ditolak',
-                    '<p>Halo <strong>' . esc($namaPelanggan) . '</strong>,</p>'
-                    . '<p>Pengajuan verifikasi perusahaan <strong>' . esc($namaPerusahaan) . '</strong> <strong>ditolak</strong>.</p>'
-                    . '<p><strong>Alasan:</strong> ' . esc($catatanAdmin) . '</p>'
-                    . '<p>Silakan perbaiki dokumen dan ajukan ulang melalui halaman Profil.</p>'
-                );
-
-                sendNotifInApp(
-                    $idUserPelanggan,
-                    null,
-                    'Verifikasi Perusahaan Ditolak',
-                    "Verifikasi perusahaan {$namaPerusahaan} ditolak: {$catatanAdmin}"
-                );
-
-                $flashMsg = 'Pengajuan verifikasi perusahaan ditolak.';
+                throw new \RuntimeException('Gagal menyimpan kerja sama perusahaan.');
             }
 
-            $db->transComplete();
-
-            if ($db->transStatus() === false) {
-                throw new \RuntimeException('Gagal memproses verifikasi.');
-            }
-        } catch (\Throwable $e) {
-            $db->transRollback();
-            log_message('error', '[ProfilController::verifikasiPerusahaanProses] {msg}', ['msg' => $e->getMessage()]);
-
-            return redirect()->back()->with('error', 'Gagal memproses verifikasi perusahaan.');
-        }
-
-        return redirect()->to(site_url('verifikasi-perusahaan'))
-            ->with($aksi === 'acc' ? 'success' : 'warning', $flashMsg);
-    }
-
-    public function pengguna(): RedirectResponse|string
-    {
-        if ((string) session()->get('role') !== 'admin') {
-            return redirect()->to(site_url('dashboard'));
-        }
-
-        $db         = \Config\Database::connect();
-        $role       = (string) ($this->request->getGet('role') ?? '');
-        $verifikasi = (string) ($this->request->getGet('verifikasi') ?? '');
-
-        $builder = $db->table('users u')
-            ->select('u.id_user, u.nama, u.email, u.role, u.created_at, p.id_pelanggan, p.no_telp, p.is_verified, p.nama_perusahaan, p.tier_perusahaan, p.is_suspended')
-            ->join('pelanggan p', 'p.id_user = u.id_user', 'left')
-            ->orderBy('u.created_at', 'DESC');
-
-        if ($role !== '' && in_array($role, ['pelanggan', 'admin', 'keuangan', 'produksi', 'owner'], true)) {
-            $builder->where('u.role', $role);
-        }
-
-        if (in_array($verifikasi, ['belum', 'pemula', 'terpercaya', 'suspend'], true)) {
-            $builder->where('u.role', 'pelanggan');
-
-            match ($verifikasi) {
-                'belum' => $builder->groupStart()
-                    ->where('p.is_verified', 0)
-                    ->orWhere('p.is_verified IS NULL', null, false)
-                    ->groupEnd(),
-                'pemula' => $builder
-                    ->where('p.is_verified', 1)
-                    ->where('p.tier_perusahaan', 'pemula')
-                    ->where('p.is_suspended', 0),
-                'terpercaya' => $builder
-                    ->where('p.is_verified', 1)
-                    ->where('p.tier_perusahaan', 'terpercaya')
-                    ->where('p.is_suspended', 0),
-                'suspend' => $builder
-                    ->where('p.is_verified', 1)
-                    ->where('p.is_suspended', 1),
-                default => null,
-            };
-        }
-
-        $users = $builder->get()->getResultArray();
-
-        return view('profil/pengguna', [
-            'title'           => 'Pengguna',
-            'page_title'      => 'Manajemen Pengguna',
-            'users'           => $users,
-            'filterRole'      => $role,
-            'filterVerifikasi' => $verifikasi,
-        ]);
-    }
-
-    public function promosikanTerpercaya(int $idPelanggan): RedirectResponse
-    {
-        if ((string) session()->get('role') !== 'admin') {
-            return redirect()->to(site_url('dashboard'));
-        }
-
-        helper('notification');
-        $db       = \Config\Database::connect();
-        $pelanggan = $db->table('pelanggan p')
-            ->select('p.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
-            ->join('users u', 'u.id_user = p.id_user')
-            ->where('p.id_pelanggan', $idPelanggan)
-            ->get()
-            ->getRowArray();
-
-        if ($pelanggan === null) {
-            return redirect()->back()->with('error', 'Pelanggan tidak ditemukan.');
-        }
-
-        if (!canPromotePerusahaanToTerpercaya($pelanggan)) {
-            $count = countOrderLancarPerusahaan($idPelanggan);
-
-            return redirect()->back()->with('error', "Belum memenuhi syarat promosi ({$count}/3 order lancar).");
-        }
-
-        try {
-            $db->table('pelanggan')->where('id_pelanggan', $idPelanggan)->update([
-                'tier_perusahaan' => 'terpercaya',
-            ]);
-
-            $namaPerusahaan = (string) ($pelanggan['nama_perusahaan'] ?? 'Perusahaan');
             sendNotifEmail(
                 (string) $pelanggan['email'],
-                '[No-Reply] Tier Perusahaan Diperbarui-Terpercaya',
+                '[No-Reply] Status Kerja Sama Perusahaan Aktif',
                 '<p>Halo <strong>' . esc((string) $pelanggan['nama']) . '</strong>,</p>'
-                . '<p>Akun perusahaan <strong>' . esc($namaPerusahaan) . '</strong> dipromosikan ke tier <strong>Terpercaya</strong>.</p>'
-                . '<p>Order ≤ Rp 5.000.000 tanpa DP. Order di atas Rp 5.000.000 tetap wajib DP.</p>'
+                . '<p>Akun Anda ditetapkan sebagai pelanggan <strong>Kerja Sama Perusahaan</strong> '
+                . '(<strong>' . esc($namaPerusahaan) . '</strong>).</p>'
+                . '<p>Order hingga Rp 5.000.000 tanpa DP (pelunasan setelah barang diterima). '
+                . 'Order di atas Rp 5.000.000 wajib DP 50%, sisa pelunasan tetap setelah barang diterima.</p>'
             );
             sendNotifInApp(
                 (int) $pelanggan['id_user_pelanggan'],
                 null,
-                'Tier Terpercaya Aktif',
-                "Perusahaan {$namaPerusahaan} dipromosikan ke tier Terpercaya."
+                'Kerja Sama Perusahaan Aktif',
+                "Akun ditetapkan kerja sama perusahaan: {$namaPerusahaan}."
             );
         } catch (\Throwable $e) {
-            log_message('error', '[ProfilController::promosikanTerpercaya] {msg}', ['msg' => $e->getMessage()]);
+            $db->transRollback();
+            log_message('error', '[ProfilController::tetapkanKerjasamaPerusahaan] {msg}', ['msg' => $e->getMessage()]);
 
-            return redirect()->back()->with('error', 'Gagal mempromosikan tier perusahaan.');
+            return redirect()->back()->with('error', 'Gagal menetapkan kerja sama perusahaan.');
         }
 
-        return redirect()->back()->with('success', 'Pelanggan berhasil dipromosikan ke tier Terpercaya.');
+        return redirect()->back()->with('success', 'Pelanggan berhasil ditetapkan sebagai Kerja Sama Perusahaan.');
     }
 
-    public function toggleSuspend(int $idPelanggan): RedirectResponse
+    public function cabutKerjasamaPerusahaan(int $idPelanggan): RedirectResponse
     {
-        if ((string) session()->get('role') !== 'admin') {
-            return redirect()->to(site_url('dashboard'));
+        if ($deny = $this->denyUnlessPenggunaViewer()) {
+            return $deny;
         }
 
-        helper('notification');
-        $db        = \Config\Database::connect();
-        $pelanggan = $db->table('pelanggan p')
-            ->select('p.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
-            ->join('users u', 'u.id_user = p.id_user')
-            ->where('p.id_pelanggan', $idPelanggan)
-            ->where('p.is_verified', 1)
-            ->get()
-            ->getRowArray();
-
-        if ($pelanggan === null) {
-            return redirect()->back()->with('error', 'Pelanggan perusahaan tidak ditemukan.');
+        if ($deny = $this->denyUnlessAdminPelangganMutation()) {
+            return $deny;
         }
 
-        $newSuspended = (int) ($pelanggan['is_suspended'] ?? 0) === 1 ? 0 : 1;
+        $pelanggan = $this->getPelangganWithUser($idPelanggan);
+        if ($pelanggan === null || !pelangganIsKerjasamaPerusahaan($pelanggan)) {
+            return redirect()->back()->with('error', 'Pelanggan kerja sama perusahaan tidak ditemukan.');
+        }
+
+        $catatan = trim((string) $this->request->getPost('catatan_alasan'));
+        $db      = \Config\Database::connect();
 
         try {
-            $update = ['is_suspended' => $newSuspended];
-            if ($newSuspended === 1 && (string) ($pelanggan['tier_perusahaan'] ?? '') === 'terpercaya') {
-                $update['tier_perusahaan'] = 'pemula';
-            }
+            $db->transStart();
 
-            $db->table('pelanggan')->where('id_pelanggan', $idPelanggan)->update($update);
+            $db->table('verifikasi_perusahaan')->insert([
+                'id_pelanggan'    => $idPelanggan,
+                'nama_perusahaan' => (string) ($pelanggan['nama_perusahaan'] ?? 'Perusahaan'),
+                'status'          => 'rejected',
+                'catatan_admin'   => $catatan !== '' ? $catatan : 'Status kerja sama perusahaan dicabut admin.',
+                'tgl_pengajuan'   => date('Y-m-d H:i:s'),
+                'tgl_verifikasi'  => date('Y-m-d H:i:s'),
+                'id_admin'        => (int) session()->get('id_user'),
+            ]);
+
+            $db->table('pelanggan')->where('id_pelanggan', $idPelanggan)->update([
+                'jenis'           => 'perseorangan',
+                'is_verified'     => 0,
+                'is_suspended'    => 0,
+            ]);
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                throw new \RuntimeException('Gagal mencabut kerja sama.');
+            }
 
             $namaPerusahaan = (string) ($pelanggan['nama_perusahaan'] ?? 'Perusahaan');
-            if ($newSuspended === 1) {
-                sendNotifInApp(
-                    (int) $pelanggan['id_user_pelanggan'],
-                    null,
-                    'Akun Perusahaan Disuspend',
-                    "Akun perusahaan {$namaPerusahaan} disuspend. Pesanan perusahaan dinonaktifkan sementara."
-                );
-                $flash = 'Akun perusahaan disuspend.';
-            } else {
-                sendNotifInApp(
-                    (int) $pelanggan['id_user_pelanggan'],
-                    null,
-                    'Suspend Dicabut',
-                    "Akun perusahaan {$namaPerusahaan} kembali aktif (tier Pemula)."
-                );
-                $flash = 'Suspend dicabut. Tier kembali ke Pemula.';
-            }
+            sendNotifEmail(
+                (string) $pelanggan['email'],
+                '[No-Reply] Status Kerja Sama Perusahaan Dicabut',
+                '<p>Halo <strong>' . esc((string) $pelanggan['nama']) . '</strong>,</p>'
+                . '<p>Status kerja sama perusahaan (<strong>' . esc($namaPerusahaan) . '</strong>) telah dicabut.</p>'
+                . '<p>Pesanan baru akan diproses dengan skema perseorangan (DP 50%, pelunasan sebelum pengiriman).</p>'
+                . ($catatan !== '' ? '<p><strong>Catatan:</strong> ' . esc($catatan) . '</p>' : '')
+            );
+            sendNotifInApp(
+                (int) $pelanggan['id_user_pelanggan'],
+                null,
+                'Kerja Sama Perusahaan Dicabut',
+                "Status kerja sama {$namaPerusahaan} dicabut. Pesanan baru mengikuti skema perseorangan."
+            );
         } catch (\Throwable $e) {
-            log_message('error', '[ProfilController::toggleSuspend] {msg}', ['msg' => $e->getMessage()]);
+            $db->transRollback();
+            log_message('error', '[ProfilController::cabutKerjasamaPerusahaan] {msg}', ['msg' => $e->getMessage()]);
 
-            return redirect()->back()->with('error', 'Gagal memperbarui status suspend.');
+            return redirect()->back()->with('error', 'Gagal mencabut kerja sama perusahaan.');
         }
 
-        return redirect()->back()->with('success', $flash);
+        return redirect()->back()->with('success', 'Status kerja sama perusahaan berhasil dicabut.');
     }
 
-    public function demoteTerpercaya(int $idPelanggan): RedirectResponse
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function getPelangganWithUser(int $idPelanggan): ?array
     {
-        if ((string) session()->get('role') !== 'admin') {
-            return redirect()->to(site_url('dashboard'));
-        }
-
-        $db = \Config\Database::connect();
-        $pelanggan = $db->table('pelanggan')
-            ->where('id_pelanggan', $idPelanggan)
-            ->where('is_verified', 1)
-            ->where('tier_perusahaan', 'terpercaya')
+        $row = \Config\Database::connect()
+            ->table('pelanggan p')
+            ->select('p.*, u.id_user AS id_user_pelanggan, u.nama, u.email, u.role, u.is_active')
+            ->join('users u', 'u.id_user = p.id_user')
+            ->where('p.id_pelanggan', $idPelanggan)
+            ->where('u.role', 'pelanggan')
             ->get()
             ->getRowArray();
 
-        if ($pelanggan === null) {
-            return redirect()->back()->with('error', 'Pelanggan tier Terpercaya tidak ditemukan.');
+        return $row ?: null;
+    }
+
+    /**
+     * @return array{success: bool, message: string, dokumen_npwp?: ?string, dokumen_ktp_pic?: ?string, dokumen_mou?: ?string}
+     */
+    private function processKerjasamaUploads(bool $requireDocs): array
+    {
+        $fileNpwp = $this->request->getFile('dokumen_npwp');
+        $fileKtp  = $this->request->getFile('dokumen_ktp_pic');
+        $fileMou  = $this->request->getFile('dokumen_mou');
+
+        $hasNpwp = $fileNpwp !== null && $fileNpwp->isValid() && !$fileNpwp->hasMoved();
+        $hasKtp  = $fileKtp !== null && $fileKtp->isValid() && !$fileKtp->hasMoved();
+        $hasMou  = $fileMou !== null && $fileMou->isValid() && !$fileMou->hasMoved();
+
+        if ($requireDocs && (!$hasNpwp || !$hasKtp || !$hasMou)) {
+            return ['success' => false, 'message' => 'Semua dokumen kerja sama wajib diunggah.'];
         }
 
-        $db->table('pelanggan')->where('id_pelanggan', $idPelanggan)->update([
-            'tier_perusahaan' => 'pemula',
-        ]);
+        $allowed = ['jpg', 'jpeg', 'png', 'pdf'];
+        $maxSize = 2 * 1024 * 1024;
+        $result  = [
+            'success'         => true,
+            'message'         => '',
+            'dokumen_npwp'    => null,
+            'dokumen_ktp_pic' => null,
+            'dokumen_mou'     => null,
+        ];
 
-        return redirect()->back()->with('success', 'Tier perusahaan diturunkan ke Pemula.');
+        foreach (['npwp' => $fileNpwp, 'ktp' => $fileKtp, 'mou' => $fileMou] as $label => $file) {
+            if ($file === null || !$file->isValid() || $file->hasMoved()) {
+                continue;
+            }
+            $ext = strtolower($file->getExtension());
+            if (!in_array($ext, $allowed, true)) {
+                return ['success' => false, 'message' => 'Format dokumen ' . $label . ' tidak valid.'];
+            }
+            if ($file->getSize() > $maxSize) {
+                return ['success' => false, 'message' => 'Ukuran dokumen ' . $label . ' maksimal 2MB.'];
+            }
+            if ($label === 'mou' && $ext !== 'pdf') {
+                return ['success' => false, 'message' => 'Dokumen MOU harus PDF.'];
+            }
+        }
+
+        try {
+            $uploadDir = FCPATH . 'uploads/dokumen_verifikasi/';
+            if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+                throw new \RuntimeException('Folder upload tidak tersedia.');
+            }
+            $this->ensureUploadIndex($uploadDir);
+
+            if ($hasNpwp) {
+                $name = time() . '_npwp_' . $fileNpwp->getClientName();
+                $fileNpwp->move($uploadDir, $name);
+                $result['dokumen_npwp'] = $name;
+            }
+            if ($hasKtp) {
+                $name = time() . '_ktp_' . $fileKtp->getClientName();
+                $fileKtp->move($uploadDir, $name);
+                $result['dokumen_ktp_pic'] = $name;
+            }
+            if ($hasMou) {
+                $name = time() . '_mou_' . $fileMou->getClientName();
+                $fileMou->move($uploadDir, $name);
+                $result['dokumen_mou'] = $name;
+            }
+        } catch (\Throwable $e) {
+            log_message('error', '[ProfilController::processKerjasamaUploads] {msg}', ['msg' => $e->getMessage()]);
+
+            return ['success' => false, 'message' => 'Gagal mengunggah dokumen.'];
+        }
+
+        return $result;
     }
 
     private function ensureUploadIndex(string $uploadDir): void
@@ -600,5 +677,323 @@ class ProfilController extends BaseController
     private function backProfilModal(): RedirectResponse
     {
         return redirect()->back()->with('open_profil_modal', true);
+    }
+
+    private function denyUnlessPenggunaViewer(): ?RedirectResponse
+    {
+        if (!in_array((string) session()->get('role'), ['admin', 'owner'], true)) {
+            return redirect()->to(site_url('dashboard'))
+                ->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
+        }
+
+        return null;
+    }
+
+    /**
+     * Mutasi data pelanggan: hanya Admin (Owner view-only → 403).
+     *
+     * @return RedirectResponse|ResponseInterface|null
+     */
+    private function denyUnlessAdminPelangganMutation(): RedirectResponse|ResponseInterface|null
+    {
+        $role = (string) session()->get('role');
+
+        if ($role === 'owner') {
+            return $this->forbiddenResponse();
+        }
+
+        if ($role !== 'admin') {
+            return redirect()->to(site_url('dashboard'))
+                ->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
+        }
+
+        return null;
+    }
+
+    /**
+     * Mutasi akun staff internal: hanya Owner (Admin read-only → 403).
+     *
+     * @return RedirectResponse|ResponseInterface|null
+     */
+    private function denyUnlessOwnerStaffMutation(): RedirectResponse|ResponseInterface|null
+    {
+        $role = (string) session()->get('role');
+
+        if ($role === 'admin') {
+            return $this->forbiddenResponse();
+        }
+
+        if ($role !== 'owner') {
+            return redirect()->to(site_url('dashboard'))
+                ->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
+        }
+
+        return null;
+    }
+
+    private function forbiddenResponse(): ResponseInterface
+    {
+        return $this->response->setStatusCode(403)->setBody('Forbidden');
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function getUserById(int $idUser): ?array
+    {
+        if ($idUser <= 0) {
+            return null;
+        }
+
+        $row = \Config\Database::connect()
+            ->table('users')
+            ->where('id_user', $idUser)
+            ->get()
+            ->getRowArray();
+
+        return is_array($row) ? $row : null;
+    }
+
+    private function canViewerTogglePelanggan(string $viewerRole): bool
+    {
+        return $viewerRole === 'admin';
+    }
+
+    private function canViewerToggleStaff(string $viewerRole, string $targetRole): bool
+    {
+        if ($targetRole === 'owner' || !in_array($targetRole, ['admin', 'keuangan', 'produksi'], true)) {
+            return false;
+        }
+
+        return $viewerRole === 'owner';
+    }
+
+    private function canViewerEditStaff(string $targetRole): bool
+    {
+        return in_array($targetRole, ['admin', 'keuangan', 'produksi'], true);
+    }
+
+    private function storePelangganByAdmin(): RedirectResponse
+    {
+        $post         = $this->request->getPost();
+        $passwordMode = (string) ($post['password_mode'] ?? 'manual');
+        if (!in_array($passwordMode, ['auto', 'manual'], true)) {
+            $passwordMode = 'manual';
+        }
+
+        $rules = pelangganAkunValidationRules();
+
+        if ($passwordMode === 'manual') {
+            $rules['password']         = 'required|min_length[8]';
+            $rules['password_confirm'] = 'required|matches[password]';
+        }
+
+        if (!$this->validate($rules, pelangganAkunValidationMessages())) {
+            return redirect()->back()
+                ->withInput()
+                ->with('open_tambah_pengguna', true)
+                ->with('error', implode(' ', $this->validator->getErrors()));
+        }
+
+        $nama   = trim((string) $post['nama']);
+        $email  = trim((string) $post['email']);
+        $noTelp = trim((string) $post['no_telp']);
+        $alamat = trim((string) $post['alamat']);
+
+        if ($formatError = validatePelangganAkunFormat($nama, $noTelp)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('open_tambah_pengguna', true)
+                ->with('error', $formatError);
+        }
+
+        $plainPassword = $passwordMode === 'auto'
+            ? $this->generateRandomPassword()
+            : (string) $post['password'];
+
+        $db = \Config\Database::connect();
+
+        try {
+            $db->transStart();
+
+            $db->table('users')->insert([
+                'nama'       => $nama,
+                'email'      => $email,
+                'password'   => password_hash($plainPassword, PASSWORD_DEFAULT),
+                'role'       => 'pelanggan',
+                'created_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            $idUser = (int) $db->insertID();
+
+            $db->table('pelanggan')->insert([
+                'id_user'     => $idUser,
+                'no_telp'     => $noTelp,
+                'jenis'       => 'perseorangan',
+                'is_verified' => 0,
+                'alamat'      => $this->truncateAlamat($alamat),
+            ]);
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                throw new \RuntimeException('Gagal menyimpan pelanggan.');
+            }
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', '[ProfilController::storePelangganByAdmin] {msg}', ['msg' => $e->getMessage()]);
+
+            $message = 'Gagal menambah pelanggan.';
+            if (str_contains(strtolower($e->getMessage()), 'duplicate')) {
+                $message = 'Email sudah terdaftar.';
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('open_tambah_pengguna', true)
+                ->with('error', $message);
+        }
+
+        $redirect = redirect()->to(site_url('pengguna'))
+            ->with('success', 'Pelanggan "' . $nama . '" berhasil didaftarkan.');
+
+        if ($passwordMode === 'auto') {
+            $redirect = $redirect
+                ->with('pengguna_password_generated', $plainPassword)
+                ->with('pengguna_password_email', $email)
+                ->with('pengguna_password_nama', $nama);
+        }
+
+        return $redirect;
+    }
+
+    private function storeStaffInternal(): RedirectResponse
+    {
+        $post     = $this->request->getPost();
+        $staffRole = (string) ($post['staff_role'] ?? '');
+
+        if (!in_array($staffRole, ['admin', 'keuangan', 'produksi'], true)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('open_tambah_pengguna', true)
+                ->with('error', 'Peran staff tidak valid.');
+        }
+
+        $rules = [
+            'nama'  => 'required|min_length[3]|max_length[100]',
+            'email' => 'required|valid_email|is_unique[users.email]',
+        ];
+
+        if (!$this->validate($rules, $this->penggunaValidationMessages())) {
+            return redirect()->back()
+                ->withInput()
+                ->with('open_tambah_pengguna', true)
+                ->with('error', implode(' ', $this->validator->getErrors()));
+        }
+
+        $nama = trim((string) $post['nama']);
+        $email = trim((string) $post['email']);
+
+        if (!isValidNamaLengkap($nama)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('open_tambah_pengguna', true)
+                ->with('error', 'Nama lengkap tidak valid (3–100 karakter, huruf/spasi/titik/kutip).');
+        }
+
+        $plainPassword = $this->generateRandomPassword();
+        $db            = \Config\Database::connect();
+
+        try {
+            $db->transStart();
+
+            $db->table('users')->insert([
+                'nama'       => $nama,
+                'email'      => $email,
+                'password'   => password_hash($plainPassword, PASSWORD_DEFAULT),
+                'role'       => $staffRole,
+                'is_active'  => 1,
+                'created_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                throw new \RuntimeException('Gagal menyimpan staff.');
+            }
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', '[ProfilController::storeStaffInternal] {msg}', ['msg' => $e->getMessage()]);
+
+            $message = 'Gagal menambah staff internal.';
+            if (str_contains(strtolower($e->getMessage()), 'duplicate')) {
+                $message = 'Email sudah terdaftar.';
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->with('open_tambah_pengguna', true)
+                ->with('error', $message);
+        }
+
+        return redirect()->to(site_url('pengguna'))
+            ->with('success', 'Staff "' . $nama . '" (' . ucfirst($staffRole) . ') berhasil didaftarkan.')
+            ->with('pengguna_password_generated', $plainPassword)
+            ->with('pengguna_password_email', $email)
+            ->with('pengguna_password_nama', $nama);
+    }
+
+    private function generateRandomPassword(int $length = 12): string
+    {
+        $chars  = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+        $max    = strlen($chars) - 1;
+        $result = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            $result .= $chars[random_int(0, $max)];
+        }
+
+        return $result;
+    }
+
+    private function truncateAlamat(string $alamat): string
+    {
+        return mb_substr(trim($alamat), 0, 150);
+    }
+
+    /**
+     * @return array<string, array<string, string>>
+     */
+    private function penggunaValidationMessages(): array
+    {
+        return [
+            'nama' => [
+                'required'   => 'Nama wajib diisi.',
+                'min_length' => 'Nama minimal 3 karakter.',
+                'max_length' => 'Nama maksimal 100 karakter.',
+            ],
+            'email' => [
+                'required'    => 'Email wajib diisi.',
+                'valid_email' => 'Format email tidak valid.',
+                'is_unique'   => 'Email sudah terdaftar.',
+            ],
+            'no_telp' => [
+                'required'   => 'No. telepon wajib diisi.',
+                'max_length' => 'No. telepon terlalu panjang.',
+            ],
+            'alamat' => [
+                'required'   => 'Alamat wajib diisi.',
+                'min_length' => 'Alamat minimal 10 karakter.',
+                'max_length' => 'Alamat maksimal 150 karakter.',
+            ],
+            'password' => [
+                'required'   => 'Kata sandi wajib diisi.',
+                'min_length' => 'Kata sandi minimal 8 karakter.',
+            ],
+            'password_confirm' => [
+                'required' => 'Konfirmasi kata sandi wajib diisi.',
+                'matches'  => 'Konfirmasi kata sandi tidak sama.',
+            ],
+        ];
     }
 }

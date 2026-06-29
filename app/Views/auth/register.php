@@ -16,9 +16,13 @@
 <form action="<?= site_url('register') ?>" method="post" class="space-y-4">
     <?= csrf_field() ?>
 
+    <p class="text-xs text-slate-500">
+        <span class="text-red-500 font-bold">*</span> yang diberi bintang merah wajib diisi.
+    </p>
+
     <div>
         <label for="nama" class="block text-sm font-semibold mb-1.5" style="color:var(--navy);">
-            Nama Lengkap
+            Nama Lengkap <span class="text-red-500">*</span>
         </label>
         <input
             type="text"
@@ -26,15 +30,19 @@
             name="nama"
             value="<?= esc(old('nama')) ?>"
             required
+            minlength="3"
+            maxlength="100"
+            pattern="[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.'\-]*"
+            title="Hanya boleh berisi huruf, spasi, tanda kutip, atau titik (3–100 karakter)"
             autocomplete="name"
             placeholder="Nama lengkap Anda"
-            class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]"
-        >
+            class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]">
+        <p class="mt-1 text-xs text-slate-400">Hanya boleh berisi huruf, spasi, tanda kutip, atau titik (3–100 karakter).</p>
     </div>
 
     <div>
         <label for="email" class="block text-sm font-semibold mb-1.5" style="color:var(--navy);">
-            Email
+            Email <span class="text-red-500">*</span>
         </label>
         <input
             type="email"
@@ -44,13 +52,12 @@
             required
             autocomplete="email"
             placeholder="nama@email.com"
-            class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]"
-        >
+            class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]">
     </div>
 
     <div>
         <label for="no_telp" class="block text-sm font-semibold mb-1.5" style="color:var(--navy);">
-            No. Telepon
+            No. Telepon <span class="text-red-500">*</span>
         </label>
         <input
             type="tel"
@@ -59,14 +66,17 @@
             value="<?= esc(old('no_telp')) ?>"
             required
             autocomplete="tel"
-            placeholder="08xxxxxxxxxx"
-            class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]"
-        >
+            placeholder="087778965442"
+            pattern="^(\+62|08|022)[0-9]{8,13}$"
+            maxlength="20"
+            title="Format harus berupa angka dan diawali dengan 08, +62, atau 022"
+            class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]">
+        <p class="mt-1 text-xs text-slate-400">Format harus berupa angka dan diawali dengan 08, +62, atau 022 (Contoh: 087778965442) (8–13 digit setelah awalan).</p>
     </div>
 
     <div>
         <label for="password" class="block text-sm font-semibold mb-1.5" style="color:var(--navy);">
-            Kata Sandi
+            Kata Sandi <span class="text-red-500">*</span>
         </label>
         <input
             type="password"
@@ -75,13 +85,12 @@
             required
             autocomplete="new-password"
             placeholder="Minimal 8 karakter"
-            class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]"
-        >
+            class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]">
     </div>
 
     <div>
         <label for="password_confirm" class="block text-sm font-semibold mb-1.5" style="color:var(--navy);">
-            Konfirmasi Kata Sandi
+            Konfirmasi Kata Sandi <span class="text-red-500">*</span>
         </label>
         <input
             type="password"
@@ -90,14 +99,12 @@
             required
             autocomplete="new-password"
             placeholder="Ulangi kata sandi"
-            class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]"
-        >
+            class="input-field w-full px-4 py-2.5 text-sm text-[#051747] placeholder:text-[#8896A5]">
     </div>
 
     <button
         type="submit"
-        class="btn-primary w-full py-3 text-white text-sm mt-2"
-    >
+        class="btn-primary w-full py-3 text-white text-sm mt-2">
         Daftar Sekarang
     </button>
 </form>

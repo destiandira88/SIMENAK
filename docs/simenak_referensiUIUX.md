@@ -673,8 +673,8 @@ Halaman yang ada:
           CV Maju Jaya | Diajukan 2 jam lalu | btn Review
           PT Berkah Abadi | Diajukan 1 hari lalu | btn Review
         KANAN — Pesanan Custom Pending (2 item):
-          ORD-20260529-0006 | Banner outdoor 2x3m | btn Set Harga
-          ORD-20260528-0004 | Packaging custom | btn Set Harga
+          ORD-20260529-0006 | Banner outdoor 2x3m | btn Konfirmasi Harga
+          ORD-20260528-0004 | Packaging custom | btn Konfirmasi Harga
 
     SECTION: SEMUA PESANAN (id="adm-pesanan")
       Filter row: status select + jenis pelanggan select + search
@@ -723,10 +723,10 @@ Halaman yang ada:
       Tabel 3 baris:
       Kolom: Kode Order | Pelanggan | Deskripsi | Tgl Masuk | Status | Harga Custom | Aksi
       Data:
-        ORD-20260529-0006 | Andi Saputra | Banner outdoor 2x3m flexi korea | 29 Mei | Menunggu Konfirmasi Harga | — | btn "Set Harga"
-        ORD-20260528-0004 | CV Maju Jaya | Packaging custom box produk | 28 Mei | Menunggu Konfirmasi Harga | — | btn "Set Harga"
+        ORD-20260529-0006 | Andi Saputra | Banner outdoor 2x3m flexi korea | 29 Mei | Menunggu Konfirmasi Harga | — | btn "Konfirmasi Harga"
+        ORD-20260528-0004 | CV Maju Jaya | Packaging custom box produk | 28 Mei | Menunggu Konfirmasi Harga | — | btn "Konfirmasi Harga"
         ORD-20260520-0002 | Siti Rahmah | Undangan custom foil emas | 20 Mei | Menunggu Konfirmasi Pelanggan | Rp 3.500.000 | btn "Lihat"
-      "Set Harga" onclick: showModal('modalSetHarga')
+      "Konfirmasi Harga" onclick: showModal('modalSetHarga')
 
     SECTION: PENGIRIMAN (id="adm-pengiriman")
       Filter: status kirim select
@@ -1086,11 +1086,11 @@ Halaman yang ada:
 
     MODALS FILE 2:
     modalSetHarga:
-      Title: "Set Harga Pesanan Custom"
+      Title: "Konfirmasi Harga Pesanan Custom"
       Info: kode order + deskripsi custom
-      Input: Harga yang Ditawarkan (Rp)
+      Input: Harga Dikonfirmasi (Rp)
       Textarea: Catatan untuk Pelanggan
-      Btn: "Kirim Penawaran" navy + Batal
+      Btn: "Konfirmasi Harga" navy + Batal
 
     modalInputResi:
       Title: "Input Nomor Resi"

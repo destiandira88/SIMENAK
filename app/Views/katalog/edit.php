@@ -21,6 +21,11 @@ $isActive    = (int) ($katalog['is_active'] ?? 0) === 1;
 $kategoriKey = (string) ($katalog['kategori'] ?? '');
 $kategoriLabel = $kategoriOptions[$kategoriKey] ?? str_replace('_', ' ', $kategoriKey);
 $hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
+helper('deadline');
+$estimasiFormValue = old('estimasi_hari');
+if ($estimasiFormValue === null || $estimasiFormValue === '') {
+    $estimasiFormValue = (string) parseEstimasiHariKerja((string) ($katalog['estimasi_hari'] ?? ''));
+}
 ?>
 
 <div class="text-xs text-slate-400 mb-2">
@@ -136,26 +141,26 @@ $hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
     <form action="<?= site_url('katalog/update/' . $idKatalog) ?>" method="post" enctype="multipart/form-data">
         <?= csrf_field() ?>
         <input type="hidden" name="_method" value="POST">
-        <p class="text-xs text-slate-400 mb-4">
+        <p class="form-note mb-4">
             <span class="text-red-500 font-bold">*</span> yang diberi bintang merah wajib diisi.
         </p>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="space-y-4">
                 <div>
-                    <label for="nama_produk" class="block text-sm font-semibold text-slate-700 mb-1.5">Nama Produk <span class="text-red-500">*</span></label>
+                    <label for="nama_produk" class="form-label">Nama Produk <span class="text-red-500">*</span></label>
                     <input
                         type="text"
                         id="nama_produk"
                         name="nama_produk"
                         value="<?= esc(old('nama_produk', $katalog['nama_produk'] ?? '')) ?>"
-                        class="input-field w-full px-3 py-2.5"
+                        class="input-field w-full px-3.5 py-2.5"
                         required>
                 </div>
 
                 <div>
-                    <label for="kategori" class="block text-sm font-semibold text-slate-700 mb-1.5">Kategori <span class="text-red-500">*</span></label>
-                    <select id="kategori" name="kategori" class="input-field w-full px-3 py-2.5" required>
+                    <label for="kategori" class="form-label">Kategori <span class="text-red-500">*</span></label>
+                    <select id="kategori" name="kategori" class="input-field w-full px-3.5 py-2.5" required>
                         <option value="">Pilih Kategori</option>
                         <?php foreach ($kategoriOptions as $value => $label): ?>
                             <?php
@@ -171,9 +176,9 @@ $hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
                 </div>
 
                 <div>
-                    <label for="harga_dasar" class="block text-sm font-semibold text-slate-700 mb-1.5">Harga Dasar <span class="text-red-500">*</span></label>
+                    <label for="harga_dasar" class="form-label">Harga Dasar <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-2">
-                        <span class="text-sm font-semibold text-slate-500 shrink-0">Rp</span>
+                        <span class="form-affix shrink-0">Rp</span>
                         <input
                             type="number"
                             id="harga_dasar"
@@ -182,28 +187,36 @@ $hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
                             placeholder="150000"
                             min="1"
                             step="1"
-                            class="input-field w-full px-3 py-2.5"
+                            class="input-field w-full px-3.5 py-2.5"
                             required>
                     </div>
-                    <p class="mt-1.5 text-xs text-slate-400">Harga per satuan produk</p>
+                    <p class="form-hint">Harga per satuan produk</p>
                 </div>
 
                 <div>
-                    <label for="estimasi_hari" class="block text-sm font-semibold text-slate-700 mb-1.5">Estimasi Pengerjaan <span class="text-red-500">*</span></label>
-                    <input
-                        type="text"
-                        id="estimasi_hari"
-                        name="estimasi_hari"
-                        value="<?= esc(old('estimasi_hari', $katalog['estimasi_hari'] ?? '')) ?>"
-                        placeholder="Contoh: 3-7 hari kerja"
-                        class="input-field w-full px-3 py-2.5"
-                        required>
+                    <label for="estimasi_hari" class="form-label">Estimasi Pengerjaan <span class="text-red-500">*</span></label>
+                    <div class="flex items-end gap-3">
+                        <input
+                            type="number"
+                            id="estimasi_hari"
+                            name="estimasi_hari"
+                            value="<?= esc($estimasiFormValue) ?>"
+                            placeholder="6"
+                            min="1"
+                            max="180"
+                            step="1"
+                            onwheel="this.blur()"
+                            class="input-field w-40 px-3.5 py-2.5"
+                            required>
+                        <span class="form-affix pb-2.5">hari kerja</span>
+                    </div>
+                    <p class="form-hint">Angka bulat · dihitung hari kerja (Sen–Jum), contoh: 6 hari kerja.</p>
                 </div>
             </div>
 
             <div class="space-y-4">
                 <div>
-                    <label for="kuota_revisi_default" class="block text-sm font-semibold text-slate-700 mb-1.5">Kuota Revisi Default <span class="text-red-500">*</span></label>
+                    <label for="kuota_revisi_default" class="form-label">Kuota Revisi Default <span class="text-red-500">*</span></label>
                     <input
                         type="number"
                         id="kuota_revisi_default"
@@ -211,13 +224,13 @@ $hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
                         value="<?= esc(old('kuota_revisi_default', (string) ($katalog['kuota_revisi_default'] ?? '3'))) ?>"
                         min="1"
                         max="10"
-                        class="input-field w-full px-3 py-2.5"
+                        class="input-field w-full px-3.5 py-2.5"
                         required>
-                    <p class="mt-1.5 text-xs text-slate-400">Jumlah maksimal revisi desain</p>
+                    <p class="form-hint">Jumlah maksimal revisi desain</p>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Min Order + Satuan <span class="text-red-500">*</span></label>
+                    <label class="form-label">Min Order + Satuan <span class="text-red-500">*</span></label>
                     <div class="flex gap-3">
                         <input
                             type="number"
@@ -225,21 +238,21 @@ $hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
                             value="<?= esc(old('min_order', (string) ($katalog['min_order'] ?? ''))) ?>"
                             placeholder="100"
                             min="1"
-                            class="input-field flex-1 px-3 py-2.5"
+                            class="input-field flex-1 px-3.5 py-2.5"
                             required>
                         <input
                             type="text"
                             name="satuan"
                             value="<?= esc(old('satuan', $katalog['satuan'] ?? '')) ?>"
                             placeholder="pcs"
-                            class="input-field w-32 px-3 py-2.5"
+                            class="input-field w-32 px-3.5 py-2.5"
                             required>
                     </div>
-                    <p class="mt-1.5 text-xs text-slate-400">Contoh: 100 pcs, 1 buku, 50 lembar</p>
+                    <p class="form-hint">Contoh: 100 pcs, 1 buku, 50 lembar</p>
                 </div>
 
                 <div>
-                    <label for="deskripsi" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                    <label for="deskripsi" class="form-label">
                         Deskripsi (Komponen yang sudah include di harga)
                     </label>
                     <textarea
@@ -247,8 +260,8 @@ $hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
                         name="deskripsi"
                         rows="4"
                         placeholder="Contoh: Hardcover linen, ukuran 12x17cm, 4 halaman, laminasi doff, ribbon pita, sablon emas, amplop custom"
-                        class="input-field w-full px-3 py-2.5 resize-none"><?= esc(old('deskripsi', $katalog['deskripsi'] ?? '')) ?></textarea>
-                    <p class="mt-1.5 text-xs text-slate-400">
+                        class="input-field w-full px-3.5 py-2.5 resize-none"><?= esc(old('deskripsi', $katalog['deskripsi'] ?? '')) ?></textarea>
+                    <p class="form-hint">
                         Isi Deskripsi sedetail mungkin, ini ditampilkan di katalog public dan form pesanan agar pelanggan tahu spesifikasi.
                     </p>
                 </div>
@@ -256,9 +269,9 @@ $hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
         </div>
 
         <div class="mt-6">
-            <label class="block text-sm font-semibold text-slate-700 mb-1.5">
+            <label class="form-label">
                 Gambar Produk
-                <span class="text-slate-400 font-normal text-xs ml-1">(Kosongkan jika tidak ingin mengubah)</span>
+                <span class="normal-case font-medium text-slate-400"> (Kosongkan jika tidak ingin mengubah)</span>
             </label>
 
             <?php if (!empty($katalog['gambar'])): ?>
@@ -267,7 +280,7 @@ $hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
                         src="<?= base_url('uploads/katalog/' . esc($katalog['gambar'])) ?>"
                         alt="Gambar produk"
                         class="w-24 h-24 object-cover rounded-xl border border-slate-200">
-                    <p class="text-sm text-slate-500">Gambar saat ini. Unggah baru untuk mengganti.</p>
+                    <p class="form-upload-text">Gambar saat ini. Unggah baru untuk mengganti.</p>
                 </div>
             <?php endif; ?>
 
@@ -281,10 +294,10 @@ $hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
                     <svg class="w-10 h-10 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <p class="text-sm text-slate-400">Klik untuk upload gambar produk</p>
-                    <p class="text-xs text-slate-300 mt-1">JPG, PNG, WEBP-Maks 2MB</p>
+                    <p class="form-upload-text">Klik untuk upload gambar produk</p>
+                    <p class="form-upload-hint">JPG, PNG, atau WEBP · maks. 2MB</p>
                 </div>
-                <span id="fileName" class="hidden text-sm text-slate-500 mt-2 block"></span>
+                <span id="fileName" class="hidden form-upload-text mt-2 block"></span>
             </div>
             <input type="file" id="inputGambar" name="gambar" accept=".jpg,.jpeg,.png,.webp" class="hidden">
         </div>
@@ -300,7 +313,7 @@ $hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
                         ? ((int) old('is_active') === 1 ? 'checked' : '')
                         : ((int) ($katalog['is_active'] ?? 0) === 1 ? 'checked' : '') ?>
                     class="w-4 h-4 accent-[#051747]">
-                <span class="text-sm font-medium text-slate-700">Produk Aktif (tersedia untuk dipesan)</span>
+                <span class="form-choice">Produk Aktif (tersedia untuk dipesan)</span>
             </label>
         </div>
 

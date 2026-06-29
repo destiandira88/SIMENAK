@@ -5,12 +5,14 @@
  * @var bool   $bisaUpload
  * @var string $status
  * @var bool   $readOnly
+ * @var bool   $hideCetakSelesai
  */
 $idOrder    = (int) ($idOrder ?? 0);
 $kodeOrder  = (string) ($kodeOrder ?? '');
 $bisaUpload = (bool) ($bisaUpload ?? false);
 $status     = (string) ($status ?? '');
 $readOnly   = (bool) ($readOnly ?? false);
+$hideCetakSelesai = (bool) ($hideCetakSelesai ?? false);
 $uploadUrl  = site_url('manajemen-desain/' . $idOrder);
 $historyUrl = site_url('manajemen-desain/' . $idOrder . '#history');
 $detailUrl  = site_url('order/detail/' . $kodeOrder);
@@ -63,7 +65,7 @@ $updateUrl  = site_url('produksi/update-status');
             </svg>
             History Revisi
         </a>
-        <?php if ($status === 'proses_cetak'): ?>
+        <?php if ($status === 'proses_cetak' && ! $hideCetakSelesai): ?>
             <form method="post"
                 action="<?= esc($updateUrl) ?>"
                 role="menuitem"

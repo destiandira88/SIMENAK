@@ -32,7 +32,7 @@ class DashboardController extends BaseController
         if ($idPelanggan <= 0) {
             return view('dashboard/pelanggan', [
                 'nama'         => $nama,
-                'cards'        => $this->emptyCards(4),
+                'cards'        => $this->pelangganSummaryCards(0, 0, 0, 0, 0),
                 'recentOrders' => [],
             ]);
         }
@@ -66,22 +66,37 @@ class DashboardController extends BaseController
 
             $recentOrders = $this->getRecentOrders($db, ['id_pelanggan' => $idPelanggan]);
 
+            $konfirmasiHargaCustom = (int) $db->table('orders')
+                ->where('id_pelanggan', $idPelanggan)
+                ->where('is_custom', 1)
+                ->whereIn('status', ['menunggu_konfirmasi_harga', 'menunggu_konfirmasi_pelanggan'])
+                ->countAllResults();
+
+            helper('notification');
+            $pelanggan = $db->table('pelanggan')
+                ->where('id_pelanggan', $idPelanggan)
+                ->get()
+                ->getRowArray();
+
             return view('dashboard/pelanggan', [
-                'nama'         => $nama,
-                'cards'        => [
-                    ['label' => 'Total Pesanan', 'value' => $totalPesanan, 'icon' => 'clipboard', 'color' => '#2E5CE6'],
-                    ['label' => 'Dalam Proses', 'value' => $dalamProses, 'icon' => 'clock', 'color' => '#8B5CF6'],
-                    ['label' => 'Menunggu Bayar', 'value' => $menungguBayar, 'icon' => 'wallet', 'color' => '#F59E0B'],
-                    ['label' => 'Selesai', 'value' => $selesai, 'icon' => 'check', 'color' => '#10B981'],
-                ],
-                'recentOrders' => $recentOrders,
+                'nama'           => $nama,
+                'cards'          => $this->pelangganSummaryCards(
+                    $totalPesanan,
+                    $dalamProses,
+                    $menungguBayar,
+                    $selesai,
+                    $konfirmasiHargaCustom
+                ),
+                'recentOrders'   => $recentOrders,
+                'canCreateOrder'         => pelangganCanCreateOrder($pelanggan),
+                'isKerjasama'    => pelangganIsKerjasamaPerusahaan($pelanggan),
             ]);
         } catch (\Throwable $e) {
             log_message('error', 'Dashboard pelanggan: {message}', ['message' => $e->getMessage()]);
 
             return view('dashboard/pelanggan', [
                 'nama'         => $nama,
-                'cards'        => $this->emptyCards(4),
+                'cards'        => $this->pelangganSummaryCards(0, 0, 0, 0, 0),
                 'recentOrders' => [],
             ]);
         }
@@ -109,10 +124,6 @@ class DashboardController extends BaseController
                 ->whereIn('status', ['siap_kirim', 'siap_diambil'])
                 ->countAllResults();
 
-            $pendingVerifikasiPerusahaan = $db->table('verifikasi_perusahaan')
-                ->where('status', 'pending')
-                ->countAllResults();
-
             $recentOrders = $db->table('orders o')
                 ->select(
                     'o.id_order, o.kode_order, o.status, o.total_harga, o.created_at, o.is_custom, '
@@ -127,8 +138,7 @@ class DashboardController extends BaseController
                 ->getResultArray();
 
             return view('dashboard/admin', [
-                'nama'                        => $nama,
-                'pendingVerifikasiPerusahaan' => $pendingVerifikasiPerusahaan,
+                'nama'         => $nama,
                 'cards'        => [
                     ['label' => 'Pesanan Hari Ini', 'value' => $totalHariIni, 'icon' => 'calendar', 'color' => '#2E5CE6'],
                     ['label' => 'Total Pesanan', 'value' => $totalSemua, 'icon' => 'clipboard', 'color' => '#051747'],
@@ -141,8 +151,7 @@ class DashboardController extends BaseController
             log_message('error', 'Dashboard admin: {message}', ['message' => $e->getMessage()]);
 
             return view('dashboard/admin', [
-                'nama'                        => $nama,
-                'pendingVerifikasiPerusahaan' => 0,
+                'nama'         => $nama,
                 'cards'        => $this->emptyCards(4),
                 'recentOrders' => [],
             ]);
@@ -287,7 +296,6 @@ class DashboardController extends BaseController
 
             $recentOrders = $this->getRecentOrders($db, [], null, 50);
 
-            // Data grafik 7 hari terakhir
             $chartRows = $db->table('orders')
                 ->select("DATE(created_at) as tgl, COUNT(*) as total")
                 ->where('created_at >=', date('Y-m-d', strtotime('-6 days')))
@@ -356,15 +364,15 @@ class DashboardController extends BaseController
     {
         $rows = $db->table('orders o')
             ->select(
-                'o.id_order, o.kode_order, o.status, o.deadline, o.sisa_kuota, o.kuota_revisi, '
+                'o.id_order, o.kode_order, o.status, o.deadline_produksi AS deadline, o.sisa_kuota, o.kuota_revisi, '
                     . 'o.jumlah_order, o.is_custom, k.nama_produk, k.satuan, u.nama AS nama_pelanggan'
             )
             ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan', 'left')
             ->join('users u', 'u.id_user = p.id_user', 'left')
             ->whereIn('o.status', $productionStatuses)
-            ->where('o.deadline IS NOT NULL', null, false)
-            ->orderBy('o.deadline', 'ASC')
+            ->where('o.deadline_produksi IS NOT NULL', null, false)
+            ->orderBy('o.deadline_produksi', 'ASC')
             ->get()
             ->getResultArray();
 
@@ -460,6 +468,25 @@ class DashboardController extends BaseController
         }
 
         return $sum;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function pelangganSummaryCards(
+        int $totalPesanan,
+        int $dalamProses,
+        int $menungguBayar,
+        int $selesai,
+        int $konfirmasiHargaCustom
+    ): array {
+        return [
+            ['label' => 'Total Pesanan', 'value' => $totalPesanan, 'icon' => 'clipboard', 'color' => '#2E5CE6'],
+            ['label' => 'Dalam Proses', 'value' => $dalamProses, 'icon' => 'clock', 'color' => '#8B5CF6'],
+            ['label' => 'Menunggu Bayar', 'value' => $menungguBayar, 'icon' => 'wallet', 'color' => '#F59E0B'],
+            ['label' => 'Menunggu Konfirmasi Harga', 'value' => $konfirmasiHargaCustom, 'icon' => 'star', 'color' => '#EF4444'],
+            ['label' => 'Selesai', 'value' => $selesai, 'icon' => 'check', 'color' => '#10B981'],
+        ];
     }
 
     /**

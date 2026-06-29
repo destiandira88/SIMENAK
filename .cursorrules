@@ -9,6 +9,16 @@ FONT: Plus Jakarta Sans via Google Fonts CDN.
 users, pelanggan, verifikasi_perusahaan, katalog, form_templates,
 orders, order_attributes (EAV), payments, revisi_desain, pengiriman, notifications
 
+=== SCHEMA MIGRATIONS (WAJIB) ===
+Semua perubahan skema database HARUS lewat migration resmi CodeIgniter 4:
+  1. php spark make:migration NamaDeskriptif
+  2. Implementasi up()/down() di app/Database/Migrations/
+  3. php spark migrate (dev/staging/produksi)
+JANGAN jalankan ALTER TABLE / CREATE TABLE manual langsung ke MySQL.
+File SQL di docs/migrations/ hanya referensi/legacy — sumber kebenaran: app/Database/Migrations/.
+Migration harus idempotent bila perlu (cek fieldExists/tableExists) agar aman jika kolom sudah ada di dev.
+Deploy hosting: jalankan php spark migrate setelah pull/deploy.
+
 === KEY PATTERNS ===
 
 1. EAV PATTERN (order_attributes)
@@ -24,31 +34,60 @@ orders, order_attributes (EAV), payments, revisi_desain, pengiriman, notificatio
    If invalid: return validation error "Minimum order [X] [satuan]".
    Display min_order info on katalog detail and order form.
    jumlah_order column must be added to orders table.
-2. CUSTOMER TYPE LOGIC (enforce every time orders are created)
-   is_verified column is in pelanggan table (0 = not verified, 1 = verified corporate).
-   tier_perusahaan column in pelanggan: pemula | terpercaya (default pemula on ACC verifikasi).
-   is_suspended column in pelanggan: 0 = aktif, 1 = suspend (admin manual).
+2. CUSTOMER TYPE & PAYMENT SCHEME (enforce at order creation)
+   TERMINOLOGY (UI/skripsi — JANGAN pakai "mitra" untuk tipe pelanggan):
+   - perseorangan = skema default semua akun baru
+   - kerja sama perusahaan = label UI; nilai DB/code tetap jenis=perusahaan
+   - "mitra" di konteks bisnis Z'Plack = CV Mitra Mandiri Group (rekan operasional), BUKAN label akun pelanggan
 
-   At order creation, check POST jenis_pelanggan, pelanggan.is_verified, tier_perusahaan, is_suspended, total_harga:
-   - jenis=perusahaan AND is_verified=0 → FORCE jenis=perseorangan, require_dp=1, flash warning
-   - jenis=perusahaan AND is_suspended=1 → block order as perusahaan OR force perseorangan (admin policy)
-   - jenis=perusahaan AND is_verified=1 AND tier=pemula → require_dp=1 ALWAYS, status=menunggu_verifikasi_dp
-   - jenis=perusahaan AND is_verified=1 AND tier=terpercaya AND total_harga <= 5000000 → require_dp=0, status=terverifikasi
-   - jenis=perusahaan AND is_verified=1 AND total_harga > 5000000 → require_dp=1 (wajib DP meski terpercaya)
-   - jenis=perseorangan (any is_verified) → require_dp=1, status=menunggu_verifikasi_dp
-     A verified corporate customer choosing perseorangan still pays DP. No exceptions.
+   REGISTRASI:
+   - Hanya perseorangan (nama, email, no_telp, alamat, password) → langsung bisa pesan
+   - TIDAK ada pilihan jenis akun / upload dokumen perusahaan saat register
+   - Kerja sama perusahaan HANYA ditetapkan Admin (ProfilController::tetapkanKerjasamaPerusahaan)
 
-   2b. TIER PERUSAHAAN (trust level)
-   - Baru ACC verifikasi → tier_perusahaan=pemula
-   - Promosi ke terpercaya: ADMIN MANUAL (tombol Promosikan), syarat ≥3 order perusahaan selesai dengan riwayat bayar lancar
-   - Order lancar = status selesai + pelunasan terverifikasi keuangan, tanpa tunggakan kronis
-   - Demosi/suspend: admin manual jika telat bayar berulang
-   - Pelanggan profil: tampilkan badge tier + progress "X/3 order lancar"
+   STATUS AKUN KERJASAMA (pelanggan table):
+   - pelangganIsKerjasamaPerusahaan() = jenis='perusahaan' AND is_verified=1
+   - is_verified=1 artinya "kerja sama perusahaan aktif" (BUKAN antrian verifikasi Owner)
+   - is_suspended: TIDAK DIPAKAI di model baru; gunakan cabutKerjasamaPerusahaan()
 
-   2c. VERIFIKASI PERUSAHAAN (dokumen & field wajib)
-   Fields: nama_perusahaan, no_npwp (validasi 15 digit), jabatan_pic, no_hp/wa perusahaan, alamat_kantor
-   Upload: dokumen_npwp, dokumen_ktp_pic, dokumen_mou (MOU/surat kerjasama/SPK bermaterai, PDF)
-   Admin ACC → is_verified=1, tier_perusahaan=pemula
+   ADMIN — Manajemen Pengguna (/pengguna):
+   - POST pengguna/{id}/tetapkan-kerjasama → isi data PT + dokumen opsional → jenis=perusahaan, is_verified=1
+   - POST pengguna/{id}/cabut-kerjasama → jenis=perseorangan, is_verified=0
+   - Arsip data PT di verifikasi_perusahaan (status=verified saat tetapkan, rejected saat cabut)
+   - Owner TIDAK verifikasi perusahaan (menu/h route verifikasi-perusahaan dihapus)
+
+   SKEMA PEMBAYARAN (resolveOrderPaymentScheme + resolveJenisPelangganFromAkun):
+   Skema ditentukan OTOMATIS dari profil akun — pelanggan TIDAK pilih manual per pesanan.
+
+   Perseorangan (default / setelah cabut kerjasama):
+   - require_dp=1 ALWAYS (DP 50% dari total_harga)
+   - status_awal=menunggu_verifikasi_dp
+   - pelunasan SEBELUM kirim/ambil (isPelunasanSebelumKirim=true)
+
+   Kerja Sama Perusahaan (pelangganIsKerjasamaPerusahaan):
+   - total_harga <= BATAS_ORDER_TANPA_DP (5.000.000) → require_dp=0, status_awal=terverifikasi
+   - total_harga > 5.000.000 → require_dp=1 (DP 50%), status_awal=menunggu_verifikasi_dp
+   - pelunasan SELALU SETELAH barang diterima/diambil (isPelunasanSebelumKirim=false), termasuk order >5jt yang wajib DP
+   - Nota tagihan aktif setelah konfirmasi terima
+
+   PESANAN LAMA: jenis_pelanggan + require_dp di baris orders TIDAK diubah saat cabut kerjasama.
+   Hanya pesanan BARU yang mengikuti skema perseorangan setelah pencabutan.
+
+   Helper wajib (notification_helper.php):
+   - pelangganIsKerjasamaPerusahaan(?array $pelanggan): bool
+   - resolveJenisPelangganFromAkun(?array $pelanggan): 'perseorangan'|'perusahaan'
+   - resolveOrderPaymentScheme(array $pelanggan, string $jenisDiminta, int $totalHarga)
+   - isPelunasanSebelumKirim(array $order): bool
+   - BATAS_ORDER_TANPA_DP = 5000000
+   - pelangganCanCreateOrder(): semua pelanggan terdaftar boleh pesan
+   - getKerjasamaPerusahaanLabel(): label UI "Kerja Sama Perusahaan"
+   - nominalDpFromTotal() / nominalPelunasanFromOrder() — DP & pelunasan 50%
+
+   2b. KERJASAMA PERUSAHAAN — data admin (ProfilController)
+   Fields wajib saat tetapkan: nama_perusahaan, jabatan_pic, wa_perusahaan, alamat_kantor
+   Opsional: no_npwp (15 digit), catatan_admin, dokumen_npwp, dokumen_ktp_pic, dokumen_mou (PDF)
+   Upload folder: FCPATH . 'uploads/dokumen_verifikasi/'
+   Notif email + in-app ke pelanggan saat tetapkan/cabut
 
 3. CUSTOM ORDER FLOW
    is_custom=1 → status=menunggu_konfirmasi_harga → in-app notif to admin.
@@ -71,30 +110,33 @@ orders, order_attributes (EAV), payments, revisi_desain, pengiriman, notificatio
    → proses_revisi → proses_cetak → finishing
    → siap_kirim | siap_diambil
 
-   Cabang A — pelunasan SEBELUM kirim (perseorangan + perusahaan tier pemula):
+   Cabang A — pelunasan SEBELUM kirim (perseorangan):
    siap_kirim|siap_diambil → upload pelunasan → menunggu_verifikasi_lunas → ACC keuangan → pelunasan_terverifikasi
    Kurir: pelunasan_terverifikasi → input resi → dikirim → pelanggan konfirmasi → selesai
    Ambil sendiri: pelunasan_terverifikasi → admin konfirmasi diambil → selesai (tanpa resi/dikirim)
 
-   Cabang B — pelunasan SETELAH kirim/ambil (perusahaan tier terpercaya, nota tagihan):
+   Cabang B — pelunasan SETELAH kirim/ambil (kerja sama perusahaan, nota tagihan):
    Kurir: siap_kirim → input resi → dikirim → pelanggan konfirmasi → menunggu_verifikasi_lunas → upload + ACC → selesai
    Ambil sendiri: siap_diambil → admin konfirmasi diambil → menunggu_verifikasi_lunas → upload + ACC → selesai
+   Catatan: order kerja sama >5jt tetap wajib DP di awal, tapi pelunasan sisa tetap cabang B (setelah terima)
 
    pesanan_diterima: ada di ENUM DB, TIDAK diset di runtime (tanpa modul refund/sengketa pasca-terima).
    dibatalkan: bisa terjadi sebelum selesai.
 
 6. NOTIFICATION SYSTEM
    EMAIL (via CI4 Email + Gmail SMTP) to:
-   - Customer: DP verified, draft available, design ACC'd, ready to ship/pickup, shipped+resi, custom price offer, corporate verified, pelunasan confirmed
+   - Customer: DP verified, draft available, design ACC'd, ready to ship/pickup, shipped+resi, custom price offer,
+     kerja sama perusahaan ditetapkan/dicabut, pelunasan confirmed
    - Keuangan: new DP proof uploaded, new pelunasan proof uploaded, escalation if unverified >2h then >6h
-     IN-APP (insert to notifications table) to:
-   - Admin: new custom order, new corporate verification request, custom order cancelled
+   IN-APP (insert to notifications table) to:
+   - Admin: new custom order, custom order cancelled
    - Produksi: revision requested, design ACC'd (ready to print)
+   - Pelanggan: kerja sama perusahaan aktif/dicabut
 
 7. PAYMENT FLOW
    DP: jenis=dp, aktif jika require_dp=1 setelah pesanan disimpan.
-   Pelunasan perseorangan/pemula: aktif saat siap_kirim OR siap_diambil; upload → order status menunggu_verifikasi_lunas.
-   Pelunasan terpercaya: aktif saat menunggu_verifikasi_lunas (setelah konfirmasi terima/diambil).
+   Pelunasan perseorangan: aktif saat siap_kirim OR siap_diambil; upload → order status menunggu_verifikasi_lunas.
+   Pelunasan kerja sama perusahaan: aktif saat menunggu_verifikasi_lunas (setelah konfirmasi terima/diambil).
    Nota tagihan: halaman cetak /order/{kode}/nota-tagihan (print/PDF browser).
    Reminder cron: php spark reminder-verifikasi-pelunasan (2j ke keuangan, 6j eskalasi owner).
    Both: upload bukti_tf → status=menunggu → keuangan ACC/tolak.
@@ -107,7 +149,8 @@ orders, order_attributes (EAV), payments, revisi_desain, pengiriman, notificatio
 - File naming: time().'\_'.original_name, saved to uploads/[folder]/ via FCPATH.
 - Always use redirect()->back()->with('success','message') after POST.
 - Always wrap DB operations in try/catch.
-- CSRF protection is active (Config/Security.php).
+- CSRF protection: filter global aktif; mode **session** (bukan cookie); `regenerate=false`; endpoint GET `/csrf-sync` untuk refresh token AJAX; meta `csrf-field` + `csrf-token` di layout; semua form POST wajib `csrf_field()`.
+- Secure headers: filter global `secureheaders` aktif (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, dll.).
 - Session: use CI4 session library, set isLoggedIn + role + id_user + nama on login.
 - password_hash() to store, password_verify() to check.
 
@@ -165,7 +208,7 @@ OrderController → FCPATH . 'uploads/referensi/' (file referensi desain pelangg
 PaymentController → FCPATH . 'uploads/bukti_bayar/' (bukti transfer DP & pelunasan)
 RevisiController → FCPATH . 'uploads/draft_desain/' (draft desain produksi, max 1MB)
 OrderController (EAV) → FCPATH . 'uploads/lampiran_peta/' (lampiran peta / field upload form)
-ProfilController → FCPATH . 'uploads/dokumen_verifikasi/' (dokumen verifikasi perusahaan)
+ProfilController → FCPATH . 'uploads/dokumen_verifikasi/' (arsip dokumen kerja sama perusahaan, diunggah Admin)
 
 Contoh simpan (ikuti KatalogController::processGambarUpload):
 $uploadDir = FCPATH . 'uploads/bukti_bayar/';
@@ -291,16 +334,23 @@ TIGA LAYOUT — jangan dicampur:
    → Topbar sticky bg white
    → Background #F0F2F8
 
-=== LOGIN FLOW ===
+=== LOGIN & REGISTER FLOW ===
 
-- Login/register via modal popup di atas landing page
-- Bukan halaman /login terpisah
+- Login/register via modal popup di atas landing page (landing.php)
+- Register: HANYA perseorangan — tidak ada form perusahaan di modal register
 - Setelah login sukses, JS redirect berdasarkan role:
-  pelanggan → /pelanggan/dashboard
+  pelanggan → /pelanggan/dashboard (atau /dashboard)
   admin → /admin/dashboard
   keuangan → /keuangan/dashboard
   produksi → /produksi/dashboard
   owner → /owner/dashboard
-- AuthController wajib punya method loginAjax() yang return JSON
+- AuthController wajib punya method loginAjax() + registerAjax() yang return JSON
+- TIDAK ada redirect ke status-verifikasi-perusahaan
 - Tombol "Pesan Sekarang" di katalog: cek session dulu,
   belum login → buka modal, sudah login → /order/create/{id_katalog}
+
+=== ADMIN ROUTES KERJASAMA ===
+- GET  /pengguna — filter role + jenis (perseorangan|kerjasama)
+- POST /pengguna/{id}/tetapkan-kerjasama — ProfilController::tetapkanKerjasamaPerusahaan
+- POST /pengguna/{id}/cabut-kerjasama — ProfilController::cabutKerjasamaPerusahaan
+- DILARANG: promosikan tier, suspend tier, Owner verifikasi-perusahaan (legacy dihapus)

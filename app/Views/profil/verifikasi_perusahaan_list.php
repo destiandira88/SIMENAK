@@ -11,7 +11,7 @@ $tabs = [
     'verified' => 'Disetujui (' . ($counts['verified'] ?? 0) . ')',
     'rejected' => 'Ditolak (' . ($counts['rejected'] ?? 0) . ')',
 ];
-$colspan = $filter === 'pending' ? 6 : 7;
+$colspan = $filter === 'pending' ? 7 : 8;
 ?>
 <?= $this->extend('layouts/main') ?>
 
@@ -26,7 +26,7 @@ $colspan = $filter === 'pending' ? 6 : 7;
 
 <div class="mb-6">
     <h2 class="text-xl font-extrabold text-[#051747]">Verifikasi Perusahaan</h2>
-    <p class="text-sm text-slate-500 mt-1">Tinjau pengajuan verifikasi akun perusahaan pelanggan</p>
+    <p class="text-sm text-slate-500 mt-1">Tinjau pengajuan verifikasi akun perusahaan pelanggan (Owner)</p>
 </div>
 
 <div class="flex flex-wrap gap-2 mb-6">
@@ -67,6 +67,7 @@ $colspan = $filter === 'pending' ? 6 : 7;
         <table class="w-full text-sm">
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
+                    <th class="px-4 py-3 text-left font-semibold w-12">No</th>
                     <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
                     <th class="px-4 py-3 text-left font-semibold">Perusahaan</th>
                     <th class="px-4 py-3 text-left font-semibold">NPWP</th>
@@ -90,7 +91,7 @@ $colspan = $filter === 'pending' ? 6 : 7;
                         </td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($pengajuan as $row): ?>
+                    <?php foreach ($pengajuan as $index => $row): ?>
                         <?php
                         $idVerify   = (int) ($row['id_verify'] ?? 0);
                         $docNpwp    = (string) ($row['dokumen_npwp'] ?? '');
@@ -112,6 +113,7 @@ $colspan = $filter === 'pending' ? 6 : 7;
                             data-search="<?= esc($searchBlob) ?>"
                             data-tanggal="<?= esc((string) $tglTs) ?>"
                             data-status="<?= esc($statusRow) ?>">
+                            <td class="row-num px-4 py-3 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3">
                                 <?= view('partials/pelanggan_kontak_cell', [
                                     'nama'   => (string) ($row['nama_pelanggan'] ?? '-'),
@@ -161,7 +163,7 @@ $colspan = $filter === 'pending' ? 6 : 7;
                                 <td class="px-4 py-3 text-slate-600">
                                     <?php if (!empty($row['tgl_verifikasi'])): ?>
                                         <p><?= esc(date('d M Y H:i', strtotime((string) $row['tgl_verifikasi']))) ?></p>
-                                        <p class="text-xs text-slate-400">oleh <?= esc((string) ($row['nama_admin'] ?? 'Admin')) ?></p>
+                                        <p class="text-xs text-slate-400">oleh <?= esc((string) ($row['nama_admin'] ?? 'Owner')) ?></p>
                                     <?php else: ?>
                                         —
                                     <?php endif; ?>
@@ -194,7 +196,7 @@ $colspan = $filter === 'pending' ? 6 : 7;
                                             class="js-action-confirm-form space-y-2"
                                             data-confirm-variant="reject"
                                             data-confirm-title="Tolak Verifikasi Perusahaan?"
-                                            data-confirm-message="Apakah Anda yakin ingin menolak verifikasi perusahaan <?= esc((string) ($row['nama_perusahaan'] ?? '')) ?>? Pelanggan dapat mengajukan ulang setelah memperbaiki dokumen.">
+                                            data-confirm-message="Apakah Anda yakin ingin menolak verifikasi perusahaan <?= esc((string) ($row['nama_perusahaan'] ?? '')) ?>? Pelanggan dapat melanjutkan sebagai perseorangan atau mengajukan ulang.">
                                             <?= csrf_field() ?>
                                             <input type="hidden" name="aksi" value="tolak">
                                             <input type="text" name="catatan_admin" required

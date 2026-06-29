@@ -5,6 +5,7 @@
         const filterStatus = document.getElementById(config.filterId || 'tableFilterStatus');
         const dateFromInput = config.dateFromId ? document.getElementById(config.dateFromId) : null;
         const dateToInput = config.dateToId ? document.getElementById(config.dateToId) : null;
+        const kodeFilterInput = config.kodeFilterId ? document.getElementById(config.kodeFilterId) : null;
         const entriesSelect = document.getElementById(config.entriesId || 'entriesSelect');
         const entriesInfo = document.getElementById(config.entriesInfoId || 'entriesInfo');
         const tbody = document.getElementById(config.tbodyId || 'tableBody');
@@ -135,7 +136,14 @@
                 }
             }
 
-            return matchSearch && matchFilter && matchTab && matchDate;
+            let matchKodeFilter = true;
+            const kodeFilterVal = (kodeFilterInput?.value || '').trim().toLowerCase();
+            if (kodeFilterVal !== '') {
+                const rowKode = (row.dataset.kode || row.dataset.kodeorder || '').toLowerCase();
+                matchKodeFilter = rowKode.includes(kodeFilterVal);
+            }
+
+            return matchSearch && matchFilter && matchTab && matchDate && matchKodeFilter;
         }
 
         function getSortValue(row, col) {
@@ -281,7 +289,7 @@
             }
         }
 
-        [searchInput, filterStatus, dateFromInput, dateToInput].forEach((el) => {
+        [searchInput, filterStatus, dateFromInput, dateToInput, kodeFilterInput].forEach((el) => {
             if (!el) return;
             el.addEventListener('input', () => { currentPage = 1; applyTableState(); });
             el.addEventListener('change', () => { currentPage = 1; applyTableState(); });

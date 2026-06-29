@@ -159,16 +159,6 @@ $kategoriBadges = [
     </div>
 </div>
 
-<?php if ($activeTab === 'menunggu-harga' || $activeTab === 'custom'): ?>
-    <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        <?php if ($activeTab === 'menunggu-harga'): ?>
-            Pesanan custom yang memerlukan penawaran harga dari Admin. Klik <strong>Set Harga</strong> pada menu aksi.
-        <?php else: ?>
-            Daftar pemesanan custom-termasuk yang menunggu konfirmasi harga dan konfirmasi pelanggan.
-        <?php endif; ?>
-    </div>
-<?php endif; ?>
-
 <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
     <div class="table-responsive">
         <table class="w-full text-sm">
@@ -310,7 +300,7 @@ $kategoriBadges = [
                                                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                Set Harga
+                                                Konfirmasi Harga
                                             </button>
                                         <?php endif; ?>
                                     </div>
@@ -357,10 +347,16 @@ $kategoriBadges = [
 <?php if (!$readOnly): ?>
     <?php foreach ($orders as $o): ?>
         <?php if (($o['status'] ?? '') === 'menunggu_konfirmasi_harga'): ?>
+            <?php
+            helper('deadline');
+            $deadlineProduksiModal = (string) ($o['deadline_produksi'] ?? $o['deadline_diajukan'] ?? date('Y-m-d'));
+            $estimasiHariModal = countHariKerjaSampaiDeadline($deadlineProduksiModal);
+            $estimasiModal = formatEstimasiHariKerjaExact($estimasiHariModal);
+            ?>
             <div id="modalSetHarga_<?= esc((string) ($o['id_order'] ?? 0)) ?>" class="hidden fixed inset-0 bg-black/50 z-50 p-4 flex items-center justify-center">
                 <div class="bg-white rounded-2xl shadow-lg p-6 max-w-lg w-full border border-[#E2E8F0]">
                     <h3 class="font-bold text-lg text-[#051747]">
-                        Set Harga Pesanan Custom
+                        Konfirmasi Harga Pesanan Custom
                         <span class="block text-xs text-slate-500 mt-1 font-normal"><?= esc((string) ($o['kode_order'] ?? '-')) ?></span>
                     </h3>
 
@@ -378,25 +374,24 @@ $kategoriBadges = [
                             <?= esc((string) ($o['jumlah_order'] ?? 0)) ?> <?= esc((string) ($o['satuan'] ?? 'pcs')) ?>
                         </p>
                         <p class="text-sm text-slate-700 mt-2"><span class="font-semibold">Catatan:</span> <?= esc((string) ($o['catatan_custom'] ?? '-')) ?></p>
-                        <?php if (!empty($o['deadline'])): ?>
-                            <?php helper('deadline'); ?>
+                        <?php if (!empty($o['deadline_diajukan'])): ?>
                             <p class="text-sm text-slate-700 mt-2">
-                                <span class="font-semibold">Deadline diajukan pelanggan:</span>
-                                <?= esc(formatTanggalId((string) $o['deadline'])) ?>
+                                <span class="font-semibold">Diajukan pelanggan:</span>
+                                <?= esc(formatTanggalId((string) $o['deadline_diajukan'])) ?>
                             </p>
                         <?php endif; ?>
                     </div>
 
                     <form method="post"
                         action="<?= esc(site_url('list-pemesanan/set-harga')) ?>"
-                        class="js-action-confirm-form"
+                        class="js-action-confirm-form js-custom-set-harga-form"
                         data-confirm-variant="offer"
                         data-confirm-kode="<?= esc((string) ($o['kode_order'] ?? '-')) ?>">
                         <?= csrf_field() ?>
                         <input type="hidden" name="id_order" value="<?= esc((string) ($o['id_order'] ?? 0)) ?>">
 
                         <div class="mb-3">
-                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Harga yang Ditawarkan (Rp)</label>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Harga Dikonfirmasi (Rp)</label>
                             <input
                                 type="number"
                                 name="harga_custom"
@@ -408,29 +403,37 @@ $kategoriBadges = [
                                 class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
                         </div>
 
-                        <div class="mb-3">
-                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Estimasi Pengerjaan</label>
-                            <input
-                                type="text"
-                                name="estimasi_custom"
-                                required
-                                placeholder="Contoh: 5-7 hari kerja (setelah ACC desain)"
-                                class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
-                            <p class="text-xs text-slate-400 mt-1">Dihitung setelah pelanggan menyetujui desain.</p>
-                        </div>
-
                         <div class="mb-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
-                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Deadline Produksi Penawaran</label>
+                            <?php if (!empty($o['deadline_diajukan'])): ?>
+                                <p class="text-xs text-slate-500 mb-2">
+                                    Diajukan pelanggan:
+                                    <strong class="text-[#2E5CE6] font-semibold"><?= esc(formatTanggalId((string) $o['deadline_diajukan'])) ?></strong>
+                                </p>
+                            <?php endif; ?>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Deadline Produksi</label>
                             <input
                                 type="date"
-                                name="deadline"
+                                name="deadline_produksi"
                                 required
                                 min="<?= esc(date('Y-m-d')) ?>"
-                                value="<?= esc((string) ($o['deadline'] ?? date('Y-m-d'))) ?>"
+                                value="<?= esc($deadlineProduksiModal) ?>"
+                                data-deadline-produksi
                                 class="w-full max-w-xs border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
                             <p class="text-xs text-slate-400 mt-1.5">
                                 Barang selesai dikerjakan — belum termasuk pengiriman. Sesuaikan jika ajuan pelanggan tidak sanggup.
                             </p>
+                        </div>
+
+                        <div class="mb-3">
+                            <p class="block text-sm font-semibold text-slate-700 mb-1.5">Estimasi Pengerjaan</p>
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 px-3.5 py-2.5" data-estimasi-display>
+                                <p class="text-sm text-slate-500" data-estimasi-text><?= esc($estimasiModal) ?></p>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1.5">
+                                Estimasi dihitung otomatis dari hari ini sampai deadline produksi (Senin-Jumat, tidak termasuk Sabtu &amp; Minggu).
+                            </p>
+                            <input type="hidden" name="estimasi_hari" data-estimasi-hari-value value="<?= esc((string) $estimasiHariModal) ?>">
+                            <input type="hidden" name="estimasi_custom" data-estimasi-hidden value="<?= esc($estimasiModal) ?>">
                         </div>
 
                         <div>
@@ -452,7 +455,7 @@ $kategoriBadges = [
                             <button
                                 type="submit"
                                 class="bg-[#051747] text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#2E5CE6] transition-colors">
-                                Kirim Penawaran
+                                Konfirmasi Harga
                             </button>
                         </div>
                     </form>
@@ -507,4 +510,5 @@ $kategoriBadges = [
     };
 </script>
 <?= view('partials/admin_data_table_scripts') ?>
+<?= view('partials/custom_estimasi_deadline_sync_script') ?>
 <?= $this->endSection() ?>

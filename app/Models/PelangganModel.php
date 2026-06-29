@@ -16,7 +16,6 @@ class PelangganModel extends Model
         'jenis',
         'nama_perusahaan',
         'is_verified',
-        'tier_perusahaan',
         'is_suspended',
     ];
 
@@ -34,7 +33,7 @@ class PelangganModel extends Model
      */
     public function getWithUser(int $idPelanggan): ?array
     {
-        return $this->select('pelanggan.*, users.nama, users.email, users.role')
+        return $this->select('pelanggan.*, users.nama, users.email, users.role, users.created_at, users.id_user')
             ->join('users', 'users.id_user = pelanggan.id_user')
             ->where('pelanggan.id_pelanggan', $idPelanggan)
             ->first();
