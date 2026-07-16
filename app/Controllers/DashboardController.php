@@ -192,7 +192,7 @@ class DashboardController extends BaseController
                 ->select(
                     'py.id_payment, py.kode_payment, py.jenis, py.nominal, py.bukti_tf, '
                         . 'py.status AS payment_status, py.tgl_upload, o.kode_order, o.status AS order_status, '
-                        . 'u.nama AS nama_pelanggan, p.no_telp'
+                        . 'o.deadline_produksi, u.nama AS nama_pelanggan, p.no_telp'
                 )
                 ->join('orders o', 'o.id_order = py.id_order', 'left')
                 ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan', 'left')
@@ -296,15 +296,7 @@ class DashboardController extends BaseController
 
             $recentOrders = $this->getRecentOrders($db, [], null, 50);
 
-            $chartRows = $db->table('orders')
-                ->select("DATE(created_at) as tgl, COUNT(*) as total")
-                ->where('created_at >=', date('Y-m-d', strtotime('-6 days')))
-                ->groupBy('DATE(created_at)')
-                ->orderBy('tgl', 'ASC')
-                ->get()->getResultArray();
-
-            $chartLabels = array_column($chartRows, 'tgl');
-            $chartValues = array_map('intval', array_column($chartRows, 'total'));
+            $chart7Days = $this->buildOwnerOrdersChart7Days($db);
 
             return view('dashboard/owner', [
                 'nama'         => $nama,
@@ -339,21 +331,81 @@ class DashboardController extends BaseController
                         'tooltip'  => 'Berdasarkan pembayaran terverifikasi (DP dan pelunasan) pada bulan berjalan.',
                     ],
                 ],
-                'recentOrders' => $recentOrders,
-                'chartLabels'  => $chartLabels,
-                'chartValues'  => $chartValues,
+                'recentOrders'  => $recentOrders,
+                'chartData'     => $chart7Days['chartData'],
+                'chartConfig'   => $chart7Days['chartConfig'],
             ]);
         } catch (\Throwable $e) {
             log_message('error', 'Dashboard owner: {message}', ['message' => $e->getMessage()]);
 
             return view('dashboard/owner', [
-                'nama'         => $nama,
-                'cards'        => $this->emptyCards(4),
-                'recentOrders' => [],
-                'chartLabels'  => [],
-                'chartValues'  => [],
+                'nama'          => $nama,
+                'cards'         => $this->emptyCards(4),
+                'recentOrders'  => [],
+                'chartData'     => [],
+                'chartConfig'   => [],
             ]);
         }
+    }
+
+    /**
+     * Grafik pesanan 7 hari terakhir — struktur data selaras shadcn BarChart multiple.
+     *
+     * @return array{
+     *     chartData: list<array{day: string, dayFull: string, cetak_digital: int, cetak_offset: int, media_promosi: int}>,
+     *     chartConfig: array<string, array{label: string}>
+     * }
+     */
+    private function buildOwnerOrdersChart7Days(\CodeIgniter\Database\BaseConnection $db): array
+    {
+        $chartConfig = [
+            'cetak_digital' => ['label' => 'Cetak Digital'],
+            'cetak_offset'  => ['label' => 'Cetak Offset'],
+            'media_promosi' => ['label' => 'Media Promosi'],
+        ];
+
+        $startDate = date('Y-m-d', strtotime('-6 days'));
+        $dateKeys  = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $dateKeys[] = date('Y-m-d', strtotime("-{$i} days"));
+        }
+
+        $chartRows = $db->table('orders o')
+            ->select('DATE(o.created_at) AS tgl, k.kategori, COUNT(*) AS total')
+            ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
+            ->where('DATE(o.created_at) >=', $startDate)
+            ->groupBy('DATE(o.created_at), k.kategori')
+            ->get()
+            ->getResultArray();
+
+        /** @var array<string, array<string, int>> $lookup */
+        $lookup = [];
+        foreach ($chartRows as $row) {
+            $tgl = (string) ($row['tgl'] ?? '');
+            $kat = (string) ($row['kategori'] ?? '');
+            if ($tgl === '' || $kat === '') {
+                continue;
+            }
+            $lookup[$tgl][$kat] = (int) ($row['total'] ?? 0);
+        }
+
+        $chartData = [];
+        foreach ($dateKeys as $dateKey) {
+            $ts = strtotime($dateKey);
+            $chartData[] = [
+                'day'           => date('D', $ts),
+                'dayFull'       => date('d M Y', $ts),
+                'cetak_digital' => $lookup[$dateKey]['cetak_digital'] ?? 0,
+                'cetak_offset'  => $lookup[$dateKey]['cetak_offset'] ?? 0,
+                'media_promosi' => $lookup[$dateKey]['media_promosi'] ?? 0,
+            ];
+        }
+
+        return [
+            'chartData'   => $chartData,
+            'chartConfig' => $chartConfig,
+        ];
     }
 
     /**
@@ -435,7 +487,7 @@ class DashboardController extends BaseController
         $builder = $db->table('orders o')
             ->select(
                 'o.id_order, o.kode_order, o.status, o.total_harga, o.created_at, o.is_custom, '
-                    . 'o.sisa_kuota, o.kuota_revisi, k.nama_produk, u.nama AS nama_pelanggan, p.no_telp, '
+                    . 'o.deadline_produksi, o.sisa_kuota, o.kuota_revisi, k.nama_produk, u.nama AS nama_pelanggan, p.no_telp, '
                     . sqlLatestOrderStatusPaymentFields('o.id_order')
             )
             ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')

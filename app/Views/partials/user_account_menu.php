@@ -4,6 +4,7 @@
  * @var string $role
  * @var string $userEmail
  * @var bool   $showProfilLink
+ * @var bool   $isKerjasamaPelanggan
  */
 $roleLabels = [
     'pelanggan' => 'Pelanggan',
@@ -13,6 +14,7 @@ $roleLabels = [
     'owner'     => 'Pemilik',
 ];
 $roleLabel = $roleLabels[$role] ?? ucfirst($role);
+$isKerjasamaPelanggan = (bool) ($isKerjasamaPelanggan ?? false);
 ?>
 <div class="relative pl-4 border-l" style="border-color:var(--border);">
     <button type="button"
@@ -26,7 +28,18 @@ $roleLabel = $roleLabels[$role] ?? ucfirst($role);
         </div>
         <div class="hidden sm:block text-left">
             <p class="text-sm font-semibold text-[#051747] leading-tight max-w-[140px] truncate"><?= esc($namaUser ?: 'Pengguna') ?></p>
-            <p class="text-xs capitalize" style="color:var(--text-muted);"><?= esc($roleLabel) ?></p>
+            <?php if ($role === 'pelanggan'): ?>
+                <div class="flex flex-wrap items-center gap-1 mt-0.5">
+                    <span class="text-xs" style="color:var(--text-muted);"><?= esc($roleLabel) ?></span>
+                    <?php if ($isKerjasamaPelanggan): ?>
+                        <span class="inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-none bg-emerald-100 text-emerald-800">
+                            Kerjasama perusahaan
+                        </span>
+                    <?php endif; ?>
+                </div>
+            <?php else: ?>
+                <p class="text-xs capitalize" style="color:var(--text-muted);"><?= esc($roleLabel) ?></p>
+            <?php endif; ?>
         </div>
         <svg class="hidden sm:block w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
@@ -39,7 +52,16 @@ $roleLabel = $roleLabels[$role] ?? ucfirst($role);
             <?php if ($userEmail !== ''): ?>
                 <p class="text-xs text-slate-500 truncate"><?= esc($userEmail) ?></p>
             <?php endif; ?>
-            <?php if ($role !== 'pelanggan'): ?>
+            <?php if ($role === 'pelanggan'): ?>
+                <div class="flex flex-wrap items-center gap-1 mt-1">
+                    <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-400"><?= esc($roleLabel) ?></span>
+                    <?php if ($isKerjasamaPelanggan): ?>
+                        <span class="inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-none bg-emerald-100 text-emerald-800 normal-case tracking-normal">
+                            Kerjasama perusahaan
+                        </span>
+                    <?php endif; ?>
+                </div>
+            <?php else: ?>
                 <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mt-1"><?= esc($roleLabel) ?></p>
             <?php endif; ?>
         </div>

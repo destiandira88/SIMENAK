@@ -177,5 +177,53 @@ $isKerjasamaProfil = pelangganIsKerjasamaPerusahaan($pelanggan);
                 input.value = formatted;
             });
         });
+
+        const profilForm = document.getElementById('profilAkunForm');
+        const profilAlert = document.getElementById('profilAkunAlert');
+        const profilPhoneInput = document.getElementById('profil_no_telp');
+        const phonePattern = /^(\+62|08|022)[0-9]{8,13}$/;
+        const namaLengkapPattern = /^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.'\-]*$/u;
+
+        const showProfilAlert = (message, isSuccess = false) => {
+            if (!profilAlert) return;
+            profilAlert.textContent = message;
+            profilAlert.classList.remove('hidden', 'bg-[#FEE2E2]', 'text-[#991B1B]', 'bg-emerald-50', 'text-emerald-800');
+            profilAlert.classList.add(isSuccess ? 'bg-emerald-50' : 'bg-[#FEE2E2]', isSuccess ? 'text-emerald-800' : 'text-[#991B1B]');
+        };
+
+        if (profilPhoneInput) {
+            profilPhoneInput.addEventListener('input', () => {
+                let value = profilPhoneInput.value.replace(/[^\d+]/g, '');
+                if (value.includes('+')) {
+                    value = '+' + value.replace(/\+/g, '');
+                }
+                profilPhoneInput.value = value.slice(0, 20);
+            });
+        }
+
+        if (profilForm) {
+            profilForm.addEventListener('submit', (event) => {
+                const nama = document.getElementById('profil_nama')?.value.trim() || '';
+                const phone = profilPhoneInput?.value.trim() || '';
+                const alamat = document.getElementById('profil_alamat')?.value.trim() || '';
+
+                if (nama.length < 3 || nama.length > 100 || !namaLengkapPattern.test(nama)) {
+                    event.preventDefault();
+                    showProfilAlert('Nama lengkap hanya boleh berisi huruf, spasi, tanda kutip, atau titik (3–100 karakter).');
+                    return;
+                }
+
+                if (!phonePattern.test(phone)) {
+                    event.preventDefault();
+                    showProfilAlert('Format no. telepon harus berupa angka dan diawali dengan 08, +62, atau 022 (Contoh: 087778965442) (8–13 digit setelah awalan).');
+                    return;
+                }
+
+                if (alamat.length < 10 || alamat.length > 150) {
+                    event.preventDefault();
+                    showProfilAlert('Alamat wajib diisi (minimal 10 karakter, maks. 150 karakter).');
+                }
+            });
+        }
     })();
 </script>

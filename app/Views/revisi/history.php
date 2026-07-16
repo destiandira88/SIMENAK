@@ -50,17 +50,21 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
 $backUrl = $role === 'pelanggan'
     ? site_url('order/detail/' . $kodeOrder)
     : site_url('antrian-desain');
-$backLabel = $role === 'pelanggan' ? '← Detail Pesanan' : '← Antrian Desain';
+$backLabel = $role === 'pelanggan' ? 'Detail Pesanan' : 'Antrian Desain';
 ?>
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('title') ?><?= esc($title ?? 'Riwayat Revisi') ?><?= $this->endSection() ?>
 <?= $this->section('page_title') ?><?= esc($page_title ?? 'Approval History Revisi') ?><?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?><?= esc($page_title ?? 'Approval History Revisi') ?><?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Riwayat persetujuan dan revisi desain untuk pesanan <?= esc($kodeOrder) ?>.<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 
 <div class="max-w-3xl mx-auto">
-    <a href="<?= esc($backUrl) ?>" class="inline-block text-sm font-semibold text-[#2E5CE6] hover:underline mb-4">
+    <a href="<?= esc($backUrl) ?>" class="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2E5CE6] hover:underline mb-4">
+        <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4 shrink-0']) ?>
         <?= esc($backLabel) ?>
     </a>
 

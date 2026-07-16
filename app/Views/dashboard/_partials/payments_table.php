@@ -3,7 +3,7 @@
  * @var list<array<string, mixed>> $payments
  */
 ?>
-<div class="card overflow-hidden">
+<div class="admin-data-table-wrap">
     <div class="px-6 py-4 border-b" style="border-color:var(--border);">
         <h3 class="text-base font-bold" style="color:var(--navy);">Pembayaran Menunggu Verifikasi</h3>
     </div>

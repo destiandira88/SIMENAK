@@ -27,6 +27,8 @@ $routes->post('reset-password', 'AuthController::processResetPassword');
 $routes->get('check-session', 'AuthController::checkSession');
 $routes->get('csrf-sync', 'AuthController::csrfSync');
 $routes->get('logout', 'AuthController::logout');
+$routes->get('auth/google', 'AuthController::redirectToGoogle');
+$routes->get('auth/google/callback', 'AuthController::googleCallback');
 
 $routes->get('tracking/(:segment)', 'TrackingController::show/$1');
 
@@ -154,6 +156,7 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
 
     // ─── Laporan Owner ─────────────────────────────────────────────────────────
     $routes->group('', ['filter' => 'role:owner'], static function ($routes) {
+        $routes->get('riwayat-aktivitas', 'ActivityLogController::index');
         $routes->get('laporan', 'LaporanController::index');
         $routes->get('laporan/export', 'LaporanController::export');
         $routes->get('laporan-produksi', 'LaporanController::produksiIndex');

@@ -39,18 +39,19 @@ $colspan           = $isAdmin ? 9 : ($isOwner ? 6 : 7);
     <h3 class="text-base font-bold text-[#051747]"><?= esc($sectionTitle) ?></h3>
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap sm:justify-end">
         <?php if ($showDateFilter): ?>
-            <div class="flex items-center gap-2">
-                <label for="<?= esc($dateFromId) ?>" class="text-xs font-medium text-slate-500 whitespace-nowrap">Dari</label>
+            <div class="list-pemesanan-date-range">
+                <label for="<?= esc($dateFromId) ?>" class="list-pemesanan-date-label">Dari</label>
                 <input
                     id="<?= esc($dateFromId) ?>"
                     type="date"
-                    class="date-filter-input"
+                    class="list-pemesanan-date-input"
                     aria-label="Filter tanggal mulai">
-                <label for="<?= esc($dateToId) ?>" class="text-xs font-medium text-slate-500 whitespace-nowrap">Sampai</label>
+                <span class="list-pemesanan-date-sep" aria-hidden="true">-</span>
+                <label for="<?= esc($dateToId) ?>" class="list-pemesanan-date-label">Sampai</label>
                 <input
                     id="<?= esc($dateToId) ?>"
                     type="date"
-                    class="date-filter-input"
+                    class="list-pemesanan-date-input"
                     aria-label="Filter tanggal akhir">
             </div>
         <?php endif; ?>
@@ -65,19 +66,10 @@ $colspan           = $isAdmin ? 9 : ($isOwner ? 6 : 7);
                 placeholder="<?= esc($searchPlaceholder) ?>"
                 autocomplete="off">
         </div>
-        <?php if ($isOwner): ?>
-            <button
-                type="button"
-                disabled
-                title="Fitur ekspor ada di halaman Laporan"
-                class="inline-flex shrink-0 items-center justify-center opacity-50 cursor-not-allowed border-2 border-[#051747] text-[#051747] px-4 py-2 rounded-full text-xs font-bold uppercase">
-                Ekspor Excel
-            </button>
-        <?php endif; ?>
     </div>
 </div>
 
-<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+<div class="admin-data-table-wrap">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
@@ -199,7 +191,7 @@ $colspan           = $isAdmin ? 9 : ($isOwner ? 6 : 7);
                                     <?php if ($totalHarga > 0): ?>
                                         Rp <?= esc(number_format($totalHarga, 0, ',', '.')) ?>
                                     <?php else: ?>
-                                        <span class="text-xs italic text-slate-400">Menunggu Admin</span>
+                                        <span class="text-xs text-amber-600 font-medium italic">Menunggu Admin</span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="px-4 py-3.5">
@@ -236,7 +228,7 @@ $colspan           = $isAdmin ? 9 : ($isOwner ? 6 : 7);
                                     <?php if ($totalHarga > 0): ?>
                                         Rp <?= esc(number_format($totalHarga, 0, ',', '.')) ?>
                                     <?php else: ?>
-                                        <span class="text-xs italic text-slate-400">Menunggu Admin</span>
+                                        <span class="text-xs text-amber-600 font-medium italic">Menunggu Admin</span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="px-4 py-3.5">

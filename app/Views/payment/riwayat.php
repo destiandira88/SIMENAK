@@ -12,8 +12,10 @@ $viewerRole = (string) ($viewerRole ?? 'keuangan');
 $filterJenis  = (string) ($_GET['jenis'] ?? '');
 $filterStatus = (string) ($_GET['status'] ?? '');
 $filterCari   = (string) ($_GET['cari'] ?? '');
+$filterDari   = (string) ($_GET['dari'] ?? '');
+$filterSampai = (string) ($_GET['sampai'] ?? '');
 
-$filtered = array_values(array_filter($payments, static function ($p) use ($filterJenis, $filterStatus, $filterCari) {
+$filtered = array_values(array_filter($payments, static function ($p) use ($filterJenis, $filterStatus, $filterCari, $filterDari, $filterSampai) {
     if ($filterJenis !== '' && ($p['jenis'] ?? '') !== $filterJenis) {
         return false;
     }
@@ -23,11 +25,34 @@ $filtered = array_values(array_filter($payments, static function ($p) use ($filt
     if ($filterCari !== '') {
         $cari = strtolower($filterCari);
         if (
-            !str_contains(strtolower((string) ($p['kode_order'] ?? '')), $cari)
+            !str_contains(strtolower((string) ($p['kode_payment'] ?? '')), $cari)
+            && !str_contains(strtolower((string) ($p['kode_order'] ?? '')), $cari)
             && !str_contains(strtolower((string) ($p['nama_pelanggan'] ?? '')), $cari)
             && !str_contains(strtolower((string) ($p['no_telp'] ?? '')), $cari)
         ) {
             return false;
+        }
+    }
+    if ($filterDari !== '' || $filterSampai !== '') {
+        $tglUpload = (string) ($p['tgl_upload'] ?? '');
+        if ($tglUpload === '') {
+            return false;
+        }
+        $ts = strtotime($tglUpload);
+        if ($ts === false) {
+            return false;
+        }
+        if ($filterDari !== '') {
+            $fromTs = strtotime($filterDari . ' 00:00:00');
+            if ($fromTs !== false && $ts < $fromTs) {
+                return false;
+            }
+        }
+        if ($filterSampai !== '') {
+            $toTs = strtotime($filterSampai . ' 23:59:59');
+            if ($toTs !== false && $ts > $toTs) {
+                return false;
+            }
         }
     }
 
@@ -48,22 +73,18 @@ foreach ($payments as $p) {
 <?= $this->section('title') ?><?= esc($title ?? 'Riwayat Pembayaran') ?><?= $this->endSection() ?>
 <?= $this->section('page_title') ?><?= esc($page_title ?? 'Riwayat Semua Pembayaran') ?><?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?><?= $readOnly ? 'Riwayat Pembayaran' : 'Riwayat Semua Pembayaran' ?><?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>
+<?= $readOnly
+    ? 'Pantau status dan riwayat pembayaran DP serta pelunasan.'
+    : 'Seluruh riwayat pembayaran DP dan pelunasan' ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-
-<div class="mb-6">
-    <h2 class="text-xl font-extrabold text-[#051747]">
-        <?= $readOnly ? 'Riwayat Pembayaran' : 'Riwayat Semua Pembayaran' ?>
-    </h2>
-    <p class="text-sm text-slate-500 mt-1">
-        <?= $readOnly
-            ? 'Pantau status dan riwayat pembayaran DP serta pelunasan.'
-            : 'Seluruh riwayat pembayaran DP dan pelunasan' ?>
-    </p>
-</div>
 
 <form method="get" action="<?= esc(site_url('riwayat-pembayaran')) ?>" class="flex gap-3 mb-5 flex-wrap items-end">
     <select name="jenis" onchange="this.form.submit()"
@@ -79,7 +100,28 @@ foreach ($payments as $p) {
         <option value="terverifikasi" <?= $filterStatus === 'terverifikasi' ? 'selected' : '' ?>>Terverifikasi</option>
         <option value="ditolak" <?= $filterStatus === 'ditolak' ? 'selected' : '' ?>>Ditolak</option>
     </select>
-    <input type="text" name="cari" placeholder="Cari kode order / nama pelanggan..."
+    <div class="list-pemesanan-date-range">
+        <label for="riwayatDateFrom" class="list-pemesanan-date-label">Dari</label>
+        <input
+            id="riwayatDateFrom"
+            name="dari"
+            type="date"
+            value="<?= esc($filterDari) ?>"
+            onchange="this.form.submit()"
+            class="list-pemesanan-date-input"
+            aria-label="Filter tanggal unggah mulai">
+        <span class="list-pemesanan-date-sep" aria-hidden="true">-</span>
+        <label for="riwayatDateTo" class="list-pemesanan-date-label">Sampai</label>
+        <input
+            id="riwayatDateTo"
+            name="sampai"
+            type="date"
+            value="<?= esc($filterSampai) ?>"
+            onchange="this.form.submit()"
+            class="list-pemesanan-date-input"
+            aria-label="Filter tanggal unggah akhir">
+    </div>
+    <input type="text" name="cari" placeholder="Cari kode pembayaran, kode order, nama pelanggan..."
         value="<?= esc($filterCari) ?>"
         class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm flex-1 min-w-[200px] focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
     <button type="submit"
@@ -113,7 +155,7 @@ foreach ($payments as $p) {
         <p class="text-lg font-extrabold text-[#051747] mt-1">
             Rp <?= esc(number_format($sumTerverifikasi, 0, ',', '.')) ?>
         </p>
-        <p class="text-xs text-slate-500 mt-0.5">Sepanjang Waktu</p>
+        <p class="text-xs text-slate-500 mt-0.5">Akumulasi Seluruh Periode</p>
     </div>
 </div>
 
@@ -122,45 +164,70 @@ foreach ($payments as $p) {
         <p class="text-slate-500 text-sm">Tidak ada data sesuai filter</p>
     </div>
 <?php else: ?>
-    <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+    <div class="admin-data-table-wrap">
         <div class="table-responsive">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-[#051747] text-white text-xs uppercase">
                         <th class="px-4 py-3 text-left font-semibold w-12">No</th>
-                        <th class="px-4 py-3 text-left font-semibold">Kode Pembayaran</th>
-                        <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
+                        <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kodebayar">
+                            Kode Pembayaran<span class="sort-icon">↕</span>
+                        </th>
+                        <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kodeorder">
+                            Kode Pesanan<span class="sort-icon">↕</span>
+                        </th>
                         <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
-                        <th class="px-4 py-3 text-left font-semibold">Jenis</th>
+                        <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="jenis">
+                            Jenis<span class="sort-icon">↕</span>
+                        </th>
                         <th class="px-4 py-3 text-left font-semibold">Nominal</th>
-                        <th class="px-4 py-3 text-left font-semibold">Tgl Unggah</th>
+                        <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="upload">
+                            Tgl Unggah<span class="sort-icon">↕</span>
+                        </th>
+                        <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="deadline">
+                            Deadline Pengerjaan<span class="sort-icon">↕</span>
+                        </th>
                         <th class="px-4 py-3 text-left font-semibold">Status</th>
                         <th class="px-4 py-3 text-left font-semibold">Verifikator</th>
-                        <th class="px-4 py-3 text-left font-semibold">Tgl Verifikasi</th>
+                        <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="verifikasi">
+                            Tgl Verifikasi<span class="sort-icon">↕</span>
+                        </th>
                         <th class="px-4 py-3 text-left font-semibold">Bukti</th>
                     </tr>
                 </thead>
                 <tbody id="riwayatTableBody">
+                    <?php helper('deadline'); ?>
                     <?php foreach ($filtered as $index => $p): ?>
                         <?php
                         $jenis   = (string) ($p['jenis'] ?? '');
                         $status  = (string) ($p['status'] ?? '');
                         $buktiTf = (string) ($p['bukti_tf'] ?? '');
+                        $kodePayment = (string) ($p['kode_payment'] ?? '');
+                        $kodeOrderRow = (string) ($p['kode_order'] ?? '');
+                        $uploadTs = !empty($p['tgl_upload']) ? strtotime((string) $p['tgl_upload']) : 0;
+                        $verifikasiTs = !empty($p['tgl_verifikasi']) ? strtotime((string) $p['tgl_verifikasi']) : 0;
+                        $deadlineRaw = trim((string) ($p['deadline_produksi'] ?? ''));
+                        $tsDeadline  = $deadlineRaw !== '' ? strtotime($deadlineRaw) : 0;
                         ?>
-                        <tr class="data-table-row border-b border-slate-100 hover:bg-[#F8FAFF]">
+                        <tr class="data-table-row border-b border-slate-100 hover:bg-[#F8FAFF]"
+                            data-kodebayar="<?= esc(mb_strtolower($kodePayment)) ?>"
+                            data-kodeorder="<?= esc(mb_strtolower($kodeOrderRow)) ?>"
+                            data-jenis="<?= esc($jenis) ?>"
+                            data-upload="<?= esc((string) $uploadTs) ?>"
+                            data-deadline="<?= esc((string) $tsDeadline) ?>"
+                            data-verifikasi="<?= esc((string) $verifikasiTs) ?>">
                             <td class="row-num px-4 py-3 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3 font-mono text-xs text-slate-500">
-                                <?= esc((string) ($p['kode_payment'] ?? '-')) ?>
+                                <?= esc($kodePayment !== '' ? $kodePayment : '-') ?>
                             </td>
                             <td class="px-4 py-3 font-mono font-semibold text-[#051747]">
-                                <?php $kodeOrder = (string) ($p['kode_order'] ?? '-'); ?>
-                                <?php if ($readOnly && $kodeOrder !== '-'): ?>
-                                    <a href="<?= esc(site_url('order/detail/' . $kodeOrder)) ?>"
+                                <?php if ($readOnly && $kodeOrderRow !== '' && $kodeOrderRow !== '-'): ?>
+                                    <a href="<?= esc(site_url('order/detail/' . $kodeOrderRow)) ?>"
                                         class="hover:text-[#2E5CE6] hover:underline">
-                                        <?= esc($kodeOrder) ?>
+                                        <?= esc($kodeOrderRow) ?>
                                     </a>
                                 <?php else: ?>
-                                    <?= esc($kodeOrder) ?>
+                                    <?= esc($kodeOrderRow !== '' ? $kodeOrderRow : '-') ?>
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3">
@@ -183,6 +250,9 @@ foreach ($payments as $p) {
                                 <?= !empty($p['tgl_upload'])
                                     ? esc(date('d M Y H:i', strtotime((string) $p['tgl_upload'])))
                                     : '-' ?>
+                            </td>
+                            <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
+                                <?= $deadlineRaw !== '' ? esc(formatTanggalId($deadlineRaw)) : '-' ?>
                             </td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold <?= esc(getPaymentRiwayatStatusBadgeClass($p)) ?>">
@@ -228,6 +298,7 @@ foreach ($payments as $p) {
     window.adminDataTableConfig = {
         tbodyId: 'riwayatTableBody',
         rowSelector: 'tr.data-table-row',
+        enableSort: true,
     };
 </script>
 <?= view('partials/admin_data_table_scripts') ?>

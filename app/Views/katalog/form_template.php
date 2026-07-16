@@ -1,7 +1,15 @@
 <?= $this->extend('layouts/main') ?>
+<?php $readOnly = (bool) ($readOnly ?? false); ?>
 
 <?= $this->section('title') ?><?= esc($title ?? 'Kelola Form') ?><?= $this->endSection() ?>
 <?= $this->section('page_title') ?>Kelola Form Template<?= $this->endSection() ?>
+
+<?= $this->section('banner_title') ?><?= $readOnly ? 'Template Formulir' : 'Kelola Form' ?>: <?= esc($katalog['nama_produk'] ?? '-') ?><?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>
+<?= $readOnly
+    ? 'Lihat field formulir khusus untuk produk ini.'
+    : 'Field hanya muncul saat pelanggan memesan produk ini, bukan produk lain meskipun namanya mirip.' ?>
+<?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <style>
@@ -72,7 +80,6 @@ $fieldTypeLabels = [
     'textarea' => 'Area Teks',
     'file'     => 'Berkas',
 ];
-$readOnly = (bool) ($readOnly ?? false);
 ?>
 
 <div class="text-xs text-slate-400 mb-2">
@@ -83,13 +90,9 @@ $readOnly = (bool) ($readOnly ?? false);
     <span class="text-slate-500"><?= $readOnly ? 'Template Formulir' : 'Kelola Form' ?></span>
 </div>
 
-<h2 class="text-2xl font-extrabold text-[#051747] mb-2">
-    <?= $readOnly ? 'Template Formulir' : 'Kelola Form' ?>: <?= esc($katalog['nama_produk'] ?? '-') ?>
-</h2>
 <?php if (!$readOnly): ?>
 <p class="text-sm text-slate-500 mb-6">
     ID Katalog <span class="font-mono font-semibold text-[#051747]">#<?= esc((string) ($katalog['id_katalog'] ?? 0)) ?></span>
-    Catatan: field hanya muncul saat pelanggan memesan <strong>produk ini</strong>, bukan produk lain meskipun namanya mirip.
 </p>
 <?php else: ?>
 <div class="mb-6"></div>
@@ -169,8 +172,9 @@ $readOnly = (bool) ($readOnly ?? false);
                     <span class="text-sm font-medium text-slate-700">Wajib Diisi</span>
                 </label>
 
-                <button type="submit" class="btn-primary w-full py-2.5 text-sm text-white">
-                    + Tambah Field
+                <button type="submit" class="btn-primary inline-flex w-full items-center justify-center gap-1.5 py-2.5 text-sm text-white">
+                    <?= view('partials/ui_svg_icon', ['icon' => 'plus', 'class' => 'h-4 w-4 shrink-0']) ?>
+                    Tambah Field
                 </button>
             </form>
         </div>

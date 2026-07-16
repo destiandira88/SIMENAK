@@ -158,6 +158,16 @@ class ReminderVerifikasiPelunasan extends BaseCommand
                 'Bukti pelunasan ' . $kodeOrder . ' belum diverifikasi selama 2 jam.'
             );
         }
+
+        sendNotifWaForRole(
+            $db,
+            'keuangan',
+            buildNotifWaText(
+                "Reminder Verifikasi Pelunasan-{$kodeOrder}",
+                "Bukti pelunasan {$kodeOrder} ({$namaPelanggan}) menunggu verifikasi 2 jam. Segera verifikasi.",
+                site_url('verifikasi-pelunasan')
+            )
+        );
     }
 
     /**
@@ -187,5 +197,15 @@ class ReminderVerifikasiPelunasan extends BaseCommand
                 'Pelunasan ' . $kodeOrder . ' belum diverifikasi 6 jam. Koordinasikan bagian keuangan.'
             );
         }
+
+        sendNotifWaForRole(
+            $db,
+            'owner',
+            buildNotifWaText(
+                "Eskalasi Pelunasan-{$kodeOrder}",
+                "Bukti pelunasan {$kodeOrder} ({$namaPelanggan}) belum diverifikasi 6 jam. Koordinasikan keuangan.",
+                site_url('dashboard')
+            )
+        );
     }
 }

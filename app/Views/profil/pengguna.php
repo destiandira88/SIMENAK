@@ -59,6 +59,17 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
 <?= $this->section('title') ?><?= esc($title ?? 'Pengguna') ?><?= $this->endSection() ?>
 <?= $this->section('page_title') ?><?= esc($page_title ?? 'Manajemen Pengguna') ?><?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?>Manajemen Pengguna<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>
+<?php if (($viewerRole ?? '') === 'admin'): ?>
+Kelola akun pelanggan — daftar staff internal tampil read-only.
+<?php elseif (($viewerRole ?? '') === 'owner'): ?>
+Kelola staff internal — data pelanggan tampil read-only.
+<?php else: ?>
+Kelola akun pelanggan & staff internal.
+<?php endif; ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
 <style>
@@ -95,26 +106,12 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
 
 <?= $this->section('content') ?>
 
-<div class="mb-4">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-            <h2 class="text-2xl font-extrabold text-[#051747]">Manajemen Pengguna</h2>
-            <p class="mt-1 text-sm text-slate-500">
-                <?php if (($viewerRole ?? '') === 'admin'): ?>
-                    Kelola akun pelanggan — daftar staff internal tampil read-only.
-                <?php elseif (($viewerRole ?? '') === 'owner'): ?>
-                    Kelola staff internal — data pelanggan tampil read-only.
-                <?php else: ?>
-                    Kelola akun pelanggan & staff internal.
-                <?php endif; ?>
-            </p>
-        </div>
-        <button type="button" id="openTambahPenggunaModal"
-            class="inline-flex items-center justify-center gap-1.5 bg-[#051747] text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-[#2E5CE6] transition-colors shrink-0">
-            <span class="text-base leading-none" aria-hidden="true">+</span>
-            <?= ($canCreateStaff ?? false) ? 'Tambah Staff' : 'Tambah Pelanggan' ?>
-        </button>
-    </div>
+<div class="mb-4 flex justify-end">
+    <button type="button" id="openTambahPenggunaModal"
+        class="inline-flex items-center justify-center gap-1.5 bg-[#051747] text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-[#2E5CE6] transition-colors shrink-0">
+        <?= view('partials/ui_svg_icon', ['icon' => 'plus', 'class' => 'h-4 w-4 shrink-0']) ?>
+        <?= ($canCreateStaff ?? false) ? 'Tambah Staff' : 'Tambah Pelanggan' ?>
+    </button>
 </div>
 
 <?php if ($generatedPassword !== null && $generatedPassword !== ''): ?>
@@ -169,7 +166,7 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
     </div>
 </div>
 
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden mb-4">
+<div class="admin-data-table-wrap mb-4">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
@@ -363,17 +360,21 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
 <?= $this->section('scripts') ?>
 <?= view('partials/pelanggan_akun_field_scripts') ?>
 <?php if ($users !== []): ?>
-    <?= view('partials/admin_data_table_scripts', [
-        'searchInputId' => 'penggunaSearch',
-        'tbodyId'       => 'penggunaBody',
-        'emptyRowId'    => 'penggunaEmptyFilter',
-        'entriesId'     => 'penggunaEntries',
-        'entriesInfoId' => 'penggunaEntriesInfo',
-        'paginationId'  => 'penggunaPagination',
-        'prevPageId'    => 'penggunaPrevPage',
-        'nextPageId'    => 'penggunaNextPage',
-        'pageInfoId'    => 'penggunaPageInfo',
-    ]) ?>
+<script>
+    window.adminDataTableConfig = {
+        searchId: 'penggunaSearch',
+        tbodyId: 'penggunaBody',
+        emptyFilterRowId: 'penggunaEmptyFilter',
+        entriesId: 'penggunaEntries',
+        entriesInfoId: 'penggunaEntriesInfo',
+        paginationId: 'penggunaPagination',
+        prevPageId: 'penggunaPrevPage',
+        nextPageId: 'penggunaNextPage',
+        pageInfoId: 'penggunaPageInfo',
+        rowSelector: 'tr.data-table-row',
+    };
+</script>
+<?= view('partials/admin_data_table_scripts') ?>
 <?php endif; ?>
 <script>
 (function () {
@@ -389,6 +390,69 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
         wrap.innerHTML = '';
     }
 
+    function formatNpwpValue(raw) {
+        const digits = String(raw || '').replace(/\D/g, '').slice(0, 15);
+        if (digits.length <= 2) return digits;
+        if (digits.length <= 5) return digits.slice(0, 2) + '.' + digits.slice(2);
+        if (digits.length <= 8) return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5);
+        if (digits.length <= 9) {
+            return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '.' + digits.slice(8);
+        }
+        if (digits.length <= 12) {
+            return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '.'
+                + digits.slice(8, 9) + '-' + digits.slice(9);
+        }
+        return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '.'
+            + digits.slice(8, 9) + '-' + digits.slice(9, 12) + '.' + digits.slice(12);
+    }
+
+    function bindKerjasamaFormValidation(form) {
+        if (!form || form.dataset.kerjasamaBound === '1') {
+            return;
+        }
+        form.dataset.kerjasamaBound = '1';
+
+        const phonePattern = /^(\+62|08|022)[0-9]{8,13}$/;
+        const waInput = form.querySelector('[data-wa-perusahaan-input]');
+        const npwpInput = form.querySelector('[data-npwp-input]');
+
+        if (waInput) {
+            waInput.addEventListener('input', function () {
+                let value = waInput.value.replace(/[^\d+]/g, '');
+                if (value.includes('+')) {
+                    value = '+' + value.replace(/\+/g, '');
+                }
+                waInput.value = value.slice(0, 20);
+            });
+        }
+
+        if (npwpInput) {
+            npwpInput.addEventListener('input', function () {
+                npwpInput.value = formatNpwpValue(npwpInput.value);
+            });
+        }
+
+        form.addEventListener('submit', function (event) {
+            const wa = waInput?.value.trim() || '';
+            if (!phonePattern.test(wa)) {
+                event.preventDefault();
+                window.alert('Format no. HP/WA perusahaan harus berupa angka dan diawali dengan 08, +62, atau 022 (8–13 digit setelah awalan).');
+                waInput?.focus();
+                return;
+            }
+
+            const npwp = npwpInput?.value.trim() || '';
+            if (npwp !== '') {
+                const digits = npwp.replace(/\D/g, '');
+                if (digits.length !== 15) {
+                    event.preventDefault();
+                    window.alert('Format NPWP tidak valid. Masukkan 15 digit angka.');
+                    npwpInput?.focus();
+                }
+            }
+        });
+    }
+
     document.querySelectorAll('.js-open-kerjasama-modal').forEach(function (btn) {
         btn.addEventListener('click', function () {
             const id = btn.getAttribute('data-pelanggan-id');
@@ -398,6 +462,7 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
             const form = wrap.querySelector('form');
             if (form) {
                 form.action = form.action.replace('/0/', '/' + id + '/');
+                bindKerjasamaFormValidation(form);
             }
             if (namaEl) namaEl.textContent = nama;
             modal.classList.add('is-open');

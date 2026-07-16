@@ -18,16 +18,14 @@ $colspan = $filter === 'pending' ? 7 : 8;
 <?= $this->section('title') ?><?= esc($title ?? 'Verifikasi Perusahaan') ?><?= $this->endSection() ?>
 <?= $this->section('page_title') ?><?= esc($page_title ?? 'Verifikasi Perusahaan') ?><?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?>Verifikasi Perusahaan<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Tinjau pengajuan verifikasi akun perusahaan pelanggan (Owner)<?= $this->endSection() ?>
+
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-
-<div class="mb-6">
-    <h2 class="text-xl font-extrabold text-[#051747]">Verifikasi Perusahaan</h2>
-    <p class="text-sm text-slate-500 mt-1">Tinjau pengajuan verifikasi akun perusahaan pelanggan (Owner)</p>
-</div>
 
 <div class="flex flex-wrap gap-2 mb-6">
     <?php foreach ($tabs as $tabKey => $tabLabel): ?>
@@ -62,7 +60,7 @@ $colspan = $filter === 'pending' ? 7 : 8;
     </div>
 </div>
 
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="admin-data-table-wrap">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>

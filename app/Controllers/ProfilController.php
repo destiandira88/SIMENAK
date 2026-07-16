@@ -26,14 +26,26 @@ class ProfilController extends BaseController
 
         $rules = [
             'nama'    => 'required|min_length[3]|max_length[100]',
-            'no_telp' => 'required|regex_match[/^[0-9]{10,13}$/]',
-            'alamat'  => 'permit_empty|max_length[150]',
+            'no_telp' => 'required|max_length[20]',
+            'alamat'  => 'required|min_length[10]|max_length[150]',
         ];
 
-        if (!$this->validate($rules)) {
+        $messages = pelangganAkunValidationMessages();
+
+        if (!$this->validate($rules, $messages)) {
             return $this->backProfilModal()
                 ->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
+        }
+
+        $nama   = trim((string) $this->request->getPost('nama'));
+        $noTelp = trim((string) $this->request->getPost('no_telp'));
+        $alamat = trim((string) $this->request->getPost('alamat'));
+
+        if ($formatError = validatePelangganAkunFormat($nama, $noTelp)) {
+            return $this->backProfilModal()
+                ->withInput()
+                ->with('error', $formatError);
         }
 
         $idUser      = (int) session()->get('id_user');
@@ -44,12 +56,12 @@ class ProfilController extends BaseController
             $db->transStart();
 
             $db->table('users')->where('id_user', $idUser)->update([
-                'nama' => trim((string) $this->request->getPost('nama')),
+                'nama' => $nama,
             ]);
 
             $db->table('pelanggan')->where('id_pelanggan', $idPelanggan)->update([
-                'no_telp' => trim((string) $this->request->getPost('no_telp')),
-                'alamat'  => trim((string) $this->request->getPost('alamat')),
+                'no_telp' => $noTelp,
+                'alamat'  => $this->truncateAlamat($alamat),
             ]);
 
             $db->transComplete();
@@ -58,7 +70,7 @@ class ProfilController extends BaseController
                 throw new \RuntimeException('Gagal menyimpan profil.');
             }
 
-            session()->set('nama', trim((string) $this->request->getPost('nama')));
+            session()->set('nama', $nama);
         } catch (\Throwable $e) {
             $db->transRollback();
             log_message('error', '[ProfilController::update] {msg}', ['msg' => $e->getMessage()]);
@@ -412,7 +424,7 @@ class ProfilController extends BaseController
         $rules = [
             'nama_perusahaan' => 'required|min_length[3]|max_length[150]',
             'jabatan_pic'     => 'required|min_length[2]|max_length[100]',
-            'wa_perusahaan'   => 'required|regex_match[/^[0-9]{10,13}$/]',
+            'wa_perusahaan'   => 'required|max_length[20]',
             'alamat_kantor'   => 'required|min_length[10]|max_length[255]',
             'no_npwp'         => 'permit_empty|max_length[20]',
             'catatan_admin'   => 'permit_empty|max_length[500]',
@@ -427,6 +439,11 @@ class ProfilController extends BaseController
         $namaPerusahaan = trim((string) $this->request->getPost('nama_perusahaan'));
         if (!isValidNamaPerusahaan($namaPerusahaan)) {
             return redirect()->back()->withInput()->with('error', 'Nama perusahaan tidak valid.');
+        }
+
+        $waPerusahaan = trim((string) $this->request->getPost('wa_perusahaan'));
+        if (!isValidNoTelepon($waPerusahaan)) {
+            return redirect()->back()->withInput()->with('error', 'Format no. HP/WA perusahaan harus berupa angka dan diawali dengan 08, +62, atau 022 (8–13 digit setelah awalan).');
         }
 
         $noNpwpRaw = trim((string) $this->request->getPost('no_npwp'));
@@ -454,7 +471,7 @@ class ProfilController extends BaseController
                 'nama_perusahaan' => $namaPerusahaan,
                 'no_npwp'         => $noNpwp,
                 'jabatan_pic'     => trim((string) $this->request->getPost('jabatan_pic')),
-                'wa_perusahaan'   => trim((string) $this->request->getPost('wa_perusahaan')),
+                'wa_perusahaan'   => $waPerusahaan,
                 'alamat_kantor'   => trim((string) $this->request->getPost('alamat_kantor')),
                 'dokumen_npwp'    => $uploads['dokumen_npwp'],
                 'dokumen_ktp_pic' => $uploads['dokumen_ktp_pic'],
@@ -489,6 +506,15 @@ class ProfilController extends BaseController
                 . '<p>Order hingga Rp 5.000.000 tanpa DP (pelunasan setelah barang diterima). '
                 . 'Order di atas Rp 5.000.000 wajib DP 50%, sisa pelunasan tetap setelah barang diterima.</p>'
             );
+            sendNotifWaForEmail(
+                $db,
+                (string) $pelanggan['email'],
+                buildNotifWaText(
+                    'Kerja Sama Perusahaan Aktif',
+                    "Akun Anda ditetapkan sebagai pelanggan kerja sama ({$namaPerusahaan}).",
+                    site_url('order')
+                )
+            );
             sendNotifInApp(
                 (int) $pelanggan['id_user_pelanggan'],
                 null,
@@ -501,6 +527,14 @@ class ProfilController extends BaseController
 
             return redirect()->back()->with('error', 'Gagal menetapkan kerja sama perusahaan.');
         }
+
+        helper('activity_log');
+        logActivity(
+            'tambah',
+            'kerjasama',
+            'Menetapkan kerja sama perusahaan untuk ' . (string) ($pelanggan['nama'] ?? 'pelanggan')
+            . ' (' . $namaPerusahaan . ')'
+        );
 
         return redirect()->back()->with('success', 'Pelanggan berhasil ditetapkan sebagai Kerja Sama Perusahaan.');
     }
@@ -557,6 +591,16 @@ class ProfilController extends BaseController
                 . '<p>Pesanan baru akan diproses dengan skema perseorangan (DP 50%, pelunasan sebelum pengiriman).</p>'
                 . ($catatan !== '' ? '<p><strong>Catatan:</strong> ' . esc($catatan) . '</p>' : '')
             );
+            sendNotifWaForEmail(
+                $db,
+                (string) $pelanggan['email'],
+                buildNotifWaText(
+                    'Kerja Sama Perusahaan Dicabut',
+                    "Status kerja sama {$namaPerusahaan} dicabut. Pesanan baru mengikuti skema perseorangan."
+                    . ($catatan !== '' ? " Catatan: {$catatan}" : ''),
+                    site_url('order')
+                )
+            );
             sendNotifInApp(
                 (int) $pelanggan['id_user_pelanggan'],
                 null,
@@ -569,6 +613,14 @@ class ProfilController extends BaseController
 
             return redirect()->back()->with('error', 'Gagal mencabut kerja sama perusahaan.');
         }
+
+        helper('activity_log');
+        logActivity(
+            'hapus',
+            'kerjasama',
+            'Mencabut kerja sama perusahaan untuk ' . (string) ($pelanggan['nama'] ?? 'pelanggan')
+            . ' (' . (string) ($pelanggan['nama_perusahaan'] ?? 'Perusahaan') . ')'
+        );
 
         return redirect()->back()->with('success', 'Status kerja sama perusahaan berhasil dicabut.');
     }

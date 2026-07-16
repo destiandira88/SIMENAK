@@ -18,10 +18,10 @@ class LaporanController extends BaseController
                 ->with('error', 'Akses laporan owner hanya untuk role Owner.');
         }
 
-        [$month, $year] = $this->resolvePeriodFilter();
+        $filters = $this->resolveOwnerDateFilters();
 
         try {
-            $report = model(LaporanModel::class)->buildOwnerReport($month, $year);
+            $report = model(LaporanModel::class)->buildOwnerReport($filters['dari'], $filters['sampai']);
         } catch (\Throwable $e) {
             log_message('error', 'Laporan owner index: {message}', ['message' => $e->getMessage()]);
 
@@ -30,11 +30,10 @@ class LaporanController extends BaseController
         }
 
         return view('laporan/owner', [
-            'title'      => 'Laporan',
+            'title'   => 'Laporan',
             'page_title' => 'Laporan Owner',
-            'report'     => $report,
-            'filterMonth'=> $month,
-            'filterYear' => $year,
+            'report'  => $report,
+            'filters' => $filters,
         ]);
     }
 
@@ -46,10 +45,10 @@ class LaporanController extends BaseController
                 ->with('error', 'Akses laporan owner hanya untuk role Owner.');
         }
 
-        [$month, $year] = $this->resolvePeriodFilter();
+        $filters = $this->resolveOwnerDateFilters();
 
         try {
-            $report = model(LaporanModel::class)->buildOwnerReport($month, $year);
+            $report = model(LaporanModel::class)->buildOwnerReport($filters['dari'], $filters['sampai']);
         } catch (\Throwable $e) {
             log_message('error', 'Laporan owner export: {message}', ['message' => $e->getMessage()]);
 
@@ -57,7 +56,11 @@ class LaporanController extends BaseController
                 ->with('error', 'Gagal mengekspor laporan.');
         }
 
-        $filename = sprintf('laporan_owner_%04d_%02d.csv', $year, $month);
+        $filename = sprintf(
+            'laporan_owner_%s_%s.csv',
+            str_replace('-', '', $filters['dari']),
+            str_replace('-', '', $filters['sampai'])
+        );
         $csv      = $this->buildOwnerCsv($report);
 
         return $this->response->download($filename, $csv);
@@ -139,7 +142,7 @@ class LaporanController extends BaseController
         $role = (string) session()->get('role');
         if (!in_array($role, ['keuangan', 'owner'], true)) {
             return redirect()->to(site_url('dashboard'))
-                ->with('error', 'Akses laporan keuangan tidak diizinkan.');
+                ->with('error', 'Akses laporan transaksi tidak diizinkan.');
         }
 
         $filters = $this->resolveKeuanganFilters();
@@ -155,12 +158,12 @@ class LaporanController extends BaseController
             log_message('error', 'Laporan keuangan index: {message}', ['message' => $e->getMessage()]);
 
             return redirect()->to(site_url('dashboard'))
-                ->with('error', 'Gagal memuat laporan keuangan.');
+                ->with('error', 'Gagal memuat laporan transaksi.');
         }
 
         return view('laporan/keuangan', [
-            'title'      => 'Laporan Keuangan',
-            'page_title' => 'Laporan Keuangan',
+            'title'      => 'Laporan Transaksi',
+            'page_title' => 'Laporan Transaksi',
             'report'     => $report,
             'filters'    => $filters,
             'readOnly'   => $role === 'owner',
@@ -172,7 +175,7 @@ class LaporanController extends BaseController
         $role = (string) session()->get('role');
         if (!in_array($role, ['keuangan', 'owner'], true)) {
             return redirect()->to(site_url('dashboard'))
-                ->with('error', 'Akses laporan keuangan tidak diizinkan.');
+                ->with('error', 'Akses laporan transaksi tidak diizinkan.');
         }
 
         $filters = $this->resolveKeuanganFilters();
@@ -188,11 +191,11 @@ class LaporanController extends BaseController
             log_message('error', 'Laporan keuangan export: {message}', ['message' => $e->getMessage()]);
 
             return redirect()->to(site_url('laporan-keuangan'))
-                ->with('error', 'Gagal mengekspor laporan keuangan.');
+                ->with('error', 'Gagal mengekspor laporan transaksi.');
         }
 
         $filename = sprintf(
-            'laporan_keuangan_%s_%s.csv',
+            'laporan_transaksi_%s_%s.csv',
             $filters['dari'],
             $filters['sampai']
         );
@@ -394,7 +397,7 @@ class LaporanController extends BaseController
         $range  = $report['range'] ?? [];
         $model  = model(LaporanModel::class);
 
-        $lines[] = $this->csvRow(['Laporan Keuangan SIMENAK']);
+        $lines[] = $this->csvRow(['Laporan Transaksi SIMENAK']);
         $lines[] = $this->csvRow(['Periode', (string) ($range['label'] ?? '-')]);
         $lines[] = $this->csvRow(['Filter Jenis', $filters['jenis']]);
         $lines[] = $this->csvRow(['Filter Status', $filters['status']]);
@@ -578,6 +581,31 @@ class LaporanController extends BaseController
         }
 
         return "\xEF\xBB\xBF" . implode("\r\n", $lines);
+    }
+
+    /**
+     * @return array{dari: string, sampai: string}
+     */
+    private function resolveOwnerDateFilters(): array
+    {
+        $dari   = trim((string) ($this->request->getGet('dari') ?? date('Y-m-01')));
+        $sampai = trim((string) ($this->request->getGet('sampai') ?? date('Y-m-d')));
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dari)) {
+            $dari = date('Y-m-01');
+        }
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $sampai)) {
+            $sampai = date('Y-m-d');
+        }
+
+        if (strtotime($dari) > strtotime($sampai)) {
+            [$dari, $sampai] = [$sampai, $dari];
+        }
+
+        return [
+            'dari'   => $dari,
+            'sampai' => $sampai,
+        ];
     }
 
     /**

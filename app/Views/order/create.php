@@ -68,22 +68,26 @@ $deadlineOld          = (string) old('deadline_diajukan', '');
 $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== ''
     ? (string) old('jumlah_order')
     : (string) $minOrder;
+$isProdukUndangan     = stripos($namaProduk, 'undangan') !== false && ! empty($fields);
+$hideSpesifikasiCustom = $isCustomSelected && ! $isProdukUndangan;
 ?>
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('title') ?><?= esc($title ?? 'Buat Pesanan') ?><?= $this->endSection() ?>
-<?= $this->section('page_title') ?><?= esc($page_title ?? 'Buat Pesanan Baru') ?><?= $this->endSection() ?>
+<?= $this->section('page_title') ?>Buat Pesanan<?= $this->endSection() ?>
+<?= $this->section('banner_title') ?>Buat Pesanan Baru<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Lengkapi detail pesanan untuk <?= esc($namaProduk) ?>.<?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 
 <div class="flex items-center justify-center gap-3 sm:gap-4 mb-8 max-w-xl mx-auto">
     <div class="flex items-center gap-2 shrink-0">
-        <div id="stepDot1" class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold bg-[#051747] text-white">①</div>
+        <div id="stepDot1" class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold bg-[#051747] text-white">1</div>
         <span id="stepLabel1" class="text-xs sm:text-sm font-bold text-[#051747] whitespace-nowrap">Detail Pesanan</span>
     </div>
     <div class="flex-1 h-0.5 bg-slate-200 min-w-[40px] max-w-[100px]"></div>
     <div class="flex items-center gap-2 shrink-0">
-        <div id="stepDot2" class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold border-2 border-slate-300 text-slate-400">②</div>
+        <div id="stepDot2" class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold border-2 border-slate-300 text-slate-400">2</div>
         <span id="stepLabel2" class="text-xs sm:text-sm text-slate-400 whitespace-nowrap">Pengiriman &amp; Konfirmasi</span>
     </div>
 </div>
@@ -254,11 +258,11 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
         </p>
 
         <?php if (!empty($fields)): ?>
-            <div id="spesifikasiKhususWrapper" class="<?= $isCustomSelected ? 'hidden' : '' ?>">
+            <div id="spesifikasiKhususWrapper" class="<?= $hideSpesifikasiCustom ? 'hidden' : '' ?>">
             <p class="form-section-label mb-3 mt-6"><?= esc((string) $stepSpesifikasi) ?>. Spesifikasi Khusus <span class="text-red-500">*</span></p>
             <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-5">
                 <div class="flex items-center gap-2 mb-4">
-                    <span class="text-lg" aria-hidden="true">📋</span>
+                    <?= view('partials/order_detail_svg_icon', ['icon' => 'clipboard', 'class' => 'h-5 w-5']) ?>
                     <p class="font-semibold text-indigo-900 text-sm">
                         Spesifikasi Khusus <?= esc($namaProduk) ?>
                     </p>
@@ -273,6 +277,7 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
                         $placeholder = (string) ($f['placeholder'] ?? '');
                         $isRequired  = (int) ($f['is_required'] ?? 0) === 1;
                         $isHariOtomatis = in_array($fieldKey, ['akad_hari', 'resepsi_hari'], true);
+                        $isResepsiTanggal = $fieldKey === 'resepsi_tanggal' && $fieldType === 'date';
                         $inputClass  = $isHariOtomatis
                             ? 'form-input w-full px-3.5 py-2.5 bg-slate-100 text-slate-600 cursor-not-allowed'
                             : 'form-input w-full px-3.5 py-2.5';
@@ -314,7 +319,7 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
                                     name="eav[<?= esc($fieldKey) ?>]"
                                     value="<?= esc((string) $oldVal) ?>"
                                     placeholder="<?= esc($isHariOtomatis ? '' : $placeholder) ?>"
-                                    class="<?= esc($inputClass) ?>"
+                                    class="<?= esc(trim($inputClass . ($isResepsiTanggal ? ' resepsi-tanggal-input' : ''))) ?>"
                                     <?= $isRequired ? 'required' : '' ?>
                                     <?= $isHariOtomatis ? 'readonly aria-readonly="true"' : '' ?>>
                                 <?php
@@ -324,6 +329,9 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
                                 ?>
                                 <?php if ($fieldHint !== ''): ?>
                                     <p class="form-hint"><?= esc($fieldHint) ?></p>
+                                <?php endif; ?>
+                                <?php if ($isResepsiTanggal): ?>
+                                    <p class="form-hint resepsi-tanggal-helper" data-resepsi-tanggal-helper></p>
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
@@ -363,6 +371,7 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
                     <p id="referensiUploadHint" class="form-upload-hint">JPG, PNG, atau PDF · maks. 2MB</p>
                 </div>
                 <div id="uploadPreview" class="hidden">
+                    <img id="uploadPreviewImg" src="" alt="Preview referensi desain" role="button" tabindex="0" title="Klik untuk memperbesar" class="hidden max-h-48 w-full mx-auto rounded-lg object-contain cursor-zoom-in transition-transform hover:scale-[1.01] mb-2">
                     <p id="uploadFileName" class="form-upload-text"></p>
                 </div>
                 <input
@@ -380,8 +389,9 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
             <button
                 type="button"
                 id="btnNextStep"
-                class="bg-[#051747] text-white px-8 py-3 rounded-full font-bold uppercase text-sm hover:bg-[#2E5CE6] transition-colors">
-                Lanjut ke Pengiriman →
+                class="bg-[#051747] text-white px-8 py-3 rounded-full font-bold uppercase text-sm hover:bg-[#2E5CE6] transition-colors inline-flex items-center gap-2">
+                Lanjut ke Pengiriman
+                <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-4 w-4']) ?>
             </button>
         </div>
     </div>
@@ -539,13 +549,15 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
                 <button
                     type="button"
                     id="btnPrevStep"
-                    class="flex-1 border border-white/30 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/10 transition-colors">
-                    ← Kembali
+                    class="flex-1 border border-white/30 text-white px-4 py-2.5 rounded-full text-sm hover:bg-white/10 transition-colors inline-flex items-center justify-center gap-2">
+                    <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4']) ?>
+                    Kembali
                 </button>
                 <button
                     type="submit"
-                    class="flex-1 bg-white text-[#051747] px-4 py-2.5 rounded-full font-bold text-sm hover:bg-blue-50 transition-colors">
-                    Simpan Pesanan →
+                    class="flex-1 bg-white text-[#051747] px-4 py-2.5 rounded-full font-bold text-sm hover:bg-blue-50 transition-colors inline-flex items-center justify-center gap-2">
+                    Simpan Pesanan
+                    <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-4 w-4']) ?>
                 </button>
             </div>
         </div>
@@ -570,6 +582,30 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
             class="max-w-full max-h-[88vh] rounded-2xl object-contain shadow-2xl">
     </div>
 <?php endif; ?>
+
+<div
+    id="referensiZoomModal"
+    class="hidden fixed inset-0 z-[90] bg-black/75 p-4 sm:p-6 flex items-center justify-center"
+    aria-hidden="true"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="referensiZoomCaption">
+    <button
+        type="button"
+        id="referensiZoomClose"
+        class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/15 text-white text-xl font-bold hover:bg-white/25 transition-colors"
+        aria-label="Tutup preview referensi">
+        ×
+    </button>
+    <div class="flex flex-col items-center max-w-[95vw]">
+        <img
+            id="referensiZoomImg"
+            src=""
+            alt=""
+            class="max-w-full max-h-[82vh] rounded-2xl object-contain shadow-2xl bg-white/5">
+        <p id="referensiZoomCaption" class="mt-3 text-sm text-white/90 text-center font-medium"></p>
+    </div>
+</div>
 
 <div id="modalDeadlineMin" class="deadline-min-modal fixed inset-0 z-[90] hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modalDeadlineMinTitle" aria-hidden="true">
     <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" data-close-deadline-min></div>
@@ -632,6 +668,7 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
     const catatanCustomMinChars = 10;
     const deadlineOld = <?= json_encode($deadlineOld !== '' ? $deadlineOld : null, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
     const idKatalog = <?= (int) $idKatalog ?>;
+    const isProdukUndangan = <?= $isProdukUndangan ? 'true' : 'false' ?>;
     const DRAFT_KEY = 'simenak_order_draft_' + idKatalog;
     const hasServerOld = <?= $hasOldInput ? 'true' : 'false' ?>;
     const clearOrderDraft = <?= $clearOrderDraft ? 'true' : 'false' ?>;
@@ -856,6 +893,23 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
         }
 
         if (step1) {
+            const minEstimasiFields = step1.querySelectorAll('#inputDeadline, .resepsi-tanggal-input');
+            for (const field of minEstimasiFields) {
+                if (!isStep1FieldActive(field, step1)) {
+                    continue;
+                }
+                const helperEl = field.id === 'inputDeadline'
+                    ? document.getElementById('deadlineHelper')
+                    : field.closest('div')?.querySelector('[data-resepsi-tanggal-helper]') || null;
+                if (!clampMinEstimasiDateInput(field, { showModal: true, helperEl })) {
+                    field.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    return;
+                }
+            }
+
             const step1Fields = step1.querySelectorAll('input, textarea, select');
             for (const field of step1Fields) {
                 if (field.type === 'radio' || field.type === 'hidden') {
@@ -1020,21 +1074,27 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
         } else {
             s2.classList.add('bg-[#051747]', 'text-white');
             s2.classList.remove('border-2', 'border-slate-300', 'text-slate-400');
+            s1.classList.remove('bg-[#051747]', 'text-white');
+            s1.classList.add('border-2', 'border-slate-300', 'text-slate-400');
             l2?.classList.add('font-bold', 'text-[#051747]');
             l2?.classList.remove('text-slate-400');
+            l1?.classList.remove('font-bold', 'text-[#051747]');
+            l1?.classList.add('text-slate-400');
         }
     }
 
     function toggleCustom(isCustom) {
+        const hideSpesifikasi = isCustom && !isProdukUndangan;
+
         document.getElementById('customNote')?.classList.toggle('hidden', !isCustom);
         document.getElementById('catatanCustomWrapper')?.classList.toggle('hidden', !isCustom);
-        document.getElementById('spesifikasiKhususWrapper')?.classList.toggle('hidden', isCustom);
+        document.getElementById('spesifikasiKhususWrapper')?.classList.toggle('hidden', hideSpesifikasi);
         const catatanEl = document.getElementById('catatanCustom');
         if (catatanEl) {
             catatanEl.required = isCustom;
             catatanEl.disabled = !isCustom;
         }
-        setContainerFieldsDisabled('spesifikasiKhususWrapper', isCustom);
+        setContainerFieldsDisabled('spesifikasiKhususWrapper', hideSpesifikasi);
         const referensiInput = document.getElementById('inputReferensi');
         if (referensiInput) {
             referensiInput.required = isCustom;
@@ -1219,25 +1279,28 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
     }
 
     function toYMD(d) {
-        return d.toISOString().split('T')[0];
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+
+        return y + '-' + m + '-' + day;
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const minHari = <?= (int) $estimasiMinHariKerja ?>;
+    function isYmdBefore(valueYmd, minYmd) {
+        return valueYmd !== '' && minYmd !== '' && valueYmd < minYmd;
+    }
 
+    function getMinEstimasiDate() {
+        const minHari = <?= (int) $estimasiMinHariKerja ?>;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const minDate = new Date(today);
         minDate.setDate(minDate.getDate() + minHari);
 
-        const inputDeadline = document.getElementById('inputDeadline');
-        if (!inputDeadline) return;
+        return { minDate, minHari, minYmd: toYMD(minDate) };
+    }
 
-        inputDeadline.min = toYMD(minDate);
-        if (!inputDeadline.value) {
-            inputDeadline.value = deadlineOld || toYMD(minDate);
-        }
-
+    function formatMinEstimasiHelper(minDate, minHari) {
         const opsi = {
             weekday: 'long',
             year: 'numeric',
@@ -1245,19 +1308,81 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
             day: 'numeric',
         };
         const tglTampil = minDate.toLocaleDateString('id-ID', opsi);
-        const deadlineHelper = document.getElementById('deadlineHelper');
-        if (deadlineHelper) {
-            deadlineHelper.textContent =
-                'Tanggal tercepat: ' + tglTampil +
-                ' (' + minHari + ' hari kerja).';
+
+        return 'Tanggal tercepat: ' + tglTampil + ' (' + minHari + ' hari kerja).';
+    }
+
+    function clampMinEstimasiDateInput(input, options = {}) {
+        const minYmd = input.min || input.dataset.minEstimasiYmd || '';
+        if (!input.value || !isYmdBefore(input.value, minYmd)) {
+            return true;
         }
 
-        inputDeadline.addEventListener('change', function() {
-            const pilihan = new Date(this.value + 'T00:00:00');
-            if (pilihan < minDate) {
-                this.value = toYMD(minDate);
-                openModalDeadlineMin(deadlineHelper?.textContent?.trim() || '');
+        input.value = minYmd;
+
+        if (options.showModal) {
+            const helperEl = options.helperEl || null;
+            const { minDate, minHari } = getMinEstimasiDate();
+            const detail = helperEl?.textContent?.trim() || formatMinEstimasiHelper(minDate, minHari);
+            if (typeof openModalDeadlineMin === 'function') {
+                openModalDeadlineMin(detail);
             }
+        }
+
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        return false;
+    }
+
+    function bindMinEstimasiDateInput(input, options = {}) {
+        if (!input || input.dataset.minEstimasiBound === '1') {
+            return;
+        }
+
+        const { minDate, minHari, minYmd } = getMinEstimasiDate();
+        const helperEl = options.helperEl || null;
+        const fallbackOld = options.fallbackOld || '';
+
+        input.min = minYmd;
+        input.dataset.minEstimasiYmd = minYmd;
+
+        if (helperEl) {
+            helperEl.textContent = formatMinEstimasiHelper(minDate, minHari);
+        }
+
+        if (!input.value) {
+            input.value = (fallbackOld && !isYmdBefore(fallbackOld, minYmd)) ? fallbackOld : minYmd;
+        } else if (isYmdBefore(input.value, minYmd)) {
+            input.value = minYmd;
+        }
+
+        const rejectInvalidDate = () => {
+            clampMinEstimasiDateInput(input, { showModal: true, helperEl });
+        };
+
+        input.addEventListener('change', rejectInvalidDate);
+        input.addEventListener('blur', rejectInvalidDate);
+
+        input.dataset.minEstimasiBound = '1';
+
+        if (input.value) {
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputDeadline = document.getElementById('inputDeadline');
+        const deadlineHelper = document.getElementById('deadlineHelper');
+
+        if (inputDeadline) {
+            bindMinEstimasiDateInput(inputDeadline, {
+                helperEl: deadlineHelper,
+                fallbackOld: deadlineOld || '',
+            });
+        }
+
+        document.querySelectorAll('.resepsi-tanggal-input').forEach((input) => {
+            const helperEl = input.closest('div')?.querySelector('[data-resepsi-tanggal-helper]') || null;
+            bindMinEstimasiDateInput(input, { helperEl });
         });
     });
 
@@ -1332,19 +1457,109 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
     });
 
     document.getElementById('inputReferensi')?.addEventListener('change', function() {
-        if (this.files[0]) {
-            document.getElementById('errReferensi')?.classList.add('hidden');
-            document.getElementById('uploadPlaceholder')?.classList.add('hidden');
-            document.getElementById('uploadPreview')?.classList.remove('hidden');
-            const fileNameEl = document.getElementById('uploadFileName');
+        const file = this.files && this.files[0];
+        const uploadPreviewImg = document.getElementById('uploadPreviewImg');
+        const fileNameEl = document.getElementById('uploadFileName');
+
+        if (!file) {
+            document.getElementById('uploadPlaceholder')?.classList.remove('hidden');
+            document.getElementById('uploadPreview')?.classList.add('hidden');
+            uploadPreviewImg?.classList.add('hidden');
+            uploadPreviewImg?.removeAttribute('src');
             if (fileNameEl) {
-                fileNameEl.textContent = '📎 ' + this.files[0].name;
+                fileNameEl.textContent = '';
             }
-            scheduleSaveOrderDraft();
+            return;
+        }
+
+        document.getElementById('errReferensi')?.classList.add('hidden');
+        document.getElementById('uploadPlaceholder')?.classList.add('hidden');
+        document.getElementById('uploadPreview')?.classList.remove('hidden');
+
+        const isImage = /^image\/(jpe?g|png)$/i.test(file.type)
+            || /\.(jpe?g|png)$/i.test(file.name);
+        const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+
+        if (isImage) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                if (uploadPreviewImg) {
+                    uploadPreviewImg.src = e.target.result;
+                    uploadPreviewImg.classList.remove('hidden');
+                }
+                if (fileNameEl) {
+                    fileNameEl.textContent = '📎 ' + file.name;
+                }
+            };
+            reader.readAsDataURL(file);
+        } else if (isPdf) {
+            uploadPreviewImg?.classList.add('hidden');
+            uploadPreviewImg?.removeAttribute('src');
+            if (fileNameEl) {
+                fileNameEl.textContent = '📄 ' + file.name;
+            }
+        } else if (fileNameEl) {
+            uploadPreviewImg?.classList.add('hidden');
+            uploadPreviewImg?.removeAttribute('src');
+            fileNameEl.textContent = '📎 ' + file.name;
+        }
+
+        scheduleSaveOrderDraft();
+    });
+
+    const referensiZoomModal = document.getElementById('referensiZoomModal');
+    const referensiZoomImg = document.getElementById('referensiZoomImg');
+    const referensiZoomCaption = document.getElementById('referensiZoomCaption');
+    const referensiZoomClose = document.getElementById('referensiZoomClose');
+    const uploadPreviewImg = document.getElementById('uploadPreviewImg');
+
+    const closeReferensiZoom = () => {
+        referensiZoomModal?.classList.add('hidden');
+        referensiZoomModal?.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('overflow-hidden');
+    };
+
+    const openReferensiZoom = (src, alt) => {
+        if (!referensiZoomModal || !referensiZoomImg || !src) {
+            return;
+        }
+        referensiZoomImg.src = src;
+        referensiZoomImg.alt = alt || 'Preview referensi desain';
+        if (referensiZoomCaption) {
+            referensiZoomCaption.textContent = alt || '';
+        }
+        referensiZoomModal.classList.remove('hidden');
+        referensiZoomModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('overflow-hidden');
+    };
+
+    uploadPreviewImg?.addEventListener('click', function (event) {
+        event.stopPropagation();
+        if (uploadPreviewImg.classList.contains('hidden') || !uploadPreviewImg.src) {
+            return;
+        }
+        openReferensiZoom(uploadPreviewImg.src, uploadPreviewImg.alt);
+    });
+
+    uploadPreviewImg?.addEventListener('keydown', function (event) {
+        if ((event.key === 'Enter' || event.key === ' ') && !uploadPreviewImg.classList.contains('hidden') && uploadPreviewImg.src) {
+            event.preventDefault();
+            event.stopPropagation();
+            openReferensiZoom(uploadPreviewImg.src, uploadPreviewImg.alt);
         }
     });
 
-    document.getElementById('uploadZone')?.addEventListener('click', function() {
+    referensiZoomClose?.addEventListener('click', closeReferensiZoom);
+    referensiZoomModal?.addEventListener('click', function (event) {
+        if (event.target === referensiZoomModal) {
+            closeReferensiZoom();
+        }
+    });
+
+    document.getElementById('uploadZone')?.addEventListener('click', function(event) {
+        if (event.target.closest('#uploadPreviewImg')) {
+            return;
+        }
         document.getElementById('inputReferensi')?.click();
     });
 
@@ -1373,6 +1588,9 @@ $jumlahOrderVal       = old('jumlah_order') !== null && old('jumlah_order') !== 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && modalZoomProduk && !modalZoomProduk.classList.contains('hidden')) {
             closeZoomProduk();
+        }
+        if (event.key === 'Escape' && referensiZoomModal && !referensiZoomModal.classList.contains('hidden')) {
+            closeReferensiZoom();
         }
     });
 

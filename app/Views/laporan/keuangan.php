@@ -62,24 +62,17 @@ $cards = [
 ?>
 <?= $this->extend('layouts/main') ?>
 
-<?= $this->section('title') ?>Laporan Keuangan<?= $this->endSection() ?>
-<?= $this->section('page_title') ?>Laporan Keuangan<?= $this->endSection() ?>
+<?= $this->section('title') ?>Laporan Transaksi<?= $this->endSection() ?>
+<?= $this->section('page_title') ?>Laporan Transaksi<?= $this->endSection() ?>
+
+<?= $this->section('banner_title') ?>Laporan Transaksi<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Rekap pemasukan terverifikasi periode <?= esc((string) ($range['label'] ?? '-')) ?><?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-
-<div class="mb-4">
-    <h2 class="text-2xl font-extrabold text-[#051747]">Laporan Keuangan</h2>
-    <p class="mt-1 text-sm text-slate-500">
-        Rekap pemasukan terverifikasi periode <?= esc((string) ($range['label'] ?? '-')) ?>
-        <!-- <?php if ($readOnly): ?>
-            · mode lihat saja
-        <?php endif; ?> -->
-    </p>
-</div>
 
 <form method="get" action="<?= esc(site_url('laporan-keuangan')) ?>" class="flex flex-wrap gap-3 items-end mb-6">
     <div>
@@ -119,7 +112,7 @@ $cards = [
 
 <?= view('dashboard/_partials/summary_cards', ['cards' => $cards]) ?>
 
-<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-6 mt-6">
+<div class="admin-data-table-wrap mb-6 mt-6">
     <div class="px-6 py-4 border-b border-slate-100">
         <h3 class="text-base font-bold text-[#051747]">Rekap Per Jenis Pembayaran</h3>
         <p class="text-xs text-slate-500 mt-0.5">
@@ -175,7 +168,7 @@ $cards = [
     </div>
 </div>
 
-<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+<div class="admin-data-table-wrap">
     <div class="px-6 py-4 border-b border-slate-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h3 class="text-base font-bold text-[#051747]">Daftar Transaksi</h3>

@@ -87,6 +87,7 @@ class PengirimanController extends BaseController
         $kodeOrder       = (string) $order['kode_order'];
         $idUserPelanggan = (int) $order['id_user_pelanggan'];
         $beforeShip      = isPelunasanSebelumKirim($order);
+        $activityKeterangan = null;
 
         try {
             $db->transStart();
@@ -104,6 +105,7 @@ class PengirimanController extends BaseController
                 $db->table('orders')->where('id_order', $idOrder)->update([
                     'status' => $newStatus,
                 ]);
+                $activityKeterangan = "Mengubah status pesanan {$kodeOrder} dari {$currentStatus} menjadi {$newStatus}";
 
                 $emailSubject = "[No-Reply] Pesanan " . ($newStatus === 'siap_diambil' ? 'Siap Diambil' : 'Siap Dikirim') . "-{$kodeOrder}";
                 $emailBody    = '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
@@ -114,6 +116,17 @@ class PengirimanController extends BaseController
                     . '</p>';
 
                 sendNotifEmail((string) $order['email'], $emailSubject, $emailBody);
+                sendNotifWaForEmail(
+                    $db,
+                    (string) $order['email'],
+                    buildNotifWaText(
+                        $newStatus === 'siap_diambil' ? "Pesanan Siap Diambil-{$kodeOrder}" : "Pesanan Siap Dikirim-{$kodeOrder}",
+                        $newStatus === 'siap_diambil'
+                            ? "Pesanan {$kodeOrder} siap diambil di toko kami."
+                            : "Pesanan {$kodeOrder} sedang dalam persiapan pengiriman.",
+                        site_url('order/detail/' . $kodeOrder)
+                    )
+                );
                 sendNotifInApp($idUserPelanggan, $idOrder, 'Pesanan ' . ($newStatus === 'siap_diambil' ? 'Siap Diambil' : 'Siap Dikirim'), "Pesanan {$kodeOrder} siap.");
 
             } elseif ($aksi === 'set_dikirim') {
@@ -142,6 +155,7 @@ class PengirimanController extends BaseController
                 $now = date('Y-m-d H:i:s');
 
                 $db->table('orders')->where('id_order', $idOrder)->update(['status' => 'dikirim']);
+                $activityKeterangan = "Mengubah status pesanan {$kodeOrder} dari {$currentStatus} menjadi dikirim (resi: {$noResi})";
 
                 $existingPg = $db->table('pengiriman')->where('id_order', $idOrder)->get()->getRowArray();
                 if ($existingPg) {
@@ -171,6 +185,15 @@ class PengirimanController extends BaseController
                     . ($namaEkspedisi ? " via <strong>{$namaEkspedisi}</strong>" : '')
                     . '</p>'
                 );
+                sendNotifWaForEmail(
+                    $db,
+                    (string) $order['email'],
+                    buildNotifWaText(
+                        "Pesanan Dikirim-{$kodeOrder}",
+                        "Pesanan {$kodeOrder} dikirim. Resi: {$noResi}" . ($namaEkspedisi ? " ({$namaEkspedisi})" : ''),
+                        site_url('order/detail/' . $kodeOrder)
+                    )
+                );
                 sendNotifInApp($idUserPelanggan, $idOrder, 'Pesanan Dikirim', "Pesanan {$kodeOrder} dikirim. Resi: {$noResi}" . ($namaEkspedisi ? " ({$namaEkspedisi})" : ''));
 
             } elseif ($aksi === 'konfirmasi_diambil') {
@@ -186,6 +209,7 @@ class PengirimanController extends BaseController
                     }
 
                     $db->table('orders')->where('id_order', $idOrder)->update(['status' => 'selesai']);
+                    $activityKeterangan = "Mengubah status pesanan {$kodeOrder} dari {$currentStatus} menjadi selesai (diambil pelanggan)";
 
                     $existingPg = $db->table('pengiriman')->where('id_order', $idOrder)->get()->getRowArray();
                     if ($existingPg) {
@@ -209,12 +233,22 @@ class PengirimanController extends BaseController
                         '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
                         . "<p>Pesanan <strong>{$kodeOrder}</strong> telah diambil. Terima kasih!</p>"
                     );
+                    sendNotifWaForEmail(
+                        $db,
+                        (string) $order['email'],
+                        buildNotifWaText(
+                            "Pesanan Selesai-{$kodeOrder}",
+                            "Pesanan {$kodeOrder} telah diambil. Terima kasih!",
+                            site_url('order/detail/' . $kodeOrder)
+                        )
+                    );
                 } else {
                     if ($currentStatus !== 'siap_diambil') {
                         return redirect()->back()->with('error', 'Pesanan belum siap diambil.');
                     }
 
                     $db->table('orders')->where('id_order', $idOrder)->update(['status' => 'menunggu_verifikasi_lunas']);
+                    $activityKeterangan = "Mengubah status pesanan {$kodeOrder} dari {$currentStatus} menjadi menunggu_verifikasi_lunas (diambil pelanggan)";
 
                     $existingPg = $db->table('pengiriman')->where('id_order', $idOrder)->get()->getRowArray();
                     if ($existingPg) {
@@ -244,6 +278,15 @@ class PengirimanController extends BaseController
                         . "<p>Pesanan <strong>{$kodeOrder}</strong> telah diambil.</p>"
                         . '<p>Silakan lakukan transfer pelunasan sesuai nota tagihan di detail pesanan.</p>'
                     );
+                    sendNotifWaForEmail(
+                        $db,
+                        (string) $order['email'],
+                        buildNotifWaText(
+                            "Pesanan Diambil-Nota Tagihan {$kodeOrder}",
+                            "Pesanan {$kodeOrder} telah diambil. Silakan transfer pelunasan sesuai nota tagihan.",
+                            site_url('order/detail/' . $kodeOrder)
+                        )
+                    );
                 }
 
             } else {
@@ -254,6 +297,11 @@ class PengirimanController extends BaseController
 
             if ($db->transStatus() === false) {
                 throw new \RuntimeException('Transaksi gagal.');
+            }
+
+            if ($activityKeterangan !== null) {
+                helper('activity_log');
+                logActivity('ubah', 'pengiriman', $activityKeterangan);
             }
         } catch (\Throwable $e) {
             $db->transRollback();
@@ -317,6 +365,15 @@ class PengirimanController extends BaseController
                     '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
                     . "<p>Pesanan <strong>{$kodeOrder}</strong> telah diterima. Terima kasih!</p>"
                 );
+                sendNotifWaForEmail(
+                    $db,
+                    (string) $order['email'],
+                    buildNotifWaText(
+                        "Pesanan Selesai-{$kodeOrder}",
+                        "Pesanan {$kodeOrder} telah diterima. Terima kasih!",
+                        site_url('order/detail/' . $kodeOrder)
+                    )
+                );
             } else {
                 $db->table('orders')->where('id_order', $idOrder)->update(['status' => 'menunggu_verifikasi_lunas']);
                 $db->table('pengiriman')->where('id_order', $idOrder)->update([
@@ -335,6 +392,15 @@ class PengirimanController extends BaseController
                     '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
                     . "<p>Pesanan <strong>{$kodeOrder}</strong> telah diterima.</p>"
                     . '<p>Silakan lakukan transfer pelunasan sesuai nota tagihan di detail pesanan.</p>'
+                );
+                sendNotifWaForEmail(
+                    $db,
+                    (string) $order['email'],
+                    buildNotifWaText(
+                        "Pesanan Diterima-Nota Tagihan {$kodeOrder}",
+                        "Pesanan {$kodeOrder} telah diterima. Silakan transfer pelunasan sesuai nota tagihan.",
+                        site_url('order/detail/' . $kodeOrder)
+                    )
                 );
             }
 

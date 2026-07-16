@@ -11,6 +11,13 @@
 <?= $this->section('title') ?>Beranda<?= $this->endSection() ?>
 <?= $this->section('page_title') ?>Beranda Keuangan<?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?>Selamat Datang, Keuangan 👋<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle_allow_html') ?>1<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>
+Daftar pembayaran yang perlu diverifikasi hari ini. Rekap tersedia pada menu
+<a href="<?= esc(site_url('laporan-keuangan')) ?>" class="font-semibold text-[#2E5CE6] hover:text-[#051747]">Laporan Transaksi</a>.
+<?= $this->endSection() ?>
+
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
 <style>
@@ -38,16 +45,6 @@
 
 <?= $this->section('content') ?>
 
-<div class="mb-6">
-    <h2 class="text-2xl font-extrabold text-[#051747]">
-        Selamat Datang, Keuangan 👋
-    </h2>
-    <p class="mt-1 text-sm text-slate-500">
-        Daftar pembayaran yang perlu diverifikasi hari ini. Rekap tersedia pada menu
-        <a href="<?= esc(site_url('laporan-keuangan')) ?>" class="font-semibold text-[#2E5CE6] hover:text-[#051747]">Laporan Keuangan</a>.
-    </p>
-</div>
-
 <?= view('dashboard/_partials/summary_cards', ['cards' => $cards]) ?>
 
 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4 mt-6">
@@ -65,31 +62,45 @@
     </div>
 </div>
 
-<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+<div class="admin-data-table-wrap">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
                     <th class="px-4 py-3 text-left font-semibold">No</th>
-                    <th class="px-4 py-3 text-left font-semibold">Kode Pembayaran</th>
-                    <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
-                    <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
-                    <th class="px-4 py-3 text-left font-semibold">Jenis</th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kodebayar">
+                        Kode Pembayaran<span class="sort-icon">↕</span>
+                    </th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kodeorder">
+                        Kode Pesanan<span class="sort-icon">↕</span>
+                    </th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="pelanggan">
+                        Pelanggan<span class="sort-icon">↕</span>
+                    </th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="jenis">
+                        Jenis<span class="sort-icon">↕</span>
+                    </th>
                     <th class="px-4 py-3 text-left font-semibold">Nominal</th>
                     <th class="px-4 py-3 text-left font-semibold">Status Order</th>
-                    <th class="px-4 py-3 text-left font-semibold">Tgl Unggah</th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="deadline">
+                        Deadline Pengerjaan<span class="sort-icon">↕</span>
+                    </th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="upload">
+                        Tgl Unggah<span class="sort-icon">↕</span>
+                    </th>
                     <th class="px-4 py-3 text-left font-semibold">Bukti</th>
                     <th class="px-4 py-3 text-left font-semibold">Aksi</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="keuanganPaymentBody">
                 <?php if ($recentPayments === []): ?>
                     <tr>
-                        <td colspan="10" class="py-12 text-center text-slate-500 text-sm">
+                        <td colspan="11" class="py-12 text-center text-slate-500 text-sm">
                             Tidak ada pembayaran yang menunggu verifikasi 🎉
                         </td>
                     </tr>
                 <?php else: ?>
+                    <?php helper('deadline'); ?>
                     <?php foreach ($recentPayments as $index => $payment): ?>
                         <?php
                         $idPayment    = (int) ($payment['id_payment'] ?? 0);
@@ -100,6 +111,9 @@
                         $jenis        = (string) ($payment['jenis'] ?? '');
                         $tglUpload    = (string) ($payment['tgl_upload'] ?? $payment['created_at'] ?? 'now');
                         $buktiFile    = (string) ($payment['bukti_tf'] ?? '');
+                        $deadlineRaw  = trim((string) ($payment['deadline_produksi'] ?? ''));
+                        $tsDeadline   = $deadlineRaw !== '' ? strtotime($deadlineRaw) : 0;
+                        $uploadTs     = $tglUpload !== '' ? strtotime($tglUpload) : 0;
                         $searchText   = mb_strtolower(trim($kodePayment . ' ' . $kodeOrder . ' ' . $namaPelanggan . ' ' . $noTelp . ' ' . $jenis));
                         $jenisBadge   = $jenis === 'pelunasan'
                             ? 'bg-purple-100 text-purple-800'
@@ -119,7 +133,13 @@
                         ?>
                         <tr
                             class="data-table-row border-b border-slate-100 hover:bg-[#F8FAFF] transition-colors"
-                            data-search="<?= esc($searchText) ?>">
+                            data-search="<?= esc($searchText) ?>"
+                            data-kodebayar="<?= esc(mb_strtolower($kodePayment)) ?>"
+                            data-kodeorder="<?= esc(mb_strtolower($kodeOrder)) ?>"
+                            data-pelanggan="<?= esc(mb_strtolower($namaPelanggan)) ?>"
+                            data-jenis="<?= esc($jenis) ?>"
+                            data-deadline="<?= esc((string) $tsDeadline) ?>"
+                            data-upload="<?= esc((string) $uploadTs) ?>">
                             <td class="row-num px-4 py-3 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3 font-mono text-sm font-semibold text-[#051747]">
                                 <?= esc($kodePayment) ?>
@@ -147,6 +167,9 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
+                                <?= $deadlineRaw !== '' ? esc(formatTanggalId($deadlineRaw)) : '-' ?>
+                            </td>
+                            <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
                                 <?= esc(date('d M Y H:i', strtotime($tglUpload))) ?>
                             </td>
                             <td class="px-4 py-3">
@@ -162,23 +185,23 @@
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3">
-                                <div class="flex flex-wrap gap-2">
+                                <div class="flex items-center gap-2">
                                     <button
                                         type="button"
-                                        class="js-payment-accept-btn bg-emerald-500 text-white rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-emerald-600"
+                                        class="js-payment-accept-btn shrink-0 bg-emerald-500 text-white rounded-full text-xs font-bold px-3 py-1.5 hover:bg-emerald-600 transition-colors whitespace-nowrap"
                                         data-id-payment="<?= esc((string) $idPayment) ?>"
                                         data-kode-order="<?= esc($kodeOrder, 'attr') ?>"
                                         data-jenis="<?= esc($jenis, 'attr') ?>"
                                         data-nominal="<?= esc((string) (int) ($payment['nominal'] ?? 0)) ?>">
-                                        ✓ Setujui
+                                        ACC
                                     </button>
                                     <button
                                         type="button"
-                                        class="js-payment-reject-btn bg-red-500 text-white rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-red-600"
+                                        class="js-payment-reject-btn shrink-0 bg-red-500 text-white rounded-full text-xs font-bold px-3 py-1.5 hover:bg-red-600 transition-colors whitespace-nowrap"
                                         data-id-payment="<?= esc((string) $idPayment) ?>"
                                         data-kode-order="<?= esc($kodeOrder, 'attr') ?>"
                                         data-jenis="<?= esc($jenis, 'attr') ?>">
-                                        ✗ Tolak
+                                        Tolak
                                     </button>
                                 </div>
                             </td>
@@ -237,7 +260,15 @@
 
 <?= $this->section('scripts') ?>
 <script>
-    const searchInput = document.getElementById('searchInput');
+    window.adminDataTableConfig = {
+        searchId: 'searchInput',
+        tbodyId: 'keuanganPaymentBody',
+        rowSelector: 'tr.data-table-row',
+        enableSort: true,
+    };
+</script>
+<?= view('partials/admin_data_table_scripts') ?>
+<script>
     const setujuiForm = document.getElementById('setujuiForm');
     const tolakForm = document.getElementById('tolakForm');
     const rejectInputModal = document.getElementById('paymentRejectInputModal');
@@ -247,15 +278,6 @@
         dp: '<?= site_url('verifikasi-dp') ?>',
         pelunasan: '<?= site_url('verifikasi-pelunasan') ?>',
     };
-
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const q = this.value.toLowerCase();
-            document.querySelectorAll('tbody tr[data-search]').forEach(row => {
-                row.style.display = row.dataset.search.toLowerCase().includes(q) ? '' : 'none';
-            });
-        });
-    }
 
     function getVerifikasiBase(jenis) {
         return jenis === 'pelunasan' ? verifikasiBaseUrl.pelunasan : verifikasiBaseUrl.dp;

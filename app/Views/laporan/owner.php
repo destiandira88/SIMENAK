@@ -2,8 +2,7 @@
 
 /**
  * @var array<string, mixed> $report
- * @var int                  $filterMonth
- * @var int                  $filterYear
+ * @var array<string, string> $filters
  */
 $period          = $report['period'] ?? [];
 $growthOrders    = $report['growthOrders'] ?? null;
@@ -16,24 +15,12 @@ $segmenPemesanan = $report['segmenPemesanan'] ?? [];
 $chartLabels     = $report['chartLabels'] ?? [];
 $chartValues     = $report['chartValues'] ?? [];
 $chartCounts     = $report['chartCounts'] ?? [];
+$chartLabelFull  = $report['chartLabelFull'] ?? [];
 
-$bulanOptions = [
-    1 => 'Januari',
-    2 => 'Februari',
-    3 => 'Maret',
-    4 => 'April',
-    5 => 'Mei',
-    6 => 'Juni',
-    7 => 'Juli',
-    8 => 'Agustus',
-    9 => 'September',
-    10 => 'Oktober',
-    11 => 'November',
-    12 => 'Desember',
-];
-
-$currentYear = (int) date('Y');
-$tahunOptions = range($currentYear, $currentYear - 5);
+$exportQuery = http_build_query([
+    'dari'   => $filters['dari'] ?? '',
+    'sampai' => $filters['sampai'] ?? '',
+]);
 
 $growthOrdersPct = $growthOrders === null
     ? null
@@ -41,7 +28,7 @@ $growthOrdersPct = $growthOrders === null
 
 $growthOrdersSuffix = $growthOrders === null
     ? null
-    : 'vs ' . ($period['prevLabel'] ?? 'bulan lalu');
+    : 'vs ' . ($period['prevLabel'] ?? 'periode sebelumnya');
 
 $growthOrdersColor = '#051747';
 if ($growthOrders !== null) {
@@ -102,40 +89,26 @@ $cards = [
 <?= $this->section('title') ?>Laporan<?= $this->endSection() ?>
 <?= $this->section('page_title') ?>Laporan Pemilik<?= $this->endSection() ?>
 
-<?= $this->section('content') ?>
+<?= $this->section('banner_title') ?>Laporan Pemilik<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Ringkasan performa bisnis Z'Plack <?= esc((string) ($period['label'] ?? '-')) ?><?= $this->endSection() ?>
 
-<div class="mb-6">
-    <h2 class="text-2xl font-extrabold text-[#051747]">Laporan Pemilik</h2>
-    <p class="mt-1 text-sm text-slate-500">
-        Ringkasan performa bisnis Z'Plack <?= esc((string) ($period['label'] ?? '-')) ?>
-    </p>
-</div>
+<?= $this->section('content') ?>
 
 <form method="get" action="<?= esc(site_url('laporan')) ?>" class="flex flex-wrap gap-3 items-end mb-6">
     <div>
-        <label for="bulan" class="block text-xs font-semibold text-slate-500 mb-1.5">Bulan</label>
-        <select id="bulan" name="bulan" class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm min-w-[140px] focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
-            <?php foreach ($bulanOptions as $num => $nama): ?>
-                <option value="<?= esc((string) $num) ?>" <?= $filterMonth === $num ? 'selected' : '' ?>>
-                    <?= esc($nama) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+        <label for="dari" class="block text-xs font-semibold text-slate-500 mb-1.5">Dari</label>
+        <input type="date" id="dari" name="dari" value="<?= esc((string) ($filters['dari'] ?? '')) ?>"
+            class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
     </div>
     <div>
-        <label for="tahun" class="block text-xs font-semibold text-slate-500 mb-1.5">Tahun</label>
-        <select id="tahun" name="tahun" class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm min-w-[100px] focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
-            <?php foreach ($tahunOptions as $thn): ?>
-                <option value="<?= esc((string) $thn) ?>" <?= $filterYear === $thn ? 'selected' : '' ?>>
-                    <?= esc((string) $thn) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+        <label for="sampai" class="block text-xs font-semibold text-slate-500 mb-1.5">Sampai</label>
+        <input type="date" id="sampai" name="sampai" value="<?= esc((string) ($filters['sampai'] ?? '')) ?>"
+            class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
     </div>
     <button type="submit" class="bg-[#051747] text-white rounded-full text-sm font-bold px-5 py-2.5 hover:bg-[#2E5CE6] transition-colors">
-        Tampilkan
+        Terapkan Filter
     </button>
-    <a href="<?= esc(site_url('laporan/export?' . http_build_query(['bulan' => $filterMonth, 'tahun' => $filterYear]))) ?>"
+    <a href="<?= esc(site_url('laporan/export?' . $exportQuery)) ?>"
         class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] rounded-full text-sm font-bold px-5 py-2.5 hover:bg-[#051747] hover:text-white transition-colors">
         Ekspor Excel
     </a>
@@ -161,7 +134,7 @@ $cards = [
 
 <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-6">
     <h3 class="text-base font-bold text-[#051747] mb-1">
-        Pendapatan Harian Bulan <?= esc((string) ($period['label'] ?? '')) ?>
+        Pendapatan Harian <?= esc((string) ($period['label'] ?? '')) ?>
         <span class="font-normal text-slate-400 text-sm">· berdasarkan tgl verifikasi pembayaran</span>
     </h3>
     <p class="text-xs text-slate-500 mt-0.5 mb-4">Nilai per hari dari pesanan yang berstatus selesai dalam periode ini.</p>
@@ -169,9 +142,9 @@ $cards = [
 </div>
 
 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+    <div class="admin-data-table-wrap">
         <div class="px-6 py-4 border-b border-slate-100">
-            <h3 class="text-base font-bold text-[#051747]">Rekap Per Kategori Bulan <?= esc((string) ($period['label'] ?? '')) ?></h3>
+            <h3 class="text-base font-bold text-[#051747]">Rekap Per Kategori <?= esc((string) ($period['label'] ?? '')) ?></h3>
             <p class="text-xs text-slate-500 mt-0.5">
                 Berdasarkan <strong>Pesanan Selesai</strong>
             </p>
@@ -215,7 +188,7 @@ $cards = [
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-        <h3 class="text-base font-bold text-[#051747] mb-4">Top 5 Katalog Terlaris Bulan <?= esc((string) ($period['label'] ?? '')) ?></h3>
+        <h3 class="text-base font-bold text-[#051747] mb-4">Top 5 Katalog Terlaris <?= esc((string) ($period['label'] ?? '')) ?></h3>
         <?php if ($topProduk === []): ?>
             <p class="text-sm py-8 text-center text-slate-400">Belum ada data produk pada periode ini.</p>
         <?php else: ?>
@@ -314,9 +287,7 @@ $cards = [
 
     const laporanChartEl = document.getElementById('laporanRevenueChart');
     if (laporanChartEl) {
-        const chartMonth = <?= (int) $filterMonth ?>;
-        const chartYear = <?= (int) $filterYear ?>;
-        const bulanNama = <?= json_encode(array_values($bulanOptions)) ?>;
+        const chartLabelFull = <?= json_encode($chartLabelFull) ?>;
         const chartOrderCounts = <?= json_encode($chartCounts) ?>;
         const ctx = laporanChartEl.getContext('2d');
         new Chart(ctx, {
@@ -344,10 +315,10 @@ $cards = [
                     tooltip: {
                         callbacks: {
                             title: function(items) {
-                                if (!items.length) return '';
-                                const day = parseInt(items[0].label, 10);
-                                const bulan = bulanNama[chartMonth - 1] || '';
-                                return day + ' ' + bulan + ' ' + chartYear;
+                                if (!items.length) {
+                                    return '';
+                                }
+                                return chartLabelFull[items[0].dataIndex] || items[0].label || '';
                             },
                             label: function(ctx) {
                                 const val = ctx.parsed.y || 0;

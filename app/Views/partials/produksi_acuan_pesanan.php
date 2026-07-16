@@ -116,16 +116,19 @@ if ($gambarKatalog !== '' && is_file(FCPATH . 'uploads/katalog/' . $gambarKatalo
         <?php endif; ?>
 
         <?php if ($attrs !== []): ?>
+            <?php helper('eav'); ?>
             <div class="border-t border-slate-100 pt-4">
                 <p class="text-xs font-bold uppercase text-indigo-800 mb-3">Spesifikasi Produk (EAV)</p>
                 <div class="space-y-3">
                     <?php foreach ($attrs as $a): ?>
                         <?php
+                        $fieldKey   = (string) ($a['attribute_key'] ?? '');
                         $fieldType  = (string) ($a['field_type'] ?? 'text');
-                        $fieldLabel = (string) ($a['field_label'] ?? $a['attribute_key'] ?? '');
+                        $fieldLabel = (string) ($a['field_label'] ?? $fieldKey);
                         $attrVal    = (string) ($a['attribute_val'] ?? '');
+                        $isTurutMengundang = $fieldKey === 'turut_mengundang';
                         if ($fieldLabel === '') {
-                            $fieldLabel = (string) ($a['attribute_key'] ?? '');
+                            $fieldLabel = $fieldKey;
                         }
                         ?>
                         <div>
@@ -134,8 +137,19 @@ if ($gambarKatalog !== '' && is_file(FCPATH . 'uploads/katalog/' . $gambarKatalo
                                 <a href="<?= esc(base_url('uploads/lampiran_peta/' . $attrVal)) ?>"
                                    target="_blank" rel="noopener noreferrer"
                                    class="text-[#2E5CE6] underline text-sm">Lihat File</a>
+                            <?php elseif ($isTurutMengundang): ?>
+                                <?php $turutList = parseTurutMengundangList($attrVal); ?>
+                                <?php if ($turutList === []): ?>
+                                    <p class="text-sm text-slate-400">—</p>
+                                <?php else: ?>
+                                    <ol class="list-decimal list-inside space-y-1 text-sm text-slate-700 pl-0.5">
+                                        <?php foreach ($turutList as $namaTurut): ?>
+                                            <li class="leading-relaxed"><?= esc($namaTurut) ?></li>
+                                        <?php endforeach; ?>
+                                    </ol>
+                                <?php endif; ?>
                             <?php else: ?>
-                                <p class="text-sm text-slate-700"><?= esc($attrVal !== '' ? $attrVal : '—') ?></p>
+                                <p class="text-sm text-slate-700 whitespace-pre-line"><?= esc($attrVal !== '' ? $attrVal : '—') ?></p>
                             <?php endif; ?>
                         </div>
                     <?php endforeach; ?>

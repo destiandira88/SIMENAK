@@ -145,6 +145,16 @@ class PaymentController extends BaseController
                     "{$namaPelanggan} mengunggah bukti DP untuk {$kodeOrder}."
                 );
             }
+
+            sendNotifWaForRole(
+                $db,
+                'keuangan',
+                buildNotifWaText(
+                    "Bukti DP Baru-{$kodeOrder}",
+                    "Pelanggan {$namaPelanggan} mengunggah bukti DP Rp " . number_format($nominalDp, 0, ',', '.') . '. Segera verifikasi.',
+                    $verifUrl
+                )
+            );
         } catch (\Throwable $e) {
             log_message('error', '[PaymentController::uploadDp] {msg}', ['msg' => $e->getMessage()]);
 
@@ -294,6 +304,16 @@ class PaymentController extends BaseController
                     "{$namaPelanggan} mengunggah bukti pelunasan untuk {$kodeOrder}."
                 );
             }
+
+            sendNotifWaForRole(
+                $db,
+                'keuangan',
+                buildNotifWaText(
+                    "Bukti Pelunasan Baru-{$kodeOrder}",
+                    "Pelanggan {$namaPelanggan} mengunggah bukti pelunasan Rp " . number_format($nominalLunas, 0, ',', '.') . '. Segera verifikasi.',
+                    $verifUrl
+                )
+            );
         } catch (\Throwable $e) {
             log_message('error', '[PaymentController::uploadPelunasan] {msg}', ['msg' => $e->getMessage()]);
 
@@ -379,6 +399,15 @@ class PaymentController extends BaseController
                 . "<p>DP Anda untuk pesanan <strong>{$kodeOrder}</strong> sudah diverifikasi.</p>"
                 . '<p>Tim produksi akan segera memproses desain Anda.</p>'
             );
+            sendNotifWaForEmail(
+                $db,
+                (string) $order['email'],
+                buildNotifWaText(
+                    "DP Terverifikasi-{$kodeOrder}",
+                    "DP pesanan {$kodeOrder} sudah diverifikasi. Tim produksi akan segera memproses desain Anda.",
+                    site_url('order/detail/' . $kodeOrder)
+                )
+            );
 
             sendNotifInApp(
                 (int) $order['id_user_pelanggan'],
@@ -392,6 +421,9 @@ class PaymentController extends BaseController
 
             return redirect()->back()->with('error', 'Gagal memverifikasi DP.');
         }
+
+        helper('activity_log');
+        logActivity('verifikasi', 'pembayaran', "Memverifikasi DP pesanan {$kodeOrder}");
 
         return redirect()->back()->with('success', 'DP berhasil diverifikasi.');
     }
@@ -458,6 +490,15 @@ class PaymentController extends BaseController
                 . date('H:i', strtotime('+24 hours')) . ' WIB</strong></p>'
                 . '<p>Login ke SIMENAK dan buka detail pesanan untuk upload ulang.</p>'
             );
+            sendNotifWaForEmail(
+                $db,
+                (string) $order['email'],
+                buildNotifWaText(
+                    "Bukti DP Ditolak-{$kodeOrder}",
+                    "Bukti DP ditolak. Alasan: {$catatanTolak}. Upload ulang dalam 24 jam.",
+                    site_url('order/detail/' . $kodeOrder)
+                )
+            );
 
             sendNotifInApp(
                 (int) $order['id_user_pelanggan'],
@@ -470,6 +511,9 @@ class PaymentController extends BaseController
 
             return redirect()->back()->with('error', 'Gagal menolak bukti DP.');
         }
+
+        helper('activity_log');
+        logActivity('tolak', 'pembayaran', "Menolak bukti DP pesanan {$kodeOrder}");
 
         return redirect()->back()->with('error', 'Bukti DP ditolak.');
     }
@@ -553,6 +597,15 @@ class PaymentController extends BaseController
                     . "<p>Pembayaran pelunasan pesanan <strong>{$kodeOrder}</strong> telah dikonfirmasi.</p>"
                     . '<p>Pesanan telah <strong>selesai</strong>. Terima kasih telah mempercayakan kebutuhan cetak kepada Z\'Plack!</p>'
                 );
+                sendNotifWaForEmail(
+                    $db,
+                    (string) $order['email'],
+                    buildNotifWaText(
+                        "Pelunasan Dikonfirmasi-{$kodeOrder}",
+                        "Pelunasan pesanan {$kodeOrder} dikonfirmasi. Pesanan selesai. Terima kasih!",
+                        site_url('order/detail/' . $kodeOrder)
+                    )
+                );
                 sendNotifInApp($idUserPelanggan, $idOrder, 'Pesanan Selesai', "Pelunasan {$kodeOrder} dikonfirmasi. Pesanan selesai!");
             } else {
                 sendNotifEmail(
@@ -565,6 +618,17 @@ class PaymentController extends BaseController
                         ? 'Pesanan siap diambil di toko kami. Tim kami akan menunggu kedatangan Anda.'
                         : 'Tim kami akan segera memproses pengiriman pesanan Anda.')
                     . '</p>'
+                );
+                sendNotifWaForEmail(
+                    $db,
+                    (string) $order['email'],
+                    buildNotifWaText(
+                        "Pelunasan Terverifikasi-{$kodeOrder}",
+                        isMetodeAmbilSendiri($order)
+                            ? "Pelunasan {$kodeOrder} terverifikasi. Pesanan siap diambil di toko."
+                            : "Pelunasan {$kodeOrder} terverifikasi. Pesanan akan segera dikirim.",
+                        site_url('order/detail/' . $kodeOrder)
+                    )
                 );
                 sendNotifInApp(
                     $idUserPelanggan,
@@ -591,6 +655,9 @@ class PaymentController extends BaseController
 
             return redirect()->back()->with('error', 'Gagal memverifikasi pelunasan.');
         }
+
+        helper('activity_log');
+        logActivity('verifikasi', 'pembayaran', "Memverifikasi pelunasan pesanan {$kodeOrder}");
 
         return redirect()->back()->with('success', 'Pelunasan berhasil diverifikasi.');
     }
@@ -660,6 +727,15 @@ class PaymentController extends BaseController
                 . '<p><strong>Alasan:</strong> ' . esc($catatanTolak) . '</p>'
                 . '<p>Silakan upload ulang bukti transfer yang valid.</p>'
             );
+            sendNotifWaForEmail(
+                $db,
+                (string) $order['email'],
+                buildNotifWaText(
+                    "Bukti Pelunasan Ditolak-{$kodeOrder}",
+                    "Bukti pelunasan ditolak. Alasan: {$catatanTolak}. Silakan upload ulang.",
+                    site_url('order/detail/' . $kodeOrder)
+                )
+            );
 
             sendNotifInApp(
                 (int) $order['id_user_pelanggan'],
@@ -673,6 +749,9 @@ class PaymentController extends BaseController
 
             return redirect()->back()->with('error', 'Gagal menolak bukti pelunasan.');
         }
+
+        helper('activity_log');
+        logActivity('tolak', 'pembayaran', "Menolak bukti pelunasan pesanan {$kodeOrder}");
 
         return redirect()->back()->with('error', 'Bukti pelunasan ditolak.');
     }

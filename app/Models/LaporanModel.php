@@ -112,48 +112,61 @@ class LaporanModel
     /**
      * @return array<string, mixed>
      */
-    public function buildOwnerReport(int $month, int $year): array
+    public function buildOwnerReport(string $dari, string $sampai): array
     {
-        $period  = $this->getPeriodBounds($month, $year);
-        $current = $this->getCompletedOrdersInPeriod($period['start'], $period['end']);
-        $prev    = $this->getCompletedOrdersInPeriod($period['prevStart'], $period['prevEnd']);
+        $range   = $this->resolveAdminDateRange($dari, $sampai);
+        $current = $this->getCompletedOrdersInPeriod($range['start'], $range['endExclusive']);
 
-        $dariTgl       = substr($period['start'], 0, 10);
-        $sampaiTgl     = date('Y-m-d', strtotime($period['start'] . ' +1 month -1 day'));
-        $prevDariTgl   = substr($period['prevStart'], 0, 10);
-        $prevSampaiTgl = date('Y-m-d', strtotime($period['prevStart'] . ' +1 month -1 day'));
+        $fromTs = strtotime($range['dateFrom']);
+        $toTs   = strtotime($range['dateTo']);
+        $days   = (int) floor(($toTs - $fromTs) / 86400) + 1;
+        $prevTo = date('Y-m-d', strtotime($range['dateFrom'] . ' -1 day'));
+        $prevFrom = date('Y-m-d', strtotime($prevTo . ' -' . ($days - 1) . ' days'));
+        $prevRange = $this->resolveAdminDateRange($prevFrom, $prevTo);
+        $prev      = $this->getCompletedOrdersInPeriod($prevRange['start'], $prevRange['endExclusive']);
+
+        $dariTgl   = $range['dateFrom'];
+        $sampaiTgl = $range['dateTo'];
 
         $totalPendapatan = getTotalPendapatanPeriode($dariTgl, $sampaiTgl);
-        $prevPendapatan  = getTotalPendapatanPeriode($prevDariTgl, $prevSampaiTgl);
+        $prevPendapatan  = getTotalPendapatanPeriode($prevRange['dateFrom'], $prevRange['dateTo']);
         $growthOrders    = $this->percentGrowth(count($current), count($prev));
         $growthRevenue   = $this->percentGrowth($totalPendapatan, $prevPendapatan);
         $avgSelesaiHari  = $this->averageCompletionDays($current);
 
-        $rekapKategori = $this->buildCategorySummary($current);
-        $topProduk     = $this->buildTopProducts($current, 5);
-        $chartDaily    = $this->buildDailyPaymentRevenueChart($month, $year);
-        $segmenPelanggan  = $this->buildPelangganSegment($current);
-        $segmenPemesanan  = $this->buildPemesananSegment($current);
-        $pesananDibatalkan = $this->countCancelledOrdersInPeriod($period['start'], $period['end']);
+        $rekapKategori     = $this->buildCategorySummary($current);
+        $topProduk         = $this->buildTopProducts($current, 5);
+        $chartDaily        = $this->buildDailyPaymentRevenueChartForRange($dariTgl, $sampaiTgl);
+        $segmenPelanggan   = $this->buildPelangganSegment($current);
+        $segmenPemesanan   = $this->buildPemesananSegment($current);
+        $pesananDibatalkan = $this->countCancelledOrdersInPeriod($range['start'], $range['endExclusive']);
+
+        $period = [
+            'start'     => $range['start'],
+            'end'       => $range['endExclusive'],
+            'prevStart' => $prevRange['start'],
+            'prevEnd'   => $prevRange['endExclusive'],
+            'label'     => $range['label'],
+            'prevLabel' => $prevRange['label'],
+        ];
 
         return [
-            'period'          => $period,
-            'month'           => $month,
-            'year'            => $year,
-            'totalPesanan'    => count($current),
-            'totalPendapatan' => $totalPendapatan,
-            'growthOrders'    => $growthOrders,
-            'growthRevenue'   => $growthRevenue,
-            'avgSelesaiHari'  => $avgSelesaiHari,
+            'period'            => $period,
+            'totalPesanan'      => count($current),
+            'totalPendapatan'   => $totalPendapatan,
+            'growthOrders'      => $growthOrders,
+            'growthRevenue'     => $growthRevenue,
+            'avgSelesaiHari'    => $avgSelesaiHari,
             'pesananDibatalkan' => $pesananDibatalkan,
-            'rekapKategori'   => $rekapKategori,
-            'topProduk'       => $topProduk,
-            'segmenPelanggan' => $segmenPelanggan,
-            'segmenPemesanan' => $segmenPemesanan,
-            'chartLabels'     => $chartDaily['labels'],
-            'chartValues'     => $chartDaily['values'],
-            'chartCounts'     => $chartDaily['counts'],
-            'orders'          => $current,
+            'rekapKategori'     => $rekapKategori,
+            'topProduk'         => $topProduk,
+            'segmenPelanggan'   => $segmenPelanggan,
+            'segmenPemesanan'   => $segmenPemesanan,
+            'chartLabels'       => $chartDaily['labels'],
+            'chartValues'       => $chartDaily['values'],
+            'chartCounts'       => $chartDaily['counts'],
+            'chartLabelFull'    => $chartDaily['labelFull'],
+            'orders'            => $current,
         ];
     }
 
@@ -354,6 +367,56 @@ class LaporanModel
         }
 
         return ['labels' => $labels, 'values' => $values, 'counts' => $counts];
+    }
+
+    /**
+     * Grafik pemasukan harian berdasarkan tgl_verifikasi payment (rentang tanggal bebas).
+     *
+     * @return array{labels: list<string>, values: list<float>, counts: list<int>, labelFull: list<string>}
+     */
+    private function buildDailyPaymentRevenueChartForRange(string $dari, string $sampai): array
+    {
+        $bounds = metricPeriodBounds($dari, $sampai);
+
+        $rows = $this->db()->table('payments')
+            ->select('DATE(tgl_verifikasi) AS tgl, SUM(nominal) AS total, COUNT(*) AS cnt', false)
+            ->where('status', 'terverifikasi')
+            ->where('tgl_verifikasi >=', $bounds['start'])
+            ->where('tgl_verifikasi <=', $bounds['end'])
+            ->groupBy('DATE(tgl_verifikasi)', false)
+            ->get()
+            ->getResultArray();
+
+        $dailyRevenue = [];
+        $dailyCount   = [];
+        foreach ($rows as $row) {
+            $dateKey                = (string) ($row['tgl'] ?? '');
+            $dailyRevenue[$dateKey] = (float) ($row['total'] ?? 0);
+            $dailyCount[$dateKey]   = (int) ($row['cnt'] ?? 0);
+        }
+
+        $labels    = [];
+        $values    = [];
+        $counts    = [];
+        $labelFull = [];
+
+        $current = strtotime($dari);
+        $endTs   = strtotime($sampai);
+        while ($current <= $endTs) {
+            $dateKey     = date('Y-m-d', $current);
+            $labels[]    = date('j M', $current);
+            $labelFull[] = date('d M Y', $current);
+            $values[]    = (float) ($dailyRevenue[$dateKey] ?? 0);
+            $counts[]    = (int) ($dailyCount[$dateKey] ?? 0);
+            $current     = strtotime('+1 day', $current);
+        }
+
+        return [
+            'labels'    => $labels,
+            'values'    => $values,
+            'counts'    => $counts,
+            'labelFull' => $labelFull,
+        ];
     }
 
     /**

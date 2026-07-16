@@ -8,6 +8,9 @@ $pageTitle = $readOnly ? 'Detail Produk' : 'Ubah Produk';
 <?= $this->section('title') ?><?= esc($title ?? $pageTitle) ?><?= $this->endSection() ?>
 <?= $this->section('page_title') ?><?= esc($pageTitle) ?><?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?><?= esc($pageTitle) ?><?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?><?= $readOnly ? 'Lihat detail produk katalog.' : 'Perbarui informasi produk katalog.' ?><?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php
 $kategoriOptions = [
@@ -21,7 +24,18 @@ $isActive    = (int) ($katalog['is_active'] ?? 0) === 1;
 $kategoriKey = (string) ($katalog['kategori'] ?? '');
 $kategoriLabel = $kategoriOptions[$kategoriKey] ?? str_replace('_', ' ', $kategoriKey);
 $hargaDasar  = (float) ($katalog['harga_dasar'] ?? 0);
-helper('deadline');
+helper(['deadline', 'notification']);
+$hargaDasarOld = old('harga_dasar');
+if ($hargaDasarOld !== null && $hargaDasarOld !== '') {
+    $hargaDasarParsed = parseRupiahAmount($hargaDasarOld);
+    $hargaDasarDisplay = $hargaDasarParsed > 0
+        ? 'Rp ' . number_format($hargaDasarParsed, 0, ',', '.')
+        : '';
+} else {
+    $hargaDasarDisplay = $hargaDasar > 0
+        ? 'Rp ' . number_format($hargaDasar, 0, ',', '.')
+        : '';
+}
 $estimasiFormValue = old('estimasi_hari');
 if ($estimasiFormValue === null || $estimasiFormValue === '') {
     $estimasiFormValue = (string) parseEstimasiHariKerja((string) ($katalog['estimasi_hari'] ?? ''));
@@ -34,7 +48,7 @@ if ($estimasiFormValue === null || $estimasiFormValue === '') {
     <span class="text-slate-500"><?= esc($pageTitle) ?></span>
 </div>
 
-<h2 class="text-2xl font-extrabold text-[#051747] mb-6"><?= esc($pageTitle) ?></h2>
+<h2 class="sr-only"><?= esc($pageTitle) ?></h2>
 
 <?php if ($readOnly): ?>
 <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
@@ -124,11 +138,13 @@ if ($estimasiFormValue === null || $estimasiFormValue === '') {
     </div>
 
     <div class="mt-6 pt-6 border-t border-slate-100 flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
-        <a href="<?= site_url('katalog/kelola') ?>" class="btn-outline inline-flex items-center justify-center px-5 py-2.5 text-sm text-center">
-            ← Kembali ke Katalog
+        <a href="<?= site_url('katalog/kelola') ?>" class="btn-outline inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm text-center">
+            <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4 shrink-0']) ?>
+            Kembali ke Katalog
         </a>
-        <a href="<?= site_url('form-template/' . $idKatalog) ?>" class="btn-primary inline-flex items-center justify-center px-5 py-2.5 text-sm text-white">
-            Lihat Form Template →
+        <a href="<?= site_url('form-template/' . $idKatalog) ?>" class="btn-primary inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm text-white">
+            Lihat Form Template
+            <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-4 w-4 shrink-0']) ?>
         </a>
     </div>
 </div>
@@ -176,20 +192,17 @@ if ($estimasiFormValue === null || $estimasiFormValue === '') {
                 </div>
 
                 <div>
-                    <label for="harga_dasar" class="form-label">Harga Dasar <span class="text-red-500">*</span></label>
-                    <div class="flex items-center gap-2">
-                        <span class="form-affix shrink-0">Rp</span>
-                        <input
-                            type="number"
-                            id="harga_dasar"
-                            name="harga_dasar"
-                            value="<?= esc(old('harga_dasar', (string) ($katalog['harga_dasar'] ?? ''))) ?>"
-                            placeholder="150000"
-                            min="1"
-                            step="1"
-                            class="input-field w-full px-3.5 py-2.5"
-                            required>
-                    </div>
+                    <label for="harga_dasar" class="form-label">Harga Dasar (Rp) <span class="text-red-500">*</span></label>
+                    <input
+                        type="text"
+                        id="harga_dasar"
+                        name="harga_dasar"
+                        value="<?= esc($hargaDasarDisplay) ?>"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        placeholder="Rp 0"
+                        class="js-harga-custom-rupiah-input input-field w-full px-3.5 py-2.5"
+                        required>
                     <p class="form-hint">Harga per satuan produk</p>
                 </div>
 
@@ -350,5 +363,6 @@ if ($estimasiFormValue === null || $estimasiFormValue === '') {
         reader.readAsDataURL(file);
     });
 </script>
+<?= view('partials/rupiah_input_format_script') ?>
 <?= $this->endSection() ?>
 <?php endif; ?>

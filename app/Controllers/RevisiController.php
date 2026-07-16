@@ -167,6 +167,13 @@ class RevisiController extends BaseController
             return redirect()->back()->with('error', 'Gagal menyimpan draft desain.');
         }
 
+        helper('activity_log');
+        logActivity(
+            'ubah',
+            'produksi',
+            "Mengunggah draft desain v{$versi} pesanan {$kodeOrder} — status menjadi proses_desain"
+        );
+
         $idUserPelanggan = (int) ($order['id_user_pelanggan'] ?? 0);
         $emailPelanggan  = (string) ($order['email_pelanggan'] ?? '');
         $namaPelanggan   = (string) ($order['nama_pelanggan'] ?? 'Pelanggan');
@@ -188,6 +195,15 @@ class RevisiController extends BaseController
                 . "<p>Draft v{$versi} untuk pesanan <strong>" . esc($kodeOrder) . '</strong> sudah tersedia.</p>'
                 . '<p>Silakan login dan review draft-nya.</p>'
                 . '<p><a href="' . esc(site_url('order/detail/' . $kodeOrder)) . '">Buka detail pesanan</a></p>'
+            );
+            sendNotifWaForEmail(
+                \Config\Database::connect(),
+                $emailPelanggan,
+                buildNotifWaText(
+                    "Draft Desain v{$versi} Tersedia-{$kodeOrder}",
+                    "Draft v{$versi} untuk pesanan {$kodeOrder} sudah tersedia. Silakan review draft.",
+                    site_url('order/detail/' . $kodeOrder)
+                )
             );
         }
 
@@ -229,6 +245,13 @@ class RevisiController extends BaseController
             return redirect()->back()->with('error', 'Gagal memperbarui status pesanan.');
         }
 
+        helper('activity_log');
+        logActivity(
+            'ubah',
+            'produksi',
+            "Mengubah status pesanan {$kodeOrder} dari proses_cetak menjadi finishing"
+        );
+
         $emailPelanggan = trim((string) ($order['email_pelanggan'] ?? ''));
         $namaPelanggan  = (string) ($order['nama_pelanggan'] ?? 'Pelanggan');
 
@@ -241,6 +264,15 @@ class RevisiController extends BaseController
                 . 'dan sedang dalam tahap <strong>Finishing</strong> (penyelesaian akhir).</p>'
                 . '<p>Kami akan segera menghubungi Anda jika pesanan sudah siap dikirim atau diambil.</p>'
                 . '<p><a href="' . esc(site_url('order/detail/' . $kodeOrder)) . '">Lihat detail pesanan</a></p>'
+            );
+            sendNotifWaForEmail(
+                \Config\Database::connect(),
+                $emailPelanggan,
+                buildNotifWaText(
+                    "Pesanan Masuk Tahap Finishing-{$kodeOrder}",
+                    "Pesanan {$kodeOrder} selesai proses cetak dan masuk tahap Finishing.",
+                    site_url('order/detail/' . $kodeOrder)
+                )
             );
         }
 

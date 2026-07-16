@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Pengujian Black Box SIMENAK — Tabel 4.x</title>
+  <!-- Buka file ini di Microsoft Word → File → Save As → Word Document (.docx) -->
+  <style>
+    @page { size: A4; margin: 2.5cm 2.5cm 2.5cm 2.5cm; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      color: #000;
+    }
+    h1 { font-size: 14pt; text-align: center; text-transform: uppercase; margin: 18pt 0 12pt; }
+    h2 { font-size: 12pt; margin: 16pt 0 8pt; }
+    h3 { font-size: 12pt; font-style: italic; font-weight: bold; margin: 12pt 0 6pt; }
+    p { text-align: justify; margin: 0 0 10pt; }
+    .caption {
+      font-weight: bold;
+      text-align: center;
+      margin: 14pt 0 6pt;
+    }
+    .note {
+      font-size: 11pt;
+      font-style: italic;
+      margin: 8pt 0 12pt;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin: 0 0 14pt;
+      font-size: 11pt;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 5pt 6pt;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #E8EEF7;
+      text-align: center;
+      font-weight: bold;
+    }
+    .col-no { width: 8%; text-align: center; }
+    .col-hasil { width: 18%; }
+    .center { text-align: center; }
+    .ringkas td { text-align: center; }
+    .ringkas td:first-child, .ringkas td:nth-child(2) { text-align: left; }
+  </style>
+</head>
+<body>
+
+<p class="note">
+  Petunjuk: Buka file ini dengan Microsoft Word, lalu simpan sebagai <b>.docx</b>.
+  Nomor tabel dimulai dari <b>Tabel 4.1</b> — sesuaikan penomoran jika pada Bab IV skripsi Anda sudah memakai nomor tabel lain.
+</p>
+
+<h1>4.x Pengujian Black Box</h1>
+
+<p>
+  Pengujian black box dilakukan untuk memastikan fungsi utama SIMENAK berjalan sesuai kebutuhan tanpa melihat struktur internal kode.
+  Kasus uji dikelompokkan menjadi empat bagian, yaitu login &amp; registrasi, data master, proses bisnis, serta keluaran (output).
+  Setiap fungsi diuji menggunakan data normal dan data salah. Kolom pengamatan diisi berdasarkan hasil uji nyata.
+</p>
+
+<!-- ===================== 1. LOGIN ===================== -->
+<h2>1. Pengujian Login &amp; Registrasi</h2>
+
+<p class="caption">Tabel 4.1 Pengujian Data Login (Data Normal)</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Pelanggan login valid melalui modal halaman utama</td>
+      <td>Login berhasil; diarahkan ke dashboard pelanggan</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Staff (admin/keuangan/produksi/owner) login valid melalui Portal /login</td>
+      <td>Login berhasil; diarahkan ke dashboard sesuai role</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.2 Pengujian Data Login (Data Salah)</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Email dan password dikosongkan</td>
+      <td>Muncul pesan “Email dan password wajib diisi dengan benar.”</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Email/password salah atau email tidak terdaftar</td>
+      <td>Muncul pesan “Email atau password salah.”</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">3</td>
+      <td>Pelanggan login di Portal /login atau staff login di modal landing</td>
+      <td>Login ditolak sesuai jalur masing-masing</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.3 Pengujian Data Registrasi / Pendaftaran Akun (Data Normal)</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Pelanggan registrasi mandiri dengan data valid</td>
+      <td>Akun berhasil dibuat; jenis pelanggan = perseorangan</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Admin mendaftarkan pelanggan / Owner mendaftarkan staff</td>
+      <td>Akun berhasil dibuat sesuai wewenang</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.4 Pengujian Data Registrasi / Pendaftaran Akun (Data Salah)</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Data registrasi tidak valid (email duplikat / password tidak cocok / field kosong)</td>
+      <td>Registrasi ditolak disertai pesan validasi</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Admin mencoba mendaftarkan akun staff</td>
+      <td>Akses ditolak; pendaftaran staff hanya wewenang Owner</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.5 Pengujian Data Logout</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Pengguna mengklik Logout</td>
+      <td>Sesi berakhir; pelanggan diarahkan ke halaman utama, staff ke Portal /login</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ===================== 2. DATA MASTER ===================== -->
+<h2>2. Pengujian Data Master</h2>
+
+<p class="caption">Tabel 4.6 Pengujian Data Katalog (Data Normal)</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Admin menambah/mengubah produk dengan data valid</td>
+      <td>Produk tersimpan dan tampil pada katalog</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Admin menonaktifkan produk</td>
+      <td>Produk tidak tampil pada katalog pelanggan</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.7 Pengujian Data Katalog (Data Salah)</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Harga ≤ 0 / field wajib kosong / gambar tidak valid</td>
+      <td>Penyimpanan ditolak</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Menghapus produk yang sudah memiliki riwayat pesanan</td>
+      <td>Produk tidak dihapus; dinonaktifkan disertai peringatan</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.8 Pengujian Data Pengguna &amp; Kerja Sama Perusahaan (Data Normal)</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Admin menetapkan kerja sama perusahaan (data wajib lengkap)</td>
+      <td>Status pelanggan menjadi kerja sama aktif</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Admin mencabut kerja sama perusahaan</td>
+      <td>Status pelanggan kembali menjadi perseorangan</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.9 Pengujian Data Pengguna &amp; Kerja Sama Perusahaan (Data Salah)</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Field wajib kerja sama kosong / format data tidak valid</td>
+      <td>Penetapan ditolak</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Owner mencoba menetapkan kerja sama / Admin mencoba menonaktifkan staff</td>
+      <td>Akses ditolak sesuai wewenang</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ===================== 3. PROSES ===================== -->
+<h2>3. Pengujian Proses</h2>
+
+<p class="caption">Tabel 4.10 Pengujian Data Pemesanan (Data Normal)</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Pelanggan perseorangan membuat pesanan standar (≥ minimum order)</td>
+      <td>Status menunggu verifikasi DP</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Pelanggan kerja sama, total ≤ Rp 5.000.000</td>
+      <td>Tanpa kewajiban DP; status terverifikasi</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">3</td>
+      <td>Pelanggan kerja sama, total &gt; Rp 5.000.000</td>
+      <td>Wajib DP; status menunggu verifikasi DP</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">4</td>
+      <td>Pelanggan membuat pesanan custom disertai referensi desain</td>
+      <td>Status menunggu konfirmasi harga</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.11 Pengujian Data Pemesanan (Data Salah)</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Jumlah &lt; minimum order / alamat kurir kosong / custom tanpa referensi</td>
+      <td>Pesanan ditolak disertai pesan kesalahan</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.12 Pengujian Data Konfirmasi Harga Custom</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Admin menetapkan harga &gt; 0 disertai deadline valid</td>
+      <td>Status menunggu konfirmasi pelanggan</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Pelanggan menyetujui / menolak harga</td>
+      <td>Setuju: lanjut pembayaran; Tolak: pesanan dibatalkan</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">3</td>
+      <td>Harga ≤ 0 atau deadline tidak valid</td>
+      <td>Penetapan harga ditolak</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.13 Pengujian Data Verifikasi DP dan Pelunasan</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Pelanggan mengunggah bukti DP valid</td>
+      <td>Status menunggu verifikasi keuangan</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Keuangan menyetujui / menolak DP (penolakan disertai alasan)</td>
+      <td>ACC: pesanan terverifikasi; Tolak: pelanggan dapat mengunggah ulang</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">3</td>
+      <td>Pelanggan mengunggah pelunasan pada status yang sesuai</td>
+      <td>Status menunggu verifikasi lunas</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">4</td>
+      <td>Keuangan menyetujui pelunasan</td>
+      <td>Perseorangan → pelunasan terverifikasi; Kerja sama → selesai</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">5</td>
+      <td>File tidak valid / penolakan tanpa alasan / status belum memenuhi syarat</td>
+      <td>Aksi ditolak</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.14 Pengujian Data Revisi Desain</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Produksi mengunggah draft desain valid</td>
+      <td>Draft tersimpan; status menuju proses desain</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Pelanggan melakukan ACC draft / mengajukan revisi (kuota &gt; 0)</td>
+      <td>ACC → proses cetak; Revisi → proses revisi dan kuota berkurang 1</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">3</td>
+      <td>Draft tidak valid / revisi tanpa catatan / kuota = 0</td>
+      <td>Aksi ditolak sesuai aturan</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.15 Pengujian Data Pengiriman</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Admin menetapkan siap kirim/diambil dari status finishing</td>
+      <td>Status siap sesuai metode pengiriman</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Admin mengisi nomor resi dan menetapkan dikirim / mengonfirmasi pengambilan</td>
+      <td>Status berlanjut sesuai skema pembayaran</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">3</td>
+      <td>Pelanggan mengonfirmasi pesanan diterima (metode kurir)</td>
+      <td>Status selesai atau menunggu pelunasan sesuai skema</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">4</td>
+      <td>Pengiriman tanpa nomor resi / syarat belum terpenuhi</td>
+      <td>Aksi ditolak</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.16 Pengujian Kontrol Akses</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Role mengakses menu sesuai wewenang</td>
+      <td>Halaman ditampilkan</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Belum login atau role salah mengakses menu tertentu</td>
+      <td>Akses ditolak atau diarahkan ke login/dashboard</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ===================== 4. OUTPUT ===================== -->
+<h2>4. Pengujian Output</h2>
+
+<p class="caption">Tabel 4.17 Pengujian Output Laporan dan Riwayat Aktivitas (Data Normal)</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Admin/Owner membuka Laporan Pemesanan</td>
+      <td>Data ditampilkan sesuai filter</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">2</td>
+      <td>Keuangan/Owner membuka Laporan Transaksi</td>
+      <td>Data transaksi ditampilkan</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td class="center">3</td>
+      <td>Owner membuka Laporan Desain / Ringkasan Bisnis / Riwayat Aktivitas</td>
+      <td>Data monitoring ditampilkan</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="caption">Tabel 4.18 Pengujian Output Laporan dan Riwayat Aktivitas (Data Salah)</p>
+<table>
+  <thead>
+    <tr>
+      <th class="col-no">No</th>
+      <th>Data Masukan</th>
+      <th>Yang Diharapkan</th>
+      <th>Pengamatan</th>
+      <th class="col-hasil">Kesimpulan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">1</td>
+      <td>Filter tanpa data / akses oleh role yang tidak berwenang</td>
+      <td>Menampilkan kondisi kosong atau akses ditolak</td>
+      <td></td>
+      <td>[√] Diterima<br>[ ] Ditolak</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ===================== RINGKASAN ===================== -->
+<p class="caption">Tabel 4.19 Ringkasan Hasil Pengujian Black Box</p>
+<table class="ringkas">
+  <thead>
+    <tr>
+      <th style="width:8%">No</th>
+      <th>Kelompok Uji</th>
+      <th>Jumlah Kasus</th>
+      <th>Hasil</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Login &amp; Registrasi</td>
+      <td>10</td>
+      <td>[√] Diterima [ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Data Master</td>
+      <td>8</td>
+      <td>[√] Diterima [ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Proses</td>
+      <td>18</td>
+      <td>[√] Diterima [ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Output</td>
+      <td>4</td>
+      <td>[√] Diterima [ ] Ditolak</td>
+    </tr>
+    <tr>
+      <td colspan="2"><b>Total</b></td>
+      <td><b>40</b></td>
+      <td><b>[√] Diterima [ ] Ditolak</b></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Kesimpulan Pengujian</h2>
+<p>
+  Berdasarkan hasil pengujian black box terhadap 40 kasus uji fungsi utama SIMENAK,
+  sistem menghasilkan keluaran yang sesuai dengan yang diharapkan pada pengujian data normal maupun data salah.
+  Dengan demikian, fungsionalitas sistem dinyatakan <b>diterima</b> dan layak digunakan sesuai kebutuhan operasional percetakan Z’Plack.
+</p>
+
+</body>
+</html>

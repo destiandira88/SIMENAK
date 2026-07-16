@@ -4,6 +4,13 @@
 <?php $readOnly = (bool) ($readOnly ?? false); ?>
 <?= $this->section('page_title') ?><?= esc($readOnly ? 'Katalog Produk' : 'Kelola Katalog') ?><?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?>Katalog Produk dan Layanan<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>
+<?= $readOnly
+    ? 'Pantau seluruh produk dan template pesanan yang tersedia.'
+    : 'Kelola seluruh produk dan layanan cetak yang tersedia' ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('styles') ?>
 <style>
     .filter-select,
@@ -232,18 +239,11 @@ $kategoriBadges = [
 ];
 ?>
 
-<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
-    <div>
-        <h2 class="text-2xl font-extrabold text-[#051747]">Katalog Produk dan Layanan</h2>
-        <p class="mt-1 text-sm text-slate-500">
-            <?= $readOnly
-                ? 'Pantau seluruh produk dan template pesanan yang tersedia.'
-                : 'Kelola seluruh produk dan layanan cetak yang tersedia' ?>
-        </p>
-    </div>
+<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-end mb-4">
     <?php if (!$readOnly): ?>
-        <a href="<?= site_url('katalog/tambah') ?>" class="btn-primary inline-flex items-center justify-center px-4 py-2.5 text-sm text-white shrink-0">
-            + Tambah Produk
+        <a href="<?= site_url('katalog/tambah') ?>" class="btn-primary inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm text-white shrink-0">
+            <?= view('partials/ui_svg_icon', ['icon' => 'plus', 'class' => 'h-4 w-4 shrink-0']) ?>
+            Tambah Produk
         </a>
     <?php endif; ?>
 </div>
@@ -283,7 +283,7 @@ $kategoriBadges = [
     </div>
 </div>
 
-<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+<div class="admin-data-table-wrap">
     <div class="table-responsive">
         <table class="w-full text-sm">
             <thead>
@@ -492,29 +492,7 @@ $kategoriBadges = [
         </table>
     </div>
 
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-slate-100">
-        <div class="flex items-center gap-2 text-sm text-slate-600">
-            <label for="entriesSelect" class="whitespace-nowrap">Tampilkan</label>
-            <select id="entriesSelect" class="entries-select">
-                <option value="5">5</option>
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-            </select>
-            <span class="whitespace-nowrap">data</span>
-        </div>
-        <p id="entriesInfo" class="text-xs text-slate-500"></p>
-    </div>
-
-    <div id="tablePagination" class="hidden items-center justify-between px-4 py-3 border-t border-slate-100">
-        <button type="button" id="prevPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-            ← Sebelumnya
-        </button>
-        <span id="pageInfo" class="text-xs text-slate-500"></span>
-        <button type="button" id="nextPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-            Selanjutnya →
-        </button>
-    </div>
+    <?= view('partials/admin_data_table_footer') ?>
 </div>
 
 <form id="katalogConfirmForm" action="" method="post" class="hidden">

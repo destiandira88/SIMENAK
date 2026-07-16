@@ -182,7 +182,10 @@
     ?>
 
     <div class="no-print">
-        <a href="<?= esc($detailUrl) ?>" class="btn btn-outline">← Kembali ke Detail Pesanan</a>
+        <a href="<?= esc($detailUrl) ?>" class="btn btn-outline inline-flex items-center gap-2">
+            <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4 shrink-0']) ?>
+            Kembali ke Detail Pesanan
+        </a>
         <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Cetak / Simpan PDF</button>
     </div>
 

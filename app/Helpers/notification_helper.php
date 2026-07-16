@@ -493,6 +493,175 @@ function deferNotifEmail(string $to, string $subject, string $htmlBody): void
 }
 
 /**
+ * Normalisasi nomor ke format Fonnte: 62xxx (tanpa +).
+ */
+function normalizeNomorWa(?string $raw): ?string
+{
+    $digits = preg_replace('/\D+/', '', (string) $raw);
+    if ($digits === '') {
+        return null;
+    }
+
+    if (str_starts_with($digits, '0')) {
+        $digits = '62' . substr($digits, 1);
+    } elseif (str_starts_with($digits, '8')) {
+        $digits = '62' . $digits;
+    }
+
+    if (! str_starts_with($digits, '62')) {
+        return null;
+    }
+
+    $len = strlen($digits);
+    if ($len < 11 || $len > 15) {
+        return null;
+    }
+
+    return $digits;
+}
+
+function isFonnteConfigured(): bool
+{
+    return trim((string) env('fonnte.token', '')) !== '';
+}
+
+/**
+ * Kirim WhatsApp via Fonnte. Gagal diam-diam (log saja), tidak mengganggu proses utama.
+ */
+function sendNotifWa(?string $nomor, string $pesan): bool
+{
+    $nomor = normalizeNomorWa($nomor);
+    $pesan = trim($pesan);
+
+    if ($nomor === null || $pesan === '') {
+        return false;
+    }
+
+    $token = trim((string) env('fonnte.token', ''));
+    if ($token === '') {
+        log_message('debug', '[sendNotifWa] fonnte.token kosong, skip ke {nomor}', ['nomor' => $nomor]);
+
+        return false;
+    }
+
+    try {
+        $client   = \Config\Services::curlrequest(['timeout' => 15, 'http_errors' => false]);
+        $response = $client->post('https://api.fonnte.com/send', [
+            'headers'     => ['Authorization' => $token],
+            'form_params' => [
+                'target'  => $nomor,
+                'message' => $pesan,
+            ],
+        ]);
+
+        $decoded = json_decode((string) $response->getBody(), true);
+        $ok      = is_array($decoded) && ($decoded['status'] ?? false) === true;
+
+        if (! $ok) {
+            $reason = is_array($decoded)
+                ? (string) ($decoded['reason'] ?? json_encode($decoded))
+                : (string) $response->getBody();
+            log_message('error', '[sendNotifWa] gagal ke {nomor}: {reason}', [
+                'nomor'  => $nomor,
+                'reason' => $reason,
+            ]);
+        }
+
+        return $ok;
+    } catch (\Throwable $e) {
+        log_message('error', '[sendNotifWa] {msg}', ['msg' => $e->getMessage(), 'nomor' => $nomor]);
+
+        return false;
+    }
+}
+
+/**
+ * @return list<string>
+ */
+function collectWaNumbersForRole(\CodeIgniter\Database\BaseConnection $db, string $role): array
+{
+    $numbers = [];
+    $envKey  = 'fonnte.notify.' . $role;
+    $envList = trim((string) env($envKey, ''));
+
+    if ($envList !== '') {
+        foreach (explode(',', $envList) as $part) {
+            $normalized = normalizeNomorWa(trim($part));
+            if ($normalized !== null) {
+                $numbers[$normalized] = true;
+            }
+        }
+    }
+
+    $rows = $db->table('users u')
+        ->select('p.no_telp')
+        ->join('pelanggan p', 'p.id_user = u.id_user', 'left')
+        ->where('u.role', $role)
+        ->get()
+        ->getResultArray();
+
+    foreach ($rows as $row) {
+        $normalized = normalizeNomorWa((string) ($row['no_telp'] ?? ''));
+        if ($normalized !== null) {
+            $numbers[$normalized] = true;
+        }
+    }
+
+    return array_keys($numbers);
+}
+
+function sendNotifWaForRole(\CodeIgniter\Database\BaseConnection $db, string $role, string $pesan): void
+{
+    foreach (collectWaNumbersForRole($db, $role) as $nomor) {
+        sendNotifWa($nomor, $pesan);
+    }
+}
+
+function resolveWaForEmail(\CodeIgniter\Database\BaseConnection $db, string $email): ?string
+{
+    $row = $db->table('users u')
+        ->select('p.no_telp')
+        ->join('pelanggan p', 'p.id_user = u.id_user', 'left')
+        ->where('u.email', $email)
+        ->get()
+        ->getRowArray();
+
+    return normalizeNomorWa((string) ($row['no_telp'] ?? ''));
+}
+
+function resolveWaForUserId(\CodeIgniter\Database\BaseConnection $db, int $idUser): ?string
+{
+    $row = $db->table('users u')
+        ->select('p.no_telp')
+        ->join('pelanggan p', 'p.id_user = u.id_user', 'left')
+        ->where('u.id_user', $idUser)
+        ->get()
+        ->getRowArray();
+
+    return normalizeNomorWa((string) ($row['no_telp'] ?? ''));
+}
+
+function sendNotifWaForEmail(\CodeIgniter\Database\BaseConnection $db, string $email, string $pesan): void
+{
+    sendNotifWa(resolveWaForEmail($db, $email), $pesan);
+}
+
+function sendNotifWaForUserId(\CodeIgniter\Database\BaseConnection $db, int $idUser, string $pesan): void
+{
+    sendNotifWa(resolveWaForUserId($db, $idUser), $pesan);
+}
+
+function buildNotifWaText(string $judul, string $isi, ?string $url = null): string
+{
+    $text = trim($judul) . "\n\n" . trim($isi);
+    if ($url !== null && $url !== '') {
+        $text .= "\n\n" . $url;
+    }
+
+    return $text;
+}
+
+/**
  * Wrapper HTML email notifikasi SIMENAK (konsisten antar template).
  */
 function buildNotifEmailHtml(string $title, string $bodyHtml, ?string $ctaUrl = null, ?string $ctaLabel = null): string

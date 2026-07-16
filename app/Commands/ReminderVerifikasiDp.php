@@ -162,6 +162,16 @@ class ReminderVerifikasiDp extends BaseCommand
                 'Bukti DP ' . $kodeOrder . ' belum diverifikasi selama 2 jam.'
             );
         }
+
+        sendNotifWaForRole(
+            $db,
+            'keuangan',
+            buildNotifWaText(
+                "Reminder Verifikasi DP-{$kodeOrder}",
+                "Bukti DP {$kodeOrder} ({$namaPelanggan}) menunggu verifikasi 2 jam. Segera verifikasi.",
+                site_url('verifikasi-dp')
+            )
+        );
     }
 
     /**
@@ -191,5 +201,15 @@ class ReminderVerifikasiDp extends BaseCommand
                 'DP ' . $kodeOrder . ' belum diverifikasi 6 jam. Koordinasikan bagian keuangan.'
             );
         }
+
+        sendNotifWaForRole(
+            $db,
+            'owner',
+            buildNotifWaText(
+                "Eskalasi DP-{$kodeOrder}",
+                "Bukti DP {$kodeOrder} ({$namaPelanggan}) belum diverifikasi 6 jam. Koordinasikan keuangan.",
+                site_url('dashboard')
+            )
+        );
     }
 }

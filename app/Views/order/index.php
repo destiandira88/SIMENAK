@@ -15,6 +15,8 @@ $kategoriBadges = [
 
 <?= $this->section('title') ?><?= esc($title ?? 'Pesanan Saya') ?><?= $this->endSection() ?>
 <?= $this->section('page_title') ?><?= esc($page_title ?? 'Pesanan Saya') ?><?= $this->endSection() ?>
+<?= $this->section('banner_title') ?>Pesanan Saya<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Riwayat dan status pesanan Anda<?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
@@ -22,11 +24,29 @@ $kategoriBadges = [
 
 <?= $this->section('content') ?>
 
-<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
-    <div>
-        <h2 class="text-2xl font-extrabold text-[#051747]">Pesanan Saya</h2>
-        <p class="mt-1 text-sm text-slate-500">Riwayat dan status pesanan Anda</p>
+<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">
+        <label for="orderSearchInput" class="sr-only">Cari pesanan</label>
+        <div class="search-control w-full sm:w-auto">
+            <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+            </svg>
+            <input
+                id="orderSearchInput"
+                type="search"
+                placeholder="Cari kode atau nama produk..."
+                autocomplete="off">
+        </div>
+
+        <select id="orderFilterStatus" class="filter-select w-full sm:w-auto" aria-label="Filter status">
+            <option value="">Semua Status</option>
+            <option value="aktif">Aktif</option>
+            <option value="menunggu_bayar">Menunggu Pembayaran</option>
+            <option value="selesai">Selesai</option>
+            <option value="dibatalkan">Dibatalkan</option>
+        </select>
     </div>
+
     <a
         href="<?= site_url('katalog') ?>"
         class="inline-flex items-center justify-center bg-[#051747] text-white px-5 py-2.5 rounded-full font-bold uppercase text-sm hover:bg-[#2E5CE6] transition-colors shrink-0">
@@ -34,29 +54,7 @@ $kategoriBadges = [
     </a>
 </div>
 
-<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end mb-4">
-    <label for="orderSearchInput" class="sr-only">Cari pesanan</label>
-    <div class="search-control w-full sm:w-auto">
-        <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-        </svg>
-        <input
-            id="orderSearchInput"
-            type="search"
-            placeholder="Cari kode atau nama produk..."
-            autocomplete="off">
-    </div>
-
-    <select id="orderFilterStatus" class="filter-select w-full sm:w-auto" aria-label="Filter status">
-        <option value="">Semua Status</option>
-        <option value="aktif">Aktif</option>
-        <option value="menunggu_bayar">Menunggu Pembayaran</option>
-        <option value="selesai">Selesai</option>
-        <option value="dibatalkan">Dibatalkan</option>
-    </select>
-</div>
-
-<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+<div class="admin-data-table-wrap">
     <div class="table-responsive">
         <table class="w-full text-sm">
             <thead>
@@ -173,29 +171,7 @@ $kategoriBadges = [
         </table>
     </div>
 
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-slate-100">
-        <div class="flex items-center gap-2 text-sm text-slate-600">
-            <label for="entriesSelect" class="whitespace-nowrap">Tampilkan</label>
-            <select id="entriesSelect" class="entries-select">
-                <option value="5">5</option>
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-            </select>
-            <span class="whitespace-nowrap">data</span>
-        </div>
-        <p id="entriesInfo" class="text-xs text-slate-500"></p>
-    </div>
-
-    <div id="tablePagination" class="hidden items-center justify-between px-4 py-3 border-t border-slate-100">
-        <button type="button" id="prevPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-            ← Sebelumnya
-        </button>
-        <span id="pageInfo" class="text-xs text-slate-500"></span>
-        <button type="button" id="nextPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-            Selanjutnya →
-        </button>
-    </div>
+    <?= view('partials/admin_data_table_footer') ?>
 </div>
 
 <?= $this->endSection() ?>

@@ -86,7 +86,10 @@ $namaPerusahaan = (string) ($verifikasiTerbaru['nama_perusahaan'] ?? $pelanggan[
     <?php elseif ($verifStatus === 'rejected' && $showAjukanForm): ?>
         <div class="bg-white rounded-[20px] border border-[#E2E8F0] shadow-sm p-6 md:p-8">
             <div class="mb-6">
-                <a href="<?= esc(site_url('status-verifikasi-perusahaan')) ?>" class="text-sm font-semibold text-[#2E5CE6] hover:underline">← Kembali ke pilihan</a>
+                <a href="<?= esc(site_url('status-verifikasi-perusahaan')) ?>" class="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2E5CE6] hover:underline">
+                    <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4 shrink-0']) ?>
+                    Kembali ke pilihan
+                </a>
                 <h2 class="mt-3 text-xl font-extrabold text-[#051747]">Ajukan Ulang Verifikasi Perusahaan</h2>
                 <p class="mt-1 text-sm text-slate-500">Lengkapi data dan dokumen yang diperbaiki.</p>
             </div>

@@ -66,6 +66,15 @@ class CekDpDeadline extends BaseCommand
                         . '<strong>' . esc($batasFmt) . '</strong>.</p>'
                         . '<p>Jika tidak diupload, pesanan otomatis dibatalkan.</p>'
                 );
+                sendNotifWaForEmail(
+                    $db,
+                    $email,
+                    buildNotifWaText(
+                        "Pengingat Upload Bukti DP-{$kodeOrder}",
+                        "Segera upload bukti DP sebelum {$batasFmt}. Jika terlewat, pesanan dibatalkan.",
+                        site_url('order/detail/' . $kodeOrder)
+                    )
+                );
 
                 $db->table('orders')
                     ->where('id_order', (int) $order['id_order'])
@@ -125,6 +134,15 @@ class CekDpDeadline extends BaseCommand
                         . "<p>Pesanan <strong>{$kodeOrder}</strong> telah otomatis dibatalkan "
                         . 'karena bukti DP tidak diterima dalam 24 jam.</p>'
                         . '<p>Anda bisa membuat pesanan baru kapan saja.</p>'
+                );
+                sendNotifWaForEmail(
+                    $db,
+                    $email,
+                    buildNotifWaText(
+                        "Pesanan Dibatalkan-{$kodeOrder}",
+                        'Pesanan dibatalkan otomatis karena bukti DP tidak diterima dalam 24 jam.',
+                        site_url('order')
+                    )
                 );
 
                 sendNotifInApp(

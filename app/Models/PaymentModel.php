@@ -28,7 +28,7 @@ class PaymentModel extends Model
     public function getDpMenunggu(): array
     {
         return $this->select(
-            'payments.*, orders.kode_order, orders.total_harga, '
+            'payments.*, orders.kode_order, orders.total_harga, orders.deadline_produksi, '
             . 'users.nama AS nama_pelanggan, users.email AS email_pelanggan, '
             . 'pelanggan.no_telp'
         )
@@ -47,7 +47,7 @@ class PaymentModel extends Model
     public function getPelunasanMenunggu(): array
     {
         return $this->select(
-            'payments.*, orders.kode_order, orders.total_harga, '
+            'payments.*, orders.kode_order, orders.total_harga, orders.deadline_produksi, '
             . 'users.nama AS nama_pelanggan, users.email AS email_pelanggan, '
             . 'pelanggan.no_telp'
         )
@@ -76,7 +76,7 @@ class PaymentModel extends Model
     public function getRiwayatSemua(): array
     {
         return $this->select(
-            'payments.*, orders.kode_order, orders.total_harga, orders.jenis_pelanggan, orders.status AS order_status,
+            'payments.*, orders.kode_order, orders.total_harga, orders.deadline_produksi, orders.jenis_pelanggan, orders.status AS order_status,
          users.nama AS nama_pelanggan, users.email AS email_pelanggan,
          pelanggan.no_telp,
          verif.nama AS nama_verifikator'

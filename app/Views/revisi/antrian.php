@@ -17,6 +17,13 @@ $statusCounts = $statusCounts ?? [];
 <?= $this->section('title') ?><?= esc($title) ?><?= $this->endSection() ?>
 <?= $this->section('page_title') ?><?= esc($page_title) ?><?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?><?= esc($page_title) ?><?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>
+<?= $readOnly
+    ? 'Pantau seluruh pesanan dalam alur desain dan produksi.'
+    : ($showAll ? 'Semua pesanan dalam alur desain & produksi' : 'Pesanan yang perlu draft atau revisi desain') ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
 <style>
@@ -60,134 +67,67 @@ $statusCounts = $statusCounts ?? [];
         opacity: 1;
     }
 
-    .antrian-th-heading {
+    .btn-laporan-filter {
         display: inline-flex;
         align-items: center;
-        gap: 2px;
-        white-space: nowrap;
-    }
-
-    .antrian-col-filter-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 22px;
-        height: 22px;
-        margin-left: 2px;
-        border: none;
-        border-radius: 6px;
-        background: transparent;
-        color: rgba(255, 255, 255, 0.55);
-        cursor: pointer;
-        padding: 0;
-        flex-shrink: 0;
-        transition: color .15s, background .15s;
-    }
-
-    .antrian-col-filter-btn:hover {
-        background: rgba(255, 255, 255, 0.12);
-        color: rgba(255, 255, 255, 0.95);
-    }
-
-    .antrian-col-filter-btn.is-active {
-        color: #93C5FD;
-        background: rgba(46, 92, 230, 0.3);
-    }
-
-    .antrian-col-filter-btn svg {
-        width: 13px;
-        height: 13px;
-    }
-
-    .antrian-filter-popover {
-        position: fixed;
-        z-index: 70;
-        display: none;
-        padding: 12px;
-        background: #fff;
+        gap: 0.5rem;
+        border-radius: 14px;
         border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        box-shadow: 0 12px 40px rgba(15, 23, 43, 0.15);
-    }
-
-    .antrian-filter-popover.is-open {
-        display: block;
-    }
-
-    .antrian-filter-popover-title {
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #64748B;
-        margin-bottom: 8px;
-    }
-
-    .antrian-popover-input {
-        width: 100%;
-        border: 1.5px solid #E2E8F0;
-        border-radius: 8px;
-        padding: 7px 10px;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 12px;
-        color: #334155;
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4A5568;
         background: #fff;
+        transition: border-color .2s, background-color .2s, color .2s;
     }
 
-    .antrian-popover-input:focus {
-        border-color: #2E5CE6;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(46, 92, 230, 0.12);
+    .btn-laporan-filter:hover,
+    .btn-laporan-filter.is-open,
+    .btn-laporan-filter.is-active {
+        border-color: #CBD5E1;
+        background: #F8FAFC;
+        color: #051747;
     }
 
-    .antrian-popover-date-row {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+    .laporan-admin-filter-panel {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 0.5rem);
+        z-index: 40;
+        width: 18rem;
+        padding: 1rem;
+        border-radius: 16px;
+        border: 1px solid #E2E8F0;
+        background: #fff;
+        box-shadow: 0 12px 40px rgba(15, 23, 43, 0.12);
     }
 
-    .antrian-popover-date-row label {
-        font-size: 10px;
+    .laporan-admin-filter-panel .filter-field + .filter-field {
+        margin-top: 1rem;
+    }
+
+    .laporan-admin-filter-panel .filter-field label {
+        display: block;
+        margin-bottom: 0.375rem;
+        font-size: 0.75rem;
         font-weight: 600;
         color: #64748B;
     }
 
-    .antrian-popover-actions {
-        display: flex;
-        gap: 6px;
-        margin-top: 10px;
-    }
-
-    .antrian-popover-btn {
-        flex: 1;
-        border-radius: 8px;
-        padding: 6px 10px;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 11px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: background .15s, color .15s, border-color .15s;
-    }
-
-    .antrian-popover-btn-apply {
-        border: none;
-        background: #051747;
-        color: #fff;
-    }
-
-    .antrian-popover-btn-apply:hover {
-        background: #2E5CE6;
-    }
-
-    .antrian-popover-btn-reset {
-        border: 1.5px solid #E2E8F0;
+    .laporan-admin-filter-panel .filter-field input {
+        width: 100%;
+        border: 1px solid #E2E8F0;
+        border-radius: 14px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        color: #334155;
         background: #fff;
-        color: #64748B;
     }
 
-    .antrian-popover-btn-reset:hover {
-        border-color: #CBD5E1;
-        color: #051747;
+    .laporan-admin-filter-panel .filter-field input:focus {
+        border-color: #2E5CE6;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(46, 92, 230, 0.1);
     }
 
     .produksi-status-badge-btn {
@@ -196,9 +136,30 @@ $statusCounts = $statusCounts ?? [];
         transition: box-shadow .15s ease, border-color .15s ease, opacity .15s ease;
     }
 
-    .produksi-status-badge-btn:hover:not(:disabled):not(.is-loading) {
+    .produksi-status-badge-btn--editable {
+        border-style: dashed;
+        border-color: rgba(91, 33, 182, 0.45);
+        padding-right: 0.5rem;
+    }
+
+    .produksi-status-badge-btn--editable:hover:not(:disabled):not(.is-loading) {
         box-shadow: 0 0 0 2px rgba(91, 33, 182, 0.2);
-        border-color: rgba(91, 33, 182, 0.35);
+        border-color: rgba(91, 33, 182, 0.55);
+    }
+
+    .produksi-status-badge-chevron {
+        flex-shrink: 0;
+        opacity: 0.7;
+        transition: transform .15s ease, opacity .15s ease;
+    }
+
+    .produksi-status-badge-btn--editable:hover:not(:disabled):not(.is-loading) .produksi-status-badge-chevron,
+    .produksi-status-badge-btn--editable[aria-expanded="true"] .produksi-status-badge-chevron {
+        opacity: 1;
+    }
+
+    .produksi-status-badge-btn--editable[aria-expanded="true"] .produksi-status-badge-chevron {
+        transform: rotate(180deg);
     }
 
     .produksi-status-badge-btn.is-loading {
@@ -210,7 +171,7 @@ $statusCounts = $statusCounts ?? [];
         position: fixed;
         z-index: 70;
         display: none;
-        min-width: 9.5rem;
+        min-width: 11rem;
         padding: 6px;
         background: #fff;
         border: 1px solid #E2E8F0;
@@ -226,6 +187,7 @@ $statusCounts = $statusCounts ?? [];
         display: flex;
         width: 100%;
         align-items: center;
+        gap: 0.5rem;
         padding: 8px 10px;
         border: none;
         border-radius: 8px;
@@ -241,15 +203,6 @@ $statusCounts = $statusCounts ?? [];
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-
-<div class="mb-4">
-    <h2 class="text-2xl font-extrabold text-[#051747]"><?= esc($page_title) ?></h2>
-    <p class="mt-1 text-sm text-slate-500">
-        <?= $readOnly
-            ? 'Pantau seluruh pesanan dalam alur desain dan produksi.'
-            : ($showAll ? 'Semua pesanan dalam alur desain & produksi' : 'Pesanan yang perlu draft atau revisi desain') ?>
-    </p>
-</div>
 
 <?php
 $countAll = count($orders);
@@ -286,6 +239,51 @@ $tabDefs  = $showAll
     </div>
 
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap sm:justify-end mb-3 sm:mb-4">
+        <div class="relative w-full sm:w-auto">
+            <button
+                type="button"
+                id="antrianFilterToggle"
+                class="btn-laporan-filter w-full sm:w-auto"
+                aria-expanded="false"
+                aria-controls="antrianFilterPanel"
+                aria-haspopup="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="w-4 h-4 shrink-0" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/>
+                </svg>
+                Filter
+            </button>
+            <div id="antrianFilterPanel" class="laporan-admin-filter-panel hidden">
+                <div class="filter-field">
+                    <label for="antrianFilterKodeDraft">Kode Pesanan</label>
+                    <input
+                        type="search"
+                        id="antrianFilterKodeDraft"
+                        placeholder="Contoh: ORD-2026-001"
+                        autocomplete="off"
+                        class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
+                </div>
+                <div class="filter-field">
+                    <label for="antrianFilterDeadlineFromDraft">Deadline Dari</label>
+                    <input
+                        type="date"
+                        id="antrianFilterDeadlineFromDraft"
+                        class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
+                </div>
+                <div class="filter-field">
+                    <label for="antrianFilterDeadlineToDraft">Deadline Sampai</label>
+                    <input
+                        type="date"
+                        id="antrianFilterDeadlineToDraft"
+                        class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
+                </div>
+                <button
+                    type="button"
+                    id="antrianFilterApply"
+                    class="mt-4 w-full bg-[#051747] text-white rounded-[14px] text-sm font-bold px-4 py-2.5 hover:bg-[#2E5CE6] transition-colors">
+                    Terapkan Filter
+                </button>
+            </div>
+        </div>
         <label for="antrianDesainSearch" class="sr-only">Cari pesanan</label>
         <div class="search-control w-full sm:w-auto">
             <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -300,45 +298,29 @@ $tabDefs  = $showAll
     </div>
 </div>
 
-<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+<div class="admin-data-table-wrap">
     <div class="overflow-x-auto">
         <table class="w-full text-sm" id="antrianTable">
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
                     <th class="px-4 py-3 text-left font-semibold">No</th>
                     <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kode">
-                        <span class="antrian-th-heading">
-                            Kode Pesanan<span class="sort-icon">↕</span>
-                            <button type="button"
-                                class="antrian-col-filter-btn"
-                                data-filter-target="kode"
-                                aria-label="Filter kode pesanan"
-                                aria-expanded="false"
-                                aria-controls="antrianPopoverKode">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M6 12h12M10 20h4"/>
-                                </svg>
-                            </button>
-                        </span>
+                        Kode Pesanan<span class="sort-icon">↕</span>
                     </th>
                     <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
+                    <th class="px-4 py-3 text-left font-semibold">Jenis Pelanggan</th>
                     <th class="px-4 py-3 text-left font-semibold">Produk</th>
                     <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="deadline">
-                        <span class="antrian-th-heading">
-                            Deadline<span class="sort-icon">↕</span>
-                            <button type="button"
-                                class="antrian-col-filter-btn"
-                                data-filter-target="deadline"
-                                aria-label="Filter deadline"
-                                aria-expanded="false"
-                                aria-controls="antrianPopoverDeadline">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M6 12h12M10 20h4"/>
-                                </svg>
-                            </button>
-                        </span>
+                        Deadline<span class="sort-icon">↕</span>
                     </th>
-                    <th class="px-4 py-3 text-left font-semibold">Status</th>
+                    <th class="px-4 py-3 text-left font-semibold">
+                        Status
+                        <?php if ($showAll && ! $readOnly): ?>
+                            <span class="block mt-0.5 text-[9px] font-normal normal-case tracking-normal text-white/55">
+                                Proses Cetak → klik badge
+                            </span>
+                        <?php endif; ?>
+                    </th>
                     <th class="px-4 py-3 text-left font-semibold">Kuota</th>
                     <th class="px-4 py-3 text-left font-semibold">Catatan Revisi</th>
                     <th class="px-4 py-3 text-left font-semibold w-12"></th>
@@ -347,7 +329,7 @@ $tabDefs  = $showAll
             <tbody id="antrianDesainBody">
                 <?php if ($orders === []): ?>
                     <tr>
-                        <td colspan="9" class="py-16 text-center text-slate-500 text-sm">
+                        <td colspan="10" class="py-16 text-center text-slate-500 text-sm">
                             Tidak ada pesanan dalam antrian 🎉
                         </td>
                     </tr>
@@ -363,10 +345,13 @@ $tabDefs  = $showAll
                         $catatanRevisi = is_array($lastRevis) ? (string) ($lastRevis['catatan_revisi'] ?? '') : '';
                         $namaPelanggan = (string) ($a['nama_pelanggan'] ?? '-');
                         $noTelp        = trim((string) ($a['no_telp'] ?? ''));
+                        $jenisPelanggan = (string) ($a['jenis_pelanggan'] ?? 'perseorangan');
+                        $isKerjasama   = $jenisPelanggan === 'perusahaan';
+                        $jenisPelangganLabel = $isKerjasama ? 'Kerjasama' : 'Perseorangan';
                         $namaProduk    = (int) ($a['is_custom'] ?? 0) === 1
                             ? 'Pesanan Custom'
                             : (string) ($a['nama_produk'] ?? '-');
-                        $searchText    = mb_strtolower(trim($kodeOrder . ' ' . $namaPelanggan . ' ' . $noTelp . ' ' . $namaProduk));
+                        $searchText    = mb_strtolower(trim($kodeOrder . ' ' . $namaPelanggan . ' ' . $noTelp . ' ' . $jenisPelangganLabel . ' ' . $namaProduk));
                         $deadline      = (string) ($a['deadline_produksi'] ?? '');
                         $tsDeadline    = $deadline !== '' ? strtotime($deadline) : 0;
                         $daysLeft      = $tsDeadline > 0 ? (int) floor(($tsDeadline - time()) / 86400) : 999;
@@ -396,6 +381,11 @@ $tabDefs  = $showAll
                                     'nama'   => $namaPelanggan,
                                     'noTelp' => $noTelp,
                                 ]) ?>
+                            </td>
+                            <td class="px-4 py-3.5">
+                                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold <?= $isKerjasama ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700' ?>">
+                                    <?= esc($jenisPelangganLabel) ?>
+                                </span>
                             </td>
                             <td class="px-4 py-3.5"><?= esc($namaProduk) ?></td>
                             <td class="px-4 py-3.5 whitespace-nowrap <?= $deadlineUrgent ? 'text-red-600 font-semibold' : 'text-slate-600' ?>">
@@ -440,7 +430,7 @@ $tabDefs  = $showAll
                         </tr>
                     <?php endforeach; ?>
                     <tr id="antrianEmptyFilter" class="hidden">
-                        <td colspan="9" class="py-12 text-center text-slate-500 text-sm">
+                        <td colspan="10" class="py-12 text-center text-slate-500 text-sm">
                             Tidak ada pesanan yang cocok dengan filter atau pencarian.
                         </td>
                     </tr>
@@ -465,31 +455,6 @@ $tabDefs  = $showAll
 <input type="hidden" id="antrianDeadlineFrom" value="">
 <input type="hidden" id="antrianDeadlineTo" value="">
 
-<div id="antrianPopoverKode" class="antrian-filter-popover" role="dialog" aria-label="Filter kode pesanan" style="width:14rem;">
-    <p class="antrian-filter-popover-title">Filter Kode Pesanan</p>
-    <input type="search" id="antrianKodeFilterDraft" class="antrian-popover-input" placeholder="Filter kode..." autocomplete="off">
-    <div class="antrian-popover-actions">
-        <button type="button" class="antrian-popover-btn antrian-popover-btn-apply" data-popover-apply="kode">Terapkan</button>
-        <button type="button" class="antrian-popover-btn antrian-popover-btn-reset" data-popover-reset="kode">Reset</button>
-    </div>
-</div>
-
-<div id="antrianPopoverDeadline" class="antrian-filter-popover" role="dialog" aria-label="Filter deadline" style="width:16.5rem;">
-    <p class="antrian-filter-popover-title">Filter Deadline</p>
-    <div class="antrian-popover-date-row">
-        <label for="antrianDeadlineFromDraft">Dari</label>
-        <input type="date" id="antrianDeadlineFromDraft" class="antrian-popover-input">
-    </div>
-    <div class="antrian-popover-date-row mt-2">
-        <label for="antrianDeadlineToDraft">Sampai</label>
-        <input type="date" id="antrianDeadlineToDraft" class="antrian-popover-input">
-    </div>
-    <div class="antrian-popover-actions">
-        <button type="button" class="antrian-popover-btn antrian-popover-btn-apply" data-popover-apply="deadline">Terapkan</button>
-        <button type="button" class="antrian-popover-btn antrian-popover-btn-reset" data-popover-reset="deadline">Reset</button>
-    </div>
-</div>
-
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
@@ -499,157 +464,69 @@ $tabDefs  = $showAll
 
     let antrianStatusFilter = '';
     let antrianTableApi = null;
-    let antrianOpenPopover = null;
-    let antrianOpenFilterBtn = null;
 
-    function antrianSyncFilterActiveStates() {
-        const kodeBtn = document.querySelector('.antrian-col-filter-btn[data-filter-target="kode"]');
-        const deadlineBtn = document.querySelector('.antrian-col-filter-btn[data-filter-target="deadline"]');
+    function antrianSyncFilterActiveState() {
+        const toggle = document.getElementById('antrianFilterToggle');
+        if (!toggle) {
+            return;
+        }
+
         const kodeVal = (document.getElementById('antrianKodeFilter')?.value || '').trim();
         const fromVal = document.getElementById('antrianDeadlineFrom')?.value || '';
         const toVal = document.getElementById('antrianDeadlineTo')?.value || '';
+        const hasFilter = kodeVal !== '' || fromVal !== '' || toVal !== '';
 
-        if (kodeBtn) {
-            kodeBtn.classList.toggle('is-active', kodeVal !== '');
+        toggle.classList.toggle('is-active', hasFilter);
+    }
+
+    function antrianSyncFilterDraftFromActive() {
+        const kodeDraft = document.getElementById('antrianFilterKodeDraft');
+        const fromDraft = document.getElementById('antrianFilterDeadlineFromDraft');
+        const toDraft = document.getElementById('antrianFilterDeadlineToDraft');
+        const kodeActive = document.getElementById('antrianKodeFilter');
+        const fromActive = document.getElementById('antrianDeadlineFrom');
+        const toActive = document.getElementById('antrianDeadlineTo');
+
+        if (kodeDraft && kodeActive) {
+            kodeDraft.value = kodeActive.value;
         }
-        if (deadlineBtn) {
-            deadlineBtn.classList.toggle('is-active', fromVal !== '' || toVal !== '');
+        if (fromDraft && fromActive) {
+            fromDraft.value = fromActive.value;
+        }
+        if (toDraft && toActive) {
+            toDraft.value = toActive.value;
         }
     }
 
-    function antrianCloseFilterPopover() {
-        if (antrianOpenPopover) {
-            antrianOpenPopover.classList.remove('is-open');
-        }
-        if (antrianOpenFilterBtn) {
-            antrianOpenFilterBtn.setAttribute('aria-expanded', 'false');
-        }
-        antrianOpenPopover = null;
-        antrianOpenFilterBtn = null;
-    }
+    function antrianApplyPanelFilter() {
+        const kodeDraft = document.getElementById('antrianFilterKodeDraft');
+        const fromDraft = document.getElementById('antrianFilterDeadlineFromDraft');
+        const toDraft = document.getElementById('antrianFilterDeadlineToDraft');
+        const kodeActive = document.getElementById('antrianKodeFilter');
+        const fromActive = document.getElementById('antrianDeadlineFrom');
+        const toActive = document.getElementById('antrianDeadlineTo');
 
-    function antrianPositionFilterPopover(popover, trigger) {
-        popover.classList.add('is-open');
-        const rect = trigger.getBoundingClientRect();
-        const margin = 8;
-        let left = rect.left;
-        let top = rect.bottom + 6;
-
-        const width = popover.offsetWidth;
-        const height = popover.offsetHeight;
-
-        if (left + width > window.innerWidth - margin) {
-            left = Math.max(margin, window.innerWidth - width - margin);
+        if (kodeActive && kodeDraft) {
+            kodeActive.value = kodeDraft.value.trim();
         }
-        if (left < margin) {
-            left = margin;
+        if (fromActive && fromDraft) {
+            fromActive.value = fromDraft.value;
         }
-        if (top + height > window.innerHeight - margin) {
-            top = Math.max(margin, rect.top - height - 6);
+        if (toActive && toDraft) {
+            toActive.value = toDraft.value;
         }
 
-        popover.style.left = left + 'px';
-        popover.style.top = top + 'px';
-    }
+        antrianSyncFilterActiveState();
 
-    function antrianOpenFilterPopover(type, trigger) {
-        if (antrianOpenFilterBtn === trigger && antrianOpenPopover?.classList.contains('is-open')) {
-            antrianCloseFilterPopover();
-            return;
+        const panel = document.getElementById('antrianFilterPanel');
+        const toggle = document.getElementById('antrianFilterToggle');
+        if (panel) {
+            panel.classList.add('hidden');
         }
-
-        antrianCloseFilterPopover();
-
-        const popoverId = type === 'kode' ? 'antrianPopoverKode' : 'antrianPopoverDeadline';
-        const popover = document.getElementById(popoverId);
-        if (!popover) {
-            return;
+        if (toggle) {
+            toggle.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
         }
-
-        if (type === 'kode') {
-            const hidden = document.getElementById('antrianKodeFilter');
-            const draft = document.getElementById('antrianKodeFilterDraft');
-            if (draft && hidden) {
-                draft.value = hidden.value;
-            }
-        } else {
-            const hiddenFrom = document.getElementById('antrianDeadlineFrom');
-            const hiddenTo = document.getElementById('antrianDeadlineTo');
-            const draftFrom = document.getElementById('antrianDeadlineFromDraft');
-            const draftTo = document.getElementById('antrianDeadlineToDraft');
-            if (draftFrom && hiddenFrom) {
-                draftFrom.value = hiddenFrom.value;
-            }
-            if (draftTo && hiddenTo) {
-                draftTo.value = hiddenTo.value;
-            }
-        }
-
-        antrianPositionFilterPopover(popover, trigger);
-        trigger.setAttribute('aria-expanded', 'true');
-        antrianOpenPopover = popover;
-        antrianOpenFilterBtn = trigger;
-
-        const focusTarget = type === 'kode'
-            ? document.getElementById('antrianKodeFilterDraft')
-            : document.getElementById('antrianDeadlineFromDraft');
-        if (focusTarget) {
-            setTimeout(function () {
-                focusTarget.focus();
-            }, 0);
-        }
-    }
-
-    function antrianApplyColumnFilter(type) {
-        if (type === 'kode') {
-            const hidden = document.getElementById('antrianKodeFilter');
-            const draft = document.getElementById('antrianKodeFilterDraft');
-            if (hidden && draft) {
-                hidden.value = draft.value.trim();
-            }
-        } else {
-            const hiddenFrom = document.getElementById('antrianDeadlineFrom');
-            const hiddenTo = document.getElementById('antrianDeadlineTo');
-            const draftFrom = document.getElementById('antrianDeadlineFromDraft');
-            const draftTo = document.getElementById('antrianDeadlineToDraft');
-            if (hiddenFrom && draftFrom) {
-                hiddenFrom.value = draftFrom.value;
-            }
-            if (hiddenTo && draftTo) {
-                hiddenTo.value = draftTo.value;
-            }
-        }
-
-        antrianSyncFilterActiveStates();
-        antrianCloseFilterPopover();
-
-        if (antrianTableApi) {
-            antrianTableApi.setPage(1);
-            antrianTableApi.applyTableState();
-        }
-    }
-
-    function antrianResetColumnFilter(type) {
-        if (type === 'kode') {
-            const hidden = document.getElementById('antrianKodeFilter');
-            const draft = document.getElementById('antrianKodeFilterDraft');
-            if (hidden) {
-                hidden.value = '';
-            }
-            if (draft) {
-                draft.value = '';
-            }
-        } else {
-            ['antrianDeadlineFrom', 'antrianDeadlineTo', 'antrianDeadlineFromDraft', 'antrianDeadlineToDraft'].forEach(function (id) {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.value = '';
-                }
-            });
-        }
-
-        antrianSyncFilterActiveStates();
-        antrianCloseFilterPopover();
 
         if (antrianTableApi) {
             antrianTableApi.setPage(1);
@@ -930,46 +807,18 @@ $tabDefs  = $showAll
         onReady: function (api) {
             antrianTableApi = api;
 
-            document.querySelectorAll('.antrian-col-filter-btn').forEach(function (btn) {
-                btn.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    antrianOpenFilterPopover(btn.dataset.filterTarget || '', btn);
-                });
-            });
-
-            document.querySelectorAll('[data-popover-apply]').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    antrianApplyColumnFilter(btn.dataset.popoverApply || '');
-                });
-            });
-
-            document.querySelectorAll('[data-popover-reset]').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    antrianResetColumnFilter(btn.dataset.popoverReset || '');
-                });
-            });
-
-            document.querySelectorAll('.antrian-filter-popover').forEach(function (popover) {
-                popover.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                });
-            });
-
             document.addEventListener('click', function () {
-                antrianCloseFilterPopover();
                 antrianStatusQuickCloseMenu();
             });
 
             window.addEventListener('resize', function () {
-                antrianCloseFilterPopover();
                 antrianStatusQuickCloseMenu();
             });
             window.addEventListener('scroll', function () {
-                antrianCloseFilterPopover();
                 antrianStatusQuickCloseMenu();
             }, true);
 
-            antrianSyncFilterActiveStates();
+            antrianSyncFilterActiveState();
 
             if (antrianEnableStatusQuick) {
                 antrianInitStatusQuickTransition();
@@ -991,6 +840,55 @@ $tabDefs  = $showAll
             });
         },
     };
+</script>
+<script>
+    (() => {
+        const toggle = document.getElementById('antrianFilterToggle');
+        const panel = document.getElementById('antrianFilterPanel');
+        const applyBtn = document.getElementById('antrianFilterApply');
+        if (!toggle || !panel) {
+            return;
+        }
+
+        const setOpen = (open) => {
+            panel.classList.toggle('hidden', !open);
+            toggle.classList.toggle('is-open', open);
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (open) {
+                antrianSyncFilterDraftFromActive();
+            }
+        };
+
+        toggle.addEventListener('click', (event) => {
+            event.stopPropagation();
+            setOpen(panel.classList.contains('hidden'));
+        });
+
+        panel.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+
+        if (applyBtn) {
+            applyBtn.addEventListener('click', () => {
+                antrianApplyPanelFilter();
+            });
+        }
+
+        document.addEventListener('click', (event) => {
+            if (panel.classList.contains('hidden')) {
+                return;
+            }
+            if (!panel.contains(event.target) && !toggle.contains(event.target)) {
+                setOpen(false);
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !panel.classList.contains('hidden')) {
+                setOpen(false);
+            }
+        });
+    })();
 </script>
 <?= view('partials/admin_data_table_scripts') ?>
 <?= $this->endSection() ?>

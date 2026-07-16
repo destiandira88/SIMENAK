@@ -2,6 +2,9 @@
 
 namespace App\Controllers;
 
+use Config\GoogleOAuth;
+use League\OAuth2\Client\Provider\Google;
+
 class AuthController extends BaseController
 {
     protected $helpers = ['form', 'url', 'notification'];
@@ -99,6 +102,153 @@ class AuthController extends BaseController
             'role'     => $result['role'],
             'nama'     => $result['nama'],
         ]);
+    }
+
+    public function redirectToGoogle()
+    {
+        if (session()->get('isLoggedIn')) {
+            return redirect()->to(site_url('/'));
+        }
+
+        /** @var GoogleOAuth $googleConfig */
+        $googleConfig = config('GoogleOAuth');
+
+        if (! $googleConfig->isConfigured()) {
+            return redirect()->to(site_url('/'))
+                ->with('error', 'Login Google belum dikonfigurasi. Hubungi administrator.')
+                ->with('open_modal', 'loginModal');
+        }
+
+        try {
+            $provider = $this->googleProvider($googleConfig);
+            $authUrl  = $provider->getAuthorizationUrl([
+                'scope' => ['openid', 'email', 'profile'],
+            ]);
+
+            session()->set('oauth2state', $provider->getState());
+
+            return redirect()->to($authUrl);
+        } catch (\Throwable $e) {
+            log_message('error', 'Google OAuth redirect failed: {message}', ['message' => $e->getMessage()]);
+
+            return redirect()->to(site_url('/'))
+                ->with('error', 'Login Google gagal dimulai. Silakan coba lagi.')
+                ->with('open_modal', 'loginModal');
+        }
+    }
+
+    public function googleCallback()
+    {
+        if (session()->get('isLoggedIn')) {
+            return redirect()->to(site_url('/'));
+        }
+
+        if ($this->request->getGet('error') !== null) {
+            return redirect()->to(site_url('/'))
+                ->with('error', 'Login Google dibatalkan.')
+                ->with('open_modal', 'loginModal');
+        }
+
+        /** @var GoogleOAuth $googleConfig */
+        $googleConfig = config('GoogleOAuth');
+
+        if (! $googleConfig->isConfigured()) {
+            return redirect()->to(site_url('/'))
+                ->with('error', 'Login Google belum dikonfigurasi.')
+                ->with('open_modal', 'loginModal');
+        }
+
+        $expectedState = (string) session()->get('oauth2state');
+        session()->remove('oauth2state');
+
+        $state = (string) $this->request->getGet('state');
+        $code  = (string) $this->request->getGet('code');
+
+        if ($expectedState === '' || $state === '' || ! hash_equals($expectedState, $state)) {
+            return redirect()->to(site_url('/'))
+                ->with('error', 'Sesi login Google tidak valid. Silakan coba lagi.')
+                ->with('open_modal', 'loginModal');
+        }
+
+        if ($code === '') {
+            return redirect()->to(site_url('/'))
+                ->with('error', 'Kode otorisasi Google tidak ditemukan.')
+                ->with('open_modal', 'loginModal');
+        }
+
+        try {
+            $provider   = $this->googleProvider($googleConfig);
+            $accessToken = $provider->getAccessToken('authorization_code', ['code' => $code]);
+            $googleUser = $provider->getResourceOwner($accessToken);
+        } catch (\Throwable $e) {
+            log_message('error', 'Google OAuth callback failed: {message}', ['message' => $e->getMessage()]);
+
+            return redirect()->to(site_url('/'))
+                ->with('error', 'Login Google gagal. Silakan coba lagi.')
+                ->with('open_modal', 'loginModal');
+        }
+
+        $email    = strtolower(trim((string) $googleUser->getEmail()));
+        $googleId = trim((string) $googleUser->getId());
+
+        if ($email === '' || $googleId === '') {
+            return redirect()->to(site_url('/'))
+                ->with('error', 'Data akun Google tidak lengkap.')
+                ->with('open_modal', 'loginModal');
+        }
+
+        try {
+            $db   = \Config\Database::connect();
+            $user = $db->table('users')
+                ->where('email', $email)
+                ->get()
+                ->getRowArray();
+
+            if ($user === null) {
+                return redirect()->to(site_url('/'))
+                    ->with('error', 'Akun belum terdaftar. Silakan daftar terlebih dahulu.')
+                    ->with('open_modal', 'registerModal');
+            }
+
+            if ((string) ($user['role'] ?? '') !== 'pelanggan') {
+                return redirect()->to(site_url('/'))
+                    ->with('error', 'Akun internal silakan masuk melalui Portal Login.')
+                    ->with('open_modal', 'loginModal');
+            }
+
+            if (array_key_exists('is_active', $user) && (int) $user['is_active'] !== 1) {
+                return redirect()->to(site_url('/'))
+                    ->with('error', 'Akun nonaktif. Hubungi administrator.')
+                    ->with('open_modal', 'loginModal');
+            }
+
+            if (
+                $db->fieldExists('google_id', 'users')
+                && ! empty($user['google_id'])
+                && (string) $user['google_id'] !== $googleId
+            ) {
+                return redirect()->to(site_url('/'))
+                    ->with('error', 'Akun Google tidak cocok dengan data terdaftar.')
+                    ->with('open_modal', 'loginModal');
+            }
+
+            if ($db->fieldExists('google_id', 'users')) {
+                $db->table('users')
+                    ->where('id_user', (int) $user['id_user'])
+                    ->update(['google_id' => $googleId]);
+            }
+
+            $sessionInfo = $this->establishUserSession($user);
+
+            return redirect()->to($sessionInfo['redirect'])
+                ->with('success', 'Login dengan Google berhasil.');
+        } catch (\Throwable $e) {
+            log_message('error', 'Google OAuth session error: {message}', ['message' => $e->getMessage()]);
+
+            return redirect()->to(site_url('/'))
+                ->with('error', 'Terjadi kesalahan saat login Google. Silakan coba lagi.')
+                ->with('open_modal', 'loginModal');
+        }
     }
 
     public function register()
@@ -268,6 +418,15 @@ class AuthController extends BaseController
                         $userEmail,
                         'Reset Kata Sandi-SIMENAK Z\'Plack',
                         buildResetPasswordEmailHtml((string) $user['nama'], $resetUrl)
+                    );
+                    sendNotifWaForEmail(
+                        $db,
+                        $userEmail,
+                        buildNotifWaText(
+                            'Reset Kata Sandi SIMENAK',
+                            'Permintaan reset kata sandi diterima. Gunakan link berikut (berlaku 1 jam).',
+                            $resetUrl
+                        )
                     );
                 } catch (\Throwable $mailError) {
                     $emailSent = false;
@@ -467,34 +626,14 @@ class AuthController extends BaseController
                 ];
             }
 
-            $sessionData = [
-                'isLoggedIn' => true,
-                'id_user'    => (int) $user['id_user'],
-                'nama'       => $user['nama'],
-                'role'       => $user['role'],
-            ];
-
-            if ($user['role'] === 'pelanggan') {
-                $pelanggan = $db->table('pelanggan')
-                    ->where('id_user', $user['id_user'])
-                    ->get()
-                    ->getRowArray();
-
-                if ($pelanggan) {
-                    $sessionData['id_pelanggan'] = (int) $pelanggan['id_pelanggan'];
-                }
-            }
-
-            session()->set($sessionData);
-
-            $redirect = $this->dashboardPathForRole((string) $user['role']);
+            $sessionInfo = $this->establishUserSession($user);
 
             return [
                 'success'  => true,
                 'message'  => 'Login berhasil.',
-                'redirect' => $redirect,
-                'role'     => (string) $user['role'],
-                'nama'     => (string) $user['nama'],
+                'redirect' => $sessionInfo['redirect'],
+                'role'     => $sessionInfo['role'],
+                'nama'     => $sessionInfo['nama'],
             ];
         } catch (\Throwable $e) {
             log_message('error', 'Login error: {message}', ['message' => $e->getMessage()]);
@@ -504,6 +643,54 @@ class AuthController extends BaseController
                 'message' => 'Terjadi kesalahan saat login. Silakan coba lagi.',
             ];
         }
+    }
+
+    /**
+     * @param array<string, mixed> $user
+     *
+     * @return array{redirect: string, role: string, nama: string}
+     */
+    private function establishUserSession(array $user): array
+    {
+        $sessionData = [
+            'isLoggedIn' => true,
+            'id_user'    => (int) $user['id_user'],
+            'nama'       => (string) $user['nama'],
+            'role'       => (string) $user['role'],
+        ];
+
+        if ($user['role'] === 'pelanggan') {
+            $db = \Config\Database::connect();
+            $pelanggan = $db->table('pelanggan')
+                ->where('id_user', $user['id_user'])
+                ->get()
+                ->getRowArray();
+
+            if ($pelanggan) {
+                $sessionData['id_pelanggan'] = (int) $pelanggan['id_pelanggan'];
+            }
+        }
+
+        session()->set($sessionData);
+
+        return [
+            'redirect' => $this->dashboardPathForRole((string) $user['role']),
+            'role'     => (string) $user['role'],
+            'nama'     => (string) $user['nama'],
+        ];
+    }
+
+    private function googleProvider(GoogleOAuth $googleConfig): Google
+    {
+        $redirectUri = $googleConfig->redirectUri !== ''
+            ? $googleConfig->redirectUri
+            : site_url('auth/google/callback');
+
+        return new Google([
+            'clientId'     => $googleConfig->clientId,
+            'clientSecret' => $googleConfig->clientSecret,
+            'redirectUri'  => $redirectUri,
+        ]);
     }
 
     /**

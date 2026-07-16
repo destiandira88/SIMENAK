@@ -126,4 +126,64 @@
         background: #F8FAFF;
         color: #051747;
     }
+
+    .list-pemesanan-date-range {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .list-pemesanan-date-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748B;
+        white-space: nowrap;
+    }
+
+    .list-pemesanan-date-sep {
+        font-size: 12px;
+        font-weight: 600;
+        color: #94A3B8;
+        user-select: none;
+    }
+
+    .list-pemesanan-date-input {
+        border: 1.5px solid #E2E8F0;
+        border-radius: 14px;
+        padding: 8px 12px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 12px;
+        color: #4A5568;
+        background-color: #fff;
+        min-width: 130px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+    .list-pemesanan-date-input:focus {
+        border-color: #2E5CE6;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(46, 92, 230, .1);
+    }
+
+    .sortable-th {
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+    .sortable-th:hover {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    .sort-icon {
+        display: inline-block;
+        margin-left: 4px;
+        font-size: 10px;
+        opacity: 0.7;
+    }
+
+    .sortable-th.is-sorted .sort-icon {
+        opacity: 1;
+    }
 </style>

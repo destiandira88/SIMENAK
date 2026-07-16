@@ -12,20 +12,14 @@
 <?= $this->section('title') ?>Beranda<?= $this->endSection() ?>
 <?= $this->section('page_title') ?>Beranda Produksi<?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?>Selamat Datang, Produksi 👋<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Antrian desain dan cetak hari ini.<?= $this->endSection() ?>
+
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-
-<div class="mb-6">
-    <h2 class="text-2xl font-extrabold text-[#051747]">
-        Selamat Datang, Produksi 👋
-    </h2>
-    <p class="mt-1 text-sm text-slate-500">
-        Antrian desain dan cetak hari ini.
-    </p>
-</div>
 
 <?= view('dashboard/_partials/summary_cards', ['cards' => $cards]) ?>
 
@@ -34,7 +28,7 @@
 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
     <h3 class="text-base font-bold text-[#051747]">Antrian Pengerjaan</h3>
     <label for="produksiDashboardSearch" class="sr-only">Cari pesanan</label>
-    <div class="search-control">
+    <div class="search-control w-full sm:w-auto">
         <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
         </svg>
@@ -46,7 +40,7 @@
     </div>
 </div>
 
-<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+<div class="admin-data-table-wrap">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
@@ -55,6 +49,7 @@
                     <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
                     <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
                     <th class="px-4 py-3 text-left font-semibold">Produk</th>
+                    <th class="px-4 py-3 text-left font-semibold">Deadline</th>
                     <th class="px-4 py-3 text-left font-semibold">Sisa Kuota</th>
                     <th class="px-4 py-3 text-left font-semibold">Status</th>
                     <th class="px-4 py-3 text-left font-semibold w-12"></th>
@@ -63,11 +58,12 @@
             <tbody id="produksiDashboardBody">
                 <?php if ($recentOrders === []): ?>
                     <tr id="emptyDataRow">
-                        <td colspan="7" class="py-16 text-center">
+                        <td colspan="8" class="py-16 text-center">
                             <p class="text-sm font-medium text-slate-500">Tidak ada pesanan dalam antrian 🎉</p>
                         </td>
                     </tr>
                 <?php else: ?>
+                    <?php helper('deadline'); ?>
                     <?php foreach ($recentOrders as $index => $order): ?>
                         <?php
                         $kodeOrder     = (string) ($order['kode_order'] ?? '');
@@ -80,6 +76,8 @@
                         $sisaKuota     = (int) ($order['sisa_kuota'] ?? 0);
                         $kuotaRevisi   = (int) ($order['kuota_revisi'] ?? 0);
                         $idOrder       = (int) ($order['id_order'] ?? 0);
+                        $deadlineRaw   = trim((string) ($order['deadline_produksi'] ?? ''));
+                        $tsDeadline    = $deadlineRaw !== '' ? strtotime($deadlineRaw) : 0;
                         $searchText    = mb_strtolower(trim($kodeOrder . ' ' . $namaPelanggan . ' ' . $noTelp . ' ' . $namaProduk . ' ' . $status));
                         $kuotaBadge    = $sisaKuota > 0
                             ? 'bg-green-100 text-green-800'
@@ -105,6 +103,9 @@
                                 ]) ?>
                             </td>
                             <td class="px-4 py-3.5"><?= esc($namaProduk) ?></td>
+                            <td class="px-4 py-3.5 text-slate-600 whitespace-nowrap">
+                                <?= $deadlineRaw !== '' ? esc(formatTanggalId($deadlineRaw)) : '—' ?>
+                            </td>
                             <td class="px-4 py-3.5">
                                 <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc($kuotaBadge) ?>">
                                     <?= esc($sisaKuota . '/' . $kuotaRevisi) ?> · <?= esc($kuotaLabel) ?>
@@ -126,7 +127,7 @@
                         </tr>
                     <?php endforeach; ?>
                     <tr id="produksiEmptyFilter" class="hidden">
-                        <td colspan="7" class="py-12 text-center">
+                        <td colspan="8" class="py-12 text-center">
                             <p class="text-sm font-medium text-slate-500">Tidak ada pesanan yang cocok dengan pencarian.</p>
                         </td>
                     </tr>

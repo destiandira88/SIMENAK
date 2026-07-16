@@ -79,7 +79,9 @@ $resolveGambarUrl = static function (array $item): ?string {
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('title') ?><?= esc($title ?? 'Katalog Produk') ?><?= $this->endSection() ?>
-<?= $this->section('page_title') ?>Katalog Produk<?= $this->endSection() ?>
+<?= $this->section('page_title') ?>Katalog Percetakan<?= $this->endSection() ?>
+<?= $this->section('banner_title') ?>Katalog Percetakan<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Pilih paket produk andalan kami, lalu lakukan pesanan secara digital.<?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <style>
@@ -275,12 +277,6 @@ $resolveGambarUrl = static function (array $item): ?string {
 
 <?= $this->section('content') ?>
 
-<header class="mb-2">
-    <p class="text-[11px] uppercase tracking-[0.22em] text-[#2E5CE6] font-bold">Z'Plack · Toko Digital</p>
-    <h2 class="mt-2 text-3xl sm:text-4xl font-extrabold text-[#051747] tracking-tight">Katalog Percetakan</h2>
-    <p class="mt-2 text-sm text-slate-500 max-w-2xl">Pilih paket produk andalan kami, lalu lakukan pesanan secara digital.</p>
-</header>
-
 <?php if ($userRole === 'admin'): ?>
     <div class="mt-4 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-sm">
         Anda login sebagai Admin.
@@ -431,29 +427,7 @@ $resolveGambarUrl = static function (array $item): ?string {
             Produk tidak ditemukan. Coba kata kunci lain atau pilih kategori berbeda.
         </p>
 
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-4 mt-4 border-t border-slate-100">
-            <div class="flex items-center gap-2 text-sm text-slate-600">
-                <label for="entriesSelect" class="whitespace-nowrap">Tampilkan</label>
-                <select id="entriesSelect" class="entries-select">
-                    <option value="5">5</option>
-                    <option value="10" selected>10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                </select>
-                <span class="whitespace-nowrap">data</span>
-            </div>
-            <p id="entriesInfo" class="text-xs text-slate-500"></p>
-        </div>
-
-        <div id="tablePagination" class="hidden items-center justify-between py-3 border-t border-slate-100">
-            <button type="button" id="prevPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                ← Sebelumnya
-            </button>
-            <span id="pageInfo" class="text-xs text-slate-500"></span>
-            <button type="button" id="nextPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                Selanjutnya →
-            </button>
-        </div>
+        <?= view('partials/admin_data_table_footer') ?>
     </div>
 
     <div id="catalogImageLightbox" role="dialog" aria-modal="true" aria-label="Pratinjau gambar produk">

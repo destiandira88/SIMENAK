@@ -124,18 +124,14 @@ $aktivitasCards = [
 <?= $this->section('title') ?>Laporan Desain<?= $this->endSection() ?>
 <?= $this->section('page_title') ?>Laporan Desain<?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?>Laporan Desain<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Ringkasan antrian desain hari ini dan aktivitas revisi pada periode <?= esc((string) ($range['label'] ?? '-')) ?><?= $this->endSection() ?>
+
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-
-<div class="mb-4">
-    <h2 class="text-2xl font-extrabold text-[#051747]">Laporan Desain</h2>
-    <p class="mt-1 text-sm text-slate-500">
-        Ringkasan antrian desain hari ini dan aktivitas revisi pada periode <?= esc((string) ($range['label'] ?? '-')) ?>
-    </p>
-</div>
 
 <div class="mb-2">
     <h3 class="text-sm font-bold uppercase tracking-wide text-slate-500">Antrian Desain Saat Ini</h3>
@@ -144,7 +140,7 @@ $aktivitasCards = [
 
 <?= view('dashboard/_partials/summary_cards', ['cards' => $snapshotCards]) ?>
 
-<div class="mb-6 mt-6 max-w-xl">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 mt-6">
     <?= view('laporan/_partials/segment_donut', [
         'title'       => 'Distribusi Tahap Desain',
         'chartId'     => 'segmenTahapProduksiChart',
@@ -152,6 +148,10 @@ $aktivitasCards = [
         'subtitle'    => 'Ringkasan antrian desain hari ini berdasarkan status pesanan aktif.',
         'showPercent' => false,
         'showRevenue' => false,
+    ]) ?>
+    <?= view('laporan/_partials/antrian_insight_panel', [
+        'snapshot'    => $snapshot,
+        'segmenTahap' => $segmenTahap,
     ]) ?>
 </div>
 
@@ -195,7 +195,7 @@ $aktivitasCards = [
     'gridClass' => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6',
 ]) ?>
 
-<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mt-6">
+<div class="admin-data-table-wrap mt-6">
     <div class="px-6 py-4 border-b border-slate-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h3 class="text-base font-bold text-[#051747]">Daftar Pesanan dengan Aktivitas Revisi</h3>

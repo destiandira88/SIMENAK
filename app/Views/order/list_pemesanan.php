@@ -24,6 +24,13 @@ $kategoriBadges = [
 <?= $this->section('title') ?><?= esc($title ?? 'List Pemesanan') ?><?= $this->endSection() ?>
 <?= $this->section('page_title') ?><?= esc($page_title ?? 'List Pemesanan') ?><?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?><?= $readOnly ? 'Pesanan' : 'List Pemesanan' ?><?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>
+<?= $readOnly
+    ? 'Pantau seluruh data pemesanan pelanggan.'
+    : 'Pantau status dan detail seluruh pemesanan pelanggan' ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
 <style>
@@ -56,58 +63,10 @@ $kategoriBadges = [
         background: #FEF3C7;
         color: #92400E;
     }
-
-    .list-pemesanan-date-range {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
-    .list-pemesanan-date-label {
-        font-size: 12px;
-        font-weight: 600;
-        color: #64748B;
-        white-space: nowrap;
-    }
-
-    .list-pemesanan-date-sep {
-        font-size: 12px;
-        font-weight: 600;
-        color: #94A3B8;
-        user-select: none;
-    }
-
-    .list-pemesanan-date-input {
-        border: 1.5px solid #E2E8F0;
-        border-radius: 14px;
-        padding: 8px 12px;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        font-size: 12px;
-        color: #4A5568;
-        background-color: #fff;
-        min-width: 130px;
-        transition: border-color .2s, box-shadow .2s;
-    }
-
-    .list-pemesanan-date-input:focus {
-        border-color: #2E5CE6;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(46, 92, 230, .1);
-    }
 </style>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-
-<div class="mb-4">
-    <h2 class="text-2xl font-extrabold text-[#051747]"><?= $readOnly ? 'Pesanan' : 'List Pemesanan' ?></h2>
-    <p class="mt-1 text-sm text-slate-500">
-        <?= $readOnly
-            ? 'Pantau seluruh data pemesanan pelanggan.'
-            : 'Pantau status dan detail seluruh pemesanan pelanggan' ?>
-    </p>
-</div>
 
 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4 border-b border-slate-200">
     <div class="flex flex-wrap items-end gap-0 overflow-x-auto" role="tablist" aria-label="Filter pemesanan">
@@ -122,10 +81,10 @@ $kategoriBadges = [
         </button>
         <button type="button" class="pemesanan-tab relative <?= $activeTab === 'menunggu-harga' ? 'is-active' : '' ?>" data-tab="menunggu-harga" role="tab" aria-selected="<?= $activeTab === 'menunggu-harga' ? 'true' : 'false' ?>">
             Menunggu harga<?php if ($countMenunggu > 0): ?>
-                <span class="ml-1.5 inline-flex min-w-[18px] h-[18px] items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1 align-middle"><?= esc((string) $countMenunggu) ?></span>
-            <?php else: ?>
-                (<?= esc((string) $countMenunggu) ?>)
-            <?php endif; ?>
+            <span class="ml-1.5 inline-flex min-w-[18px] h-[18px] items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1 align-middle"><?= esc((string) $countMenunggu) ?></span>
+        <?php else: ?>
+            (<?= esc((string) $countMenunggu) ?>)
+        <?php endif; ?>
         </button>
     </div>
 
@@ -159,7 +118,7 @@ $kategoriBadges = [
     </div>
 </div>
 
-<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+<div class="admin-data-table-wrap">
     <div class="table-responsive">
         <table class="w-full text-sm">
             <thead>
@@ -258,7 +217,7 @@ $kategoriBadges = [
                             <td class="px-4 py-3.5 text-slate-600 whitespace-nowrap"><?= esc($tglPesan) ?></td>
                             <td class="px-4 py-3.5">
                                 <?php if ($status === 'menunggu_konfirmasi_harga' || ($isCustom && $totalHarga <= 0)): ?>
-                                    <span class="text-sm italic text-slate-400">Menunggu Admin</span>
+                                    <span class="text-sm text-amber-600 font-medium italic">Menunggu Admin</span>
                                 <?php else: ?>
                                     <span class="font-semibold text-[#051747]">
                                         Rp <?= esc(number_format($totalHarga, 0, ',', '.')) ?>
@@ -319,29 +278,7 @@ $kategoriBadges = [
         </table>
     </div>
 
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-slate-100">
-        <div class="flex items-center gap-2 text-sm text-slate-600">
-            <label for="entriesSelect" class="whitespace-nowrap">Tampilkan</label>
-            <select id="entriesSelect" class="entries-select">
-                <option value="5">5</option>
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-            </select>
-            <span class="whitespace-nowrap">data</span>
-        </div>
-        <p id="entriesInfo" class="text-xs text-slate-500"></p>
-    </div>
-
-    <div id="tablePagination" class="hidden items-center justify-between px-4 py-3 border-t border-slate-100">
-        <button type="button" id="prevPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-            ← Sebelumnya
-        </button>
-        <span id="pageInfo" class="text-xs text-slate-500"></span>
-        <button type="button" id="nextPageBtn" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-            Selanjutnya →
-        </button>
-    </div>
+    <?= view('partials/admin_data_table_footer') ?>
 </div>
 
 <?php if (!$readOnly): ?>
@@ -352,9 +289,10 @@ $kategoriBadges = [
             $deadlineProduksiModal = (string) ($o['deadline_produksi'] ?? $o['deadline_diajukan'] ?? date('Y-m-d'));
             $estimasiHariModal = countHariKerjaSampaiDeadline($deadlineProduksiModal);
             $estimasiModal = formatEstimasiHariKerjaExact($estimasiHariModal);
+            $referensiDesainModal = (string) ($o['referensi_desain'] ?? '');
             ?>
             <div id="modalSetHarga_<?= esc((string) ($o['id_order'] ?? 0)) ?>" class="hidden fixed inset-0 bg-black/50 z-50 p-4 flex items-center justify-center">
-                <div class="bg-white rounded-2xl shadow-lg p-6 max-w-lg w-full border border-[#E2E8F0]">
+                <div class="bg-white rounded-2xl shadow-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[#E2E8F0]">
                     <h3 class="font-bold text-lg text-[#051747]">
                         Konfirmasi Harga Pesanan Custom
                         <span class="block text-xs text-slate-500 mt-1 font-normal"><?= esc((string) ($o['kode_order'] ?? '-')) ?></span>
@@ -382,6 +320,42 @@ $kategoriBadges = [
                         <?php endif; ?>
                     </div>
 
+                    <div class="mb-4">
+                        <p class="text-xs font-bold uppercase text-slate-500 mb-2">Referensi Desain Pelanggan</p>
+                        <?php if ($referensiDesainModal !== ''): ?>
+                            <?php
+                            $referensiUrlModal = base_url('uploads/referensi/' . $referensiDesainModal);
+                            $referensiIsImageModal = (bool) preg_match('/\.(jpe?g|png|gif|webp)$/i', $referensiDesainModal);
+                            ?>
+                            <p class="text-xs text-slate-500 mb-2 truncate" title="<?= esc($referensiDesainModal) ?>">
+                                <?= esc($referensiDesainModal) ?>
+                            </p>
+                            <?php if ($referensiIsImageModal): ?>
+                                <a href="<?= esc($referensiUrlModal) ?>"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="block rounded-xl overflow-hidden border border-slate-200 bg-slate-50 hover:border-[#2E5CE6] transition-colors"
+                                    title="Buka gambar referensi ukuran penuh">
+                                    <img src="<?= esc($referensiUrlModal) ?>"
+                                        alt="Referensi desain pelanggan"
+                                        class="w-full max-h-56 object-contain">
+                                </a>
+                            <?php else: ?>
+                                <a href="<?= esc($referensiUrlModal) ?>"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-2 text-sm font-semibold text-[#2E5CE6] hover:underline">
+                                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                    </svg>
+                                    Lihat File Referensi (PDF)
+                                </a>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <p class="text-sm text-slate-400">Tidak ada file referensi</p>
+                        <?php endif; ?>
+                    </div>
+
                     <form method="post"
                         action="<?= esc(site_url('list-pemesanan/set-harga')) ?>"
                         class="js-action-confirm-form js-custom-set-harga-form"
@@ -391,16 +365,16 @@ $kategoriBadges = [
                         <input type="hidden" name="id_order" value="<?= esc((string) ($o['id_order'] ?? 0)) ?>">
 
                         <div class="mb-3">
-                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Harga Dikonfirmasi (Rp)</label>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1" for="hargaCustomInput_<?= esc((string) ($o['id_order'] ?? 0)) ?>">Total Harga Dikonfirmasi (Rp)</label>
                             <input
-                                type="number"
+                                type="text"
                                 name="harga_custom"
-                                min="1"
-                                step="1"
+                                id="hargaCustomInput_<?= esc((string) ($o['id_order'] ?? 0)) ?>"
+                                inputmode="numeric"
+                                autocomplete="off"
                                 required
-                                placeholder="Contoh: 350000"
-                                onwheel="this.blur()"
-                                class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
+                                class="js-harga-custom-rupiah-input w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"
+                                placeholder="Rp 0">
                         </div>
 
                         <div class="mb-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
@@ -420,7 +394,7 @@ $kategoriBadges = [
                                 data-deadline-produksi
                                 class="w-full max-w-xs border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
                             <p class="text-xs text-slate-400 mt-1.5">
-                                Barang selesai dikerjakan — belum termasuk pengiriman. Sesuaikan jika ajuan pelanggan tidak sanggup.
+                                Target penyelesaian produksi (belum termasuk pengiriman). Sesuaikan apabila deadline yang diajukan pelanggan tidak dapat dipenuhi.
                             </p>
                         </div>
 
@@ -508,6 +482,37 @@ $kategoriBadges = [
             });
         },
     };
+</script>
+<script>
+    (function() {
+        const formatRupiahDisplay = (digits) => {
+            if (!digits) {
+                return '';
+            }
+
+            const num = parseInt(digits, 10);
+            if (Number.isNaN(num) || num <= 0) {
+                return '';
+            }
+
+            return 'Rp ' + num.toLocaleString('id-ID');
+        };
+
+        document.querySelectorAll('.js-harga-custom-rupiah-input').forEach((input) => {
+            const applyFormat = () => {
+                const digits = input.value.replace(/\D/g, '').replace(/^0+/, '');
+                const formatted = formatRupiahDisplay(digits);
+                input.value = formatted;
+
+                if (formatted) {
+                    input.setSelectionRange(formatted.length, formatted.length);
+                }
+            };
+
+            input.addEventListener('input', applyFormat);
+            input.addEventListener('blur', applyFormat);
+        });
+    })();
 </script>
 <?= view('partials/admin_data_table_scripts') ?>
 <?= view('partials/custom_estimasi_deadline_sync_script') ?>

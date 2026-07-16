@@ -87,6 +87,15 @@ class CustomOrderController extends BaseController
              <p>Silakan login ke SIMENAK dan konfirmasi apakah Anda
              <strong>Setuju</strong> atau <strong>Menolak</strong> harga ini.</p>"
         );
+        sendNotifWaForEmail(
+            \Config\Database::connect(),
+            (string) $order['email'],
+            buildNotifWaText(
+                "Konfirmasi Harga Custom-{$order['kode_order']}",
+                'Harga Rp ' . number_format($hargaCustom, 0, ',', '.') . ", estimasi {$estimasiCustom}. Silakan konfirmasi di SIMENAK.",
+                site_url('order/detail/' . $order['kode_order'])
+            )
+        );
 
         sendNotifInApp(
             (int) $order['id_user_pelanggan'],
@@ -95,6 +104,14 @@ class CustomOrderController extends BaseController
             "Admin Z'Plack mengonfirmasi harga Rp "
             . number_format($hargaCustom, 0, ',', '.')
             . " untuk pesanan {$order['kode_order']}. Silakan konfirmasi."
+        );
+
+        helper('activity_log');
+        logActivity(
+            'ubah',
+            'pemesanan',
+            'Mengonfirmasi harga custom pesanan ' . (string) $order['kode_order']
+            . ' menjadi ' . formatLogRupiah($hargaCustom)
         );
 
         return redirect()->to(site_url('list-pemesanan?tab=custom'))
@@ -188,16 +205,37 @@ class CustomOrderController extends BaseController
 
         helper('notification');
 
-        $admin = $db->table('users')->where('role', 'admin')->get()->getRowArray();
-        if ($admin) {
+        $adminUsers = $db->table('users')->where('role', 'admin')->get()->getResultArray();
+        $namaPelanggan = (string) (session()->get('nama') ?? 'Pelanggan');
+        $detailUrl = site_url('order/detail/' . $order['kode_order']);
+
+        foreach ($adminUsers as $admin) {
             sendNotifInApp(
                 (int) $admin['id_user'],
                 $idOrder,
                 'Konfirmasi Harga Ditolak',
-                "Pelanggan " . session()->get('nama')
-                . " menolak konfirmasi harga untuk {$order['kode_order']}."
+                "Pelanggan {$namaPelanggan} menolak konfirmasi harga untuk {$order['kode_order']}."
+            );
+            sendNotifEmail(
+                (string) $admin['email'],
+                "Konfirmasi Harga Ditolak-{$order['kode_order']}",
+                '<p>Halo <strong>' . esc((string) $admin['nama']) . '</strong>,</p>'
+                . '<p>Pelanggan <strong>' . esc($namaPelanggan) . '</strong> menolak konfirmasi harga '
+                . 'untuk pesanan custom <strong>' . esc((string) $order['kode_order']) . '</strong>.</p>'
+                . '<p>Status pesanan: <strong>Dibatalkan</strong>.</p>'
+                . '<p><a href="' . esc($detailUrl) . '">Lihat detail pesanan</a></p>'
             );
         }
+
+        sendNotifWaForRole(
+            $db,
+            'admin',
+            buildNotifWaText(
+                "Harga Ditolak-{$order['kode_order']}",
+                "Pelanggan {$namaPelanggan} menolak konfirmasi harga. Pesanan dibatalkan.",
+                $detailUrl
+            )
+        );
 
         return redirect()->to(site_url('order/detail/' . $order['kode_order']))
             ->with('info', 'Harga ditolak. Pesanan dibatalkan.');

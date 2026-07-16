@@ -291,15 +291,69 @@ class OrderController extends BaseController
         }
 
         if ($isCustom === 1) {
-            $admin = $db->table('users')->where('role', 'admin')->get()->getRowArray();
-            if ($admin !== null) {
+            $userRow = $db->table('users')
+                ->where('id_user', (int) session()->get('id_user'))
+                ->get()
+                ->getRowArray();
+
+            $namaPelanggan = (string) ($userRow['nama'] ?? 'Pelanggan');
+            $namaProduk    = (string) ($katalog['nama_produk'] ?? 'Produk Custom');
+            $detailUrl     = site_url('order/detail/' . $kodeOrder);
+            $adminListUrl  = site_url('list-pemesanan?tab=menunggu-harga');
+
+            if ($userRow !== null) {
+                sendNotifEmail(
+                    (string) $userRow['email'],
+                    "Pengajuan Pesanan Custom-{$kodeOrder}",
+                    '<p>Halo <strong>' . esc($namaPelanggan) . '</strong>,</p>'
+                    . '<p>Pesanan custom <strong>' . esc($kodeOrder) . '</strong> untuk '
+                    . '<strong>' . esc($namaProduk) . '</strong> telah kami terima.</p>'
+                    . '<p>Admin akan meninjau spesifikasi dan mengonfirmasi harga '
+                    . '(estimasi maks. 2 hari kerja). Anda akan mendapat notifikasi setelah harga ditetapkan.</p>'
+                    . '<p><a href="' . esc($detailUrl) . '">Lihat detail pesanan</a></p>'
+                );
+                sendNotifWaForUserId(
+                    $db,
+                    (int) $userRow['id_user'],
+                    buildNotifWaText(
+                        "Pengajuan Custom-{$kodeOrder}",
+                        "Pesanan custom {$namaProduk} diterima. Admin akan konfirmasi harga. Pantau status di SIMENAK.",
+                        $detailUrl
+                    )
+                );
+            }
+
+            $adminUsers = $db->table('users')->where('role', 'admin')->get()->getResultArray();
+            foreach ($adminUsers as $admin) {
                 sendNotifInApp(
                     (int) $admin['id_user'],
                     $idOrder,
                     'Pesanan Custom Baru',
                     "Pesanan custom masuk: {$kodeOrder}. Harap set harga."
                 );
+                sendNotifEmail(
+                    (string) $admin['email'],
+                    "Pesanan Custom Baru-{$kodeOrder}",
+                    '<p>Halo <strong>' . esc((string) $admin['nama']) . '</strong>,</p>'
+                    . '<p>Pelanggan <strong>' . esc($namaPelanggan) . '</strong> mengajukan pesanan custom:</p>'
+                    . '<ul>'
+                    . '<li>Kode: <strong>' . esc($kodeOrder) . '</strong></li>'
+                    . '<li>Produk: <strong>' . esc($namaProduk) . '</strong></li>'
+                    . '</ul>'
+                    . '<p>Segera tinjau spesifikasi dan konfirmasi harga.</p>'
+                    . '<p><a href="' . esc($adminListUrl) . '">Buka list pemesanan menunggu harga</a></p>'
+                );
             }
+
+            sendNotifWaForRole(
+                $db,
+                'admin',
+                buildNotifWaText(
+                    "Pesanan Custom Baru-{$kodeOrder}",
+                    "Dari {$namaPelanggan} · {$namaProduk}. Segera konfirmasi harga di SIMENAK.",
+                    $adminListUrl
+                )
+            );
         } elseif ($requireDp === 0) {
             $userRow = $db->table('users')
                 ->where('id_user', (int) session()->get('id_user'))
@@ -313,6 +367,15 @@ class OrderController extends BaseController
                     . '<p>Pesanan <strong>' . esc($kodeOrder) . '</strong> telah berhasil dibuat '
                     . 'dan langsung masuk ke antrian produksi tanpa DP.</p>'
                     . '<p>Pantau status di dashboard SIMENAK.</p>'
+                );
+                sendNotifWaForUserId(
+                    $db,
+                    (int) $userRow['id_user'],
+                    buildNotifWaText(
+                        "Pesanan {$kodeOrder} Berhasil Dibuat",
+                        'Pesanan berhasil dibuat dan langsung masuk antrian produksi tanpa DP.',
+                        site_url('order/detail/' . $kodeOrder)
+                    )
                 );
             }
         }
@@ -535,6 +598,15 @@ class OrderController extends BaseController
                 . 'Alasan: <strong>' . esc($alasan) . '</strong>.</p>'
                 . '<p>Hubungi admin Z\'Plack jika ada pertanyaan.</p>'
             );
+            sendNotifWaForEmail(
+                $db,
+                (string) $order['email'],
+                buildNotifWaText(
+                    "Pesanan {$order['kode_order']} Dibatalkan",
+                    'Pesanan dibatalkan. Alasan: ' . $alasan,
+                    site_url('order')
+                )
+            );
         }
 
         $redirectUrl = $role === 'admin'
@@ -577,8 +649,12 @@ class OrderController extends BaseController
 
     private function validateFormTemplateFields(int $idKatalog): ?string
     {
-        if ((int) $this->request->getPost('is_custom') === 1) {
-            return null;
+        $isCustom = (int) $this->request->getPost('is_custom') === 1;
+        if ($isCustom) {
+            $katalog = model(KatalogModel::class)->find($idKatalog);
+            if (! $this->isProdukUndangan($katalog)) {
+                return null;
+            }
         }
 
         $db = \Config\Database::connect();
@@ -622,6 +698,15 @@ class OrderController extends BaseController
         }
 
         return null;
+    }
+
+    private function isProdukUndangan(?array $katalog): bool
+    {
+        if ($katalog === null) {
+            return false;
+        }
+
+        return stripos((string) ($katalog['nama_produk'] ?? ''), 'undangan') !== false;
     }
 
     /**

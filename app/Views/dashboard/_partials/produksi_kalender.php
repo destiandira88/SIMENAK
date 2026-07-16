@@ -12,8 +12,9 @@ $detailBase = rtrim(site_url('manajemen-desain'), '/');
             </p>
         </div>
         <a href="<?= esc(site_url('antrian-desain')) ?>"
-           class="inline-flex items-center justify-center text-xs font-bold px-4 py-2 rounded-full border-2 border-[#051747] text-[#051747] hover:bg-[#051747] hover:text-white transition-colors w-fit">
-            ← Antrian Desain
+           class="inline-flex items-center justify-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full border-2 border-[#051747] text-[#051747] hover:bg-[#051747] hover:text-white transition-colors w-fit">
+            <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-3.5 w-3.5 shrink-0']) ?>
+            Antrian Desain
         </a>
     </div>
 
@@ -22,13 +23,13 @@ $detailBase = rtrim(site_url('manajemen-desain'), '/');
         <div class="xl:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 overflow-x-auto">
             <div class="flex justify-between items-center mb-6 min-w-[280px]">
                 <button type="button" id="prevMonth"
-                    class="text-xs font-bold px-3 py-1.5 rounded-full border-2 border-[#051747] text-[#051747] hover:bg-[#051747] hover:text-white transition-colors">
-                    ←
+                    class="inline-flex items-center justify-center text-xs font-bold px-3 py-1.5 rounded-full border-2 border-[#051747] text-[#051747] hover:bg-[#051747] hover:text-white transition-colors">
+                    <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-3.5 w-3.5 shrink-0']) ?>
                 </button>
                 <h2 id="calMonthYear" class="font-bold text-[#051747] text-lg"></h2>
                 <button type="button" id="nextMonth"
-                    class="text-xs font-bold px-3 py-1.5 rounded-full border-2 border-[#051747] text-[#051747] hover:bg-[#051747] hover:text-white transition-colors">
-                    →
+                    class="inline-flex items-center justify-center text-xs font-bold px-3 py-1.5 rounded-full border-2 border-[#051747] text-[#051747] hover:bg-[#051747] hover:text-white transition-colors">
+                    <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-3.5 w-3.5 shrink-0']) ?>
                 </button>
             </div>
 

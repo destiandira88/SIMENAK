@@ -32,6 +32,7 @@ class OrderModel extends Model
         'created_at',
         'batas_upload_dp',
         'reminder_dp_sent',
+        'reminder_harga_eskalasi_sent',
     ];
 
     /**

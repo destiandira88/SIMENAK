@@ -6,6 +6,7 @@ $isCustomer = $isLoggedIn && $userRole === 'pelanggan';
 $openModalOnLoad = session()->getFlashdata('open_modal');
 $forgotPasswordNotice = session()->getFlashdata('forgot_password_notice');
 $forgotPasswordError  = session()->getFlashdata('forgot_password_error');
+$googleOAuthEnabled   = config('GoogleOAuth')->isConfigured();
 $ajaxRoutePath = static function (string $route): string {
     $path = parse_url(site_url($route), PHP_URL_PATH);
 
@@ -50,19 +51,35 @@ $navMenus = [
         }
 
         html {
-            scroll-behavior: smooth
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+            max-width: 100%;
         }
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background: var(--bg-page);
-            color: #4A5568
+            color: #4A5568;
+            overflow-x: hidden;
+            max-width: 100%;
         }
 
         .glass-nav {
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, .75);
-            border: 1px solid rgba(226, 232, 240, .7)
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            transition: background .3s ease, border-color .3s ease, box-shadow .3s ease;
+        }
+
+        .site-header.is-scrolled .glass-nav {
+            background: rgba(255, 255, 255, 0.72);
+            border-color: rgba(226, 232, 240, 0.75);
+            box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .hero-gradient {
+            background-color: transparent;
         }
 
         .btn-primary {
@@ -219,13 +236,8 @@ $navMenus = [
 </head>
 
 <body class="min-h-screen">
-    <div class="fixed top-0 left-0 right-0 z-50 h-8 bg-[#051747] flex items-center justify-center px-4">
-        <p class="text-white text-[10px] md:text-xs uppercase tracking-[0.2em] text-center truncate font-semibold">
-            ⚡ SOLUSI CETAK PROFESIONAL • PENGIRIMAN PRIORITAS SELURUH INDONESIA ⚡
-        </p>
-    </div>
 
-    <header class="fixed top-8 left-0 right-0 z-40">
+    <header id="site-header" class="site-header hero-gradient fixed top-0 left-0 right-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <nav class="glass-nav rounded-full px-4 md:px-6 h-14 flex items-center justify-between">
                 <a href="<?= site_url('/') ?>" class="flex items-center gap-2 shrink-0">
@@ -265,7 +277,7 @@ $navMenus = [
         </div>
     </header>
 
-    <main class="pt-28">
+    <main class="pt-0">
         <?= $this->renderSection('content') ?>
     </main>
 
@@ -307,14 +319,37 @@ $navMenus = [
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 9V4h12v5M6 14H4a2 2 0 01-2-2v-4a2 2 0 012-2h16a2 2 0 012 2v4a2 2 0 01-2 2h-2M6 14v5h12v-5M6 14h12" />
                         </svg>
                     </div>
-                    <h4 class="text-2xl md:text-[28px] font-extrabold text-[#051747] leading-tight">Selamat Datang 👋</h4>
+                    <h4 class="text-2xl md:text-[28px] font-extrabold text-[#051747] leading-tight">Selamat Datang</h4>
                     <p class="mt-2 text-sm text-slate-500 leading-relaxed px-2">
-                        Masuk sebagai pelanggan untuk melakukan pemesanan di SIMENAK Z'Plack
+                        Masukkan email dan kata sandi Anda untuk masuk SIMENAK Z'Plack!
                     </p>
                 </div>
 
                 <div id="loginAlert" class="hidden mt-4 px-4 py-3 rounded-xl text-sm font-medium"></div>
-                <form id="loginForm" method="post" action="<?= site_url('login-ajax') ?>" class="mt-6 space-y-5"><?= csrf_field() ?>
+
+                <?php if ($googleOAuthEnabled): ?>
+                    <a
+                        href="<?= esc(site_url('auth/google')) ?>"
+                        class="mt-6 w-full inline-flex items-center justify-center gap-3 rounded border border-[#dadce0] bg-[#f8f9fa] py-2.5 px-4 text-sm font-medium text-[#3c4043] transition-colors hover:bg-[#f1f3f4]">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="h-[18px] w-[18px] shrink-0" aria-hidden="true">
+                            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                        </svg>
+                        Lanjutkan dengan Google
+                    </a>
+                    <div class="relative my-5">
+                        <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                            <span class="w-full border-t border-slate-200"></span>
+                        </div>
+                        <div class="relative flex justify-center text-[11px] uppercase tracking-[0.12em] text-slate-400">
+                            <span class="bg-white px-3">atau</span>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <form id="loginForm" method="post" action="<?= site_url('login-ajax') ?>" class="<?= $googleOAuthEnabled ? '' : 'mt-6 ' ?>space-y-5"><?= csrf_field() ?>
                     <div>
                         <label for="login_email" class="form-label">Email</label>
                         <div class="relative">
@@ -1318,6 +1353,21 @@ $navMenus = [
                     }
                 });
             }
+        })();
+    </script>
+    <script>
+        (function() {
+            const header = document.getElementById('site-header');
+            if (!header) return;
+
+            function updateHeaderScroll() {
+                header.classList.toggle('is-scrolled', window.scrollY > 80);
+            }
+
+            updateHeaderScroll();
+            window.addEventListener('scroll', updateHeaderScroll, {
+                passive: true
+            });
         })();
     </script>
     <?= view('partials/flash_toast') ?>

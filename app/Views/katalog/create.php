@@ -3,6 +3,9 @@
 <?= $this->section('title') ?><?= esc($title ?? 'Tambah Produk') ?><?= $this->endSection() ?>
 <?= $this->section('page_title') ?>Tambah Produk<?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?>Tambah Produk<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Lengkapi informasi produk baru untuk katalog.<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php
 $kategoriOptions = [
@@ -11,6 +14,15 @@ $kategoriOptions = [
     'cetak_offset'  => 'Cetak Offset',
     'media_promosi' => 'Media Promosi',
 ];
+helper('notification');
+$hargaDasarOld = old('harga_dasar');
+$hargaDasarDisplay = '';
+if ($hargaDasarOld !== null && $hargaDasarOld !== '') {
+    $hargaDasarParsed = parseRupiahAmount($hargaDasarOld);
+    $hargaDasarDisplay = $hargaDasarParsed > 0
+        ? 'Rp ' . number_format($hargaDasarParsed, 0, ',', '.')
+        : '';
+}
 ?>
 
 <div class="text-xs text-slate-400 mb-2">
@@ -19,7 +31,7 @@ $kategoriOptions = [
     <span class="text-slate-500">Tambah Produk</span>
 </div>
 
-<h2 class="text-2xl font-extrabold text-[#051747] mb-6">Tambah Produk</h2>
+<h2 class="sr-only">Tambah Produk</h2>
 
 <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
     <form action="<?= site_url('katalog/simpan') ?>" method="post" enctype="multipart/form-data">
@@ -54,20 +66,17 @@ $kategoriOptions = [
                 </div>
 
                 <div>
-                    <label for="harga_dasar" class="form-label">Harga Dasar <span class="text-red-500">*</span></label>
-                    <div class="flex items-center gap-2">
-                        <span class="form-affix shrink-0">Rp</span>
-                        <input
-                            type="number"
-                            id="harga_dasar"
-                            name="harga_dasar"
-                            value="<?= esc(old('harga_dasar')) ?>"
-                            placeholder="150000"
-                            min="1"
-                            step="1"
-                            class="input-field w-full px-3.5 py-2.5"
-                            required>
-                    </div>
+                    <label for="harga_dasar" class="form-label">Harga Dasar (Rp) <span class="text-red-500">*</span></label>
+                    <input
+                        type="text"
+                        id="harga_dasar"
+                        name="harga_dasar"
+                        value="<?= esc($hargaDasarDisplay) ?>"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        placeholder="Rp 0"
+                        class="js-harga-custom-rupiah-input input-field w-full px-3.5 py-2.5"
+                        required>
                     <p class="form-hint">Harga per satuan produk</p>
                 </div>
 
@@ -206,4 +215,5 @@ $kategoriOptions = [
         reader.readAsDataURL(file);
     });
 </script>
+<?= view('partials/rupiah_input_format_script') ?>
 <?= $this->endSection() ?>

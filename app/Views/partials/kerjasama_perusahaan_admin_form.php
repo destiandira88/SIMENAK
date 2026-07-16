@@ -26,8 +26,11 @@ $namaPelanggan = (string) ($namaPelanggan ?? '');
         </div>
         <div>
             <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">No. HP / WA Perusahaan <span class="text-red-500">*</span></label>
-            <input type="text" name="wa_perusahaan" required pattern="[0-9]{10,13}" maxlength="13"
+            <input type="text" name="wa_perusahaan" required maxlength="20" autocomplete="tel"
+                data-wa-perusahaan-input
+                placeholder="08xxxxxxxxxx atau +62xxxxxxxxxx"
                 class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
+            <p class="text-xs text-slate-400 mt-1">Diawali 08, +62, atau 022 · 8–13 digit setelah awalan</p>
         </div>
     </div>
 
@@ -39,8 +42,9 @@ $namaPelanggan = (string) ($namaPelanggan ?? '');
 
     <div>
         <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">No. NPWP (opsional)</label>
-        <input type="text" name="no_npwp" data-npwp-input maxlength="20" inputmode="numeric" placeholder="12.345.678.9-012.345"
+        <input type="text" name="no_npwp" data-npwp-input maxlength="20" inputmode="numeric" autocomplete="off" placeholder="12.345.678.9-012.345"
             class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
+        <p class="text-xs text-slate-400 mt-1">15 digit angka · format otomatis XX.XXX.XXX.X-XXX.XXX</p>
     </div>
 
     <div>

@@ -27,6 +27,9 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
 <?= $this->section('title') ?><?= esc($title ?? 'Unggah Draf') ?><?= $this->endSection() ?>
 <?= $this->section('page_title') ?><?= esc($page_title ?? 'Unggah Draf') ?><?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?><?= esc($page_title ?? 'Unggah Draf') ?><?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Unggah draft desain untuk pesanan <?= esc($kodeOrder) ?>.<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 
 <p class="text-xs text-slate-400 mb-4">
@@ -107,8 +110,9 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
                 </div>
 
                 <button type="submit"
-                    class="w-full bg-[#051747] text-white py-3 rounded-full font-bold text-sm uppercase hover:bg-[#2E5CE6] transition-colors">
-                    Unggah Draf →
+                    class="inline-flex w-full items-center justify-center gap-2 bg-[#051747] text-white py-3 rounded-full font-bold text-sm uppercase hover:bg-[#2E5CE6] transition-colors">
+                    Unggah Draf
+                    <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-4 w-4 shrink-0']) ?>
                 </button>
             </form>
         </div>

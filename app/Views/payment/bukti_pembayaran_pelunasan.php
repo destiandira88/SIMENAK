@@ -12,6 +12,15 @@
     <?php helper('notification'); ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function() {
+            try {
+                if (localStorage.getItem('simenak-dashboard-theme') === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <title><?= esc($title ?? 'Bukti Pembayaran Pelunasan') ?>-<?= esc((string) ($order['kode_order'] ?? '')) ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -167,6 +176,107 @@
             .invoice-header { flex-direction: column; }
             .invoice-title, .invoice-num { text-align: left; }
         }
+
+        html[data-theme="dark"] {
+            color-scheme: dark;
+            --bg-page: #0c111c;
+            --border: rgba(255, 255, 255, 0.08);
+            --surface: #151f2e;
+            --surface-muted: #0f1624;
+            --text-body: #98a2b3;
+            --text-strong: #e4e7ec;
+            --green: #6ee7b7;
+            --green-bg: rgba(16, 185, 129, 0.12);
+        }
+
+        html[data-theme="dark"] body {
+            background: var(--bg-page);
+            color: var(--text-body);
+        }
+
+        html[data-theme="dark"] .btn-outline {
+            background: transparent;
+            color: var(--text-strong);
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        html[data-theme="dark"] .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        html[data-theme="dark"] .invoice-wrap {
+            background: var(--surface);
+            border-color: var(--border);
+            box-shadow: none;
+        }
+
+        html[data-theme="dark"] .note-box {
+            background: var(--green-bg);
+            border-color: rgba(16, 185, 129, 0.35);
+            color: var(--green);
+        }
+
+        html[data-theme="dark"] .note-box strong {
+            color: #a7f3d0;
+        }
+
+        html[data-theme="dark"] .meta-label,
+        html[data-theme="dark"] .invoice-table th {
+            color: #667085;
+        }
+
+        html[data-theme="dark"] .meta-value,
+        html[data-theme="dark"] .invoice-table td {
+            color: var(--text-strong);
+        }
+
+        html[data-theme="dark"] .invoice-table th {
+            border-bottom-color: var(--border);
+        }
+
+        html[data-theme="dark"] .invoice-table td {
+            border-bottom-color: rgba(255, 255, 255, 0.06);
+        }
+
+        html[data-theme="dark"] .invoice-meta {
+            border-bottom-color: var(--border);
+        }
+
+        html[data-theme="dark"] .total-row.grand {
+            color: var(--green);
+            border-top-color: rgba(16, 185, 129, 0.35);
+        }
+
+        html[data-theme="dark"] .verif-card {
+            background: var(--surface-muted);
+            border-color: var(--border);
+        }
+
+        html[data-theme="dark"] .verif-card p {
+            color: var(--text-body);
+        }
+
+        html[data-theme="dark"] .verif-card strong {
+            color: var(--text-strong);
+        }
+
+        html[data-theme="dark"] .invoice-footer {
+            background: var(--surface-muted);
+            color: var(--text-body);
+        }
+
+        html[data-theme="dark"] .badge-lunas {
+            background: var(--green-bg);
+            color: var(--green);
+        }
+
+        html[data-theme="dark"] .meta-value span[style] {
+            color: #98a2b3 !important;
+        }
+
+        html[data-theme="dark"] .verif-card p[style] {
+            color: #667085 !important;
+        }
     </style>
 </head>
 <body>
@@ -186,7 +296,10 @@
     ?>
 
     <div class="no-print">
-        <a href="<?= esc($detailUrl) ?>" class="btn btn-outline">← Kembali ke Detail Pesanan</a>
+        <a href="<?= esc($detailUrl) ?>" class="btn btn-outline inline-flex items-center gap-2">
+            <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4 shrink-0']) ?>
+            Kembali ke Detail Pesanan
+        </a>
         <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Cetak / Simpan PDF</button>
     </div>
 

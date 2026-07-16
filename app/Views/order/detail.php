@@ -121,6 +121,11 @@ if ($jenisPelanggan === 'perusahaan' && !$pelunasanSebelumKirim) {
             'menunggu_verifikasi_dp' => getOrderStatusLabel($orderStatusRow),
         ], $statusList);
     }
+    if ($metodePengiriman === 'ambil_sendiri') {
+        unset($statusList['siap_kirim'], $statusList['dikirim']);
+    } else {
+        unset($statusList['siap_diambil']);
+    }
 } else {
     $statusList = [
         'menunggu_verifikasi_dp'    => getOrderStatusLabel($orderStatusRow),
@@ -189,16 +194,17 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('title') ?><?= esc($title ?? 'Detail Pesanan') ?><?= $this->endSection() ?>
-<?= $this->section('page_title') ?><?= esc($page_title ?? 'Detail Pesanan') ?><?= $this->endSection() ?>
+<?= $this->section('page_title') ?>Detail Pesanan<?= $this->endSection() ?>
+<?= $this->section('banner_title') ?>Detail Pesanan<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Kode pesanan <?= esc($kodeOrder) ?><?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 
 <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
     <div>
+        <?php if ($role !== 'pelanggan'): ?>
         <p class="text-xs text-slate-400 mb-1">
-            <?php if ($role === 'pelanggan'): ?>
-                <a href="<?= site_url('order') ?>" class="hover:text-[#051747]">Pesanan Saya</a>
-            <?php elseif ($role === 'admin'): ?>
+            <?php if ($role === 'admin'): ?>
                 <a href="<?= site_url('list-pemesanan') ?>" class="hover:text-[#051747]">List Pemesanan</a>
             <?php elseif ($role === 'owner'): ?>
                 <a href="<?= site_url('list-pemesanan') ?>" class="hover:text-[#051747]">Pesanan</a>
@@ -212,40 +218,49 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
             <span class="mx-1">/</span>
             <span class="text-slate-500"><?= esc($kodeOrder) ?></span>
         </p>
+        <?php endif; ?>
+        <?php if ($role !== 'pelanggan'): ?>
         <h1 class="font-mono font-extrabold text-2xl text-[#051747]"><?= esc($kodeOrder) ?></h1>
-        <span class="inline-flex mt-2 px-4 py-1.5 rounded-full text-sm font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
+        <?php endif; ?>
+        <span class="inline-flex <?= $role === 'pelanggan' ? '' : 'mt-2 ' ?>px-4 py-1.5 rounded-full text-sm font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
             <?= esc(getOrderStatusLabel($orderStatusRow, $role)) ?>
         </span>
     </div>
     <?php if ($role === 'pelanggan'): ?>
         <a href="<?= site_url('order') ?>"
-            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
-            ← Pesanan Saya
+            class="inline-flex items-center gap-2 justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
+            <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4']) ?>
+            Pesanan Saya
         </a>
     <?php elseif ($role === 'admin'): ?>
         <a href="<?= site_url('list-pemesanan') ?>"
-            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
-            ← List Pemesanan
+            class="inline-flex items-center gap-2 justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
+            <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4']) ?>
+            List Pemesanan
         </a>
     <?php elseif ($role === 'owner'): ?>
         <a href="<?= site_url('list-pemesanan') ?>"
-            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
-            ← Pesanan
+            class="inline-flex items-center gap-2 justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
+            <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4']) ?>
+            Pesanan
         </a>
     <?php elseif ($role === 'keuangan'): ?>
         <a href="<?= site_url('verifikasi-dp') ?>"
-            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
-            ← Verifikasi Pembayaran
+            class="inline-flex items-center gap-2 justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
+            <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4']) ?>
+            Verifikasi Pembayaran
         </a>
     <?php elseif ($role === 'produksi'): ?>
         <a href="<?= site_url('antrian-desain') ?>"
-            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
-            ← Antrian Desain
+            class="inline-flex items-center gap-2 justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
+            <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4']) ?>
+            Antrian Desain
         </a>
     <?php else: ?>
         <a href="<?= site_url('dashboard') ?>"
-            class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
-            ← Beranda
+            class="inline-flex items-center gap-2 justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
+            <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4']) ?>
+            Beranda
         </a>
     <?php endif; ?>
 </div>
@@ -347,18 +362,22 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
         </div>
 
         <?php if ($attrs !== []): ?>
-            <div class="bg-indigo-50 border border-indigo-200 rounded-xl shadow-sm p-6">
-                <h2 class="font-bold text-indigo-900 mb-4 pb-3 border-b border-indigo-200">
-                    📋 Spesifikasi <?= esc((string) ($order['nama_produk'] ?? '')) ?>
+            <?php helper('eav'); ?>
+            <div class="order-eav-spec-card bg-indigo-50 border border-indigo-200 rounded-xl shadow-sm p-6">
+                <h2 class="order-eav-spec-title font-bold text-indigo-900 mb-4 pb-3 border-b border-indigo-200 flex items-center gap-2">
+                    <?= view('partials/order_detail_svg_icon', ['icon' => 'clipboard', 'class' => 'h-5 w-5']) ?>
+                    Spesifikasi <?= esc((string) ($order['nama_produk'] ?? '')) ?>
                 </h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <?php foreach ($attrs as $a): ?>
                         <?php
+                        $fieldKey  = (string) ($a['attribute_key'] ?? '');
                         $fieldType = (string) ($a['field_type'] ?? 'text');
-                        $fieldLabel = (string) ($a['field_label'] ?? $a['attribute_key'] ?? '');
+                        $fieldLabel = (string) ($a['field_label'] ?? $fieldKey);
                         $attrVal   = (string) ($a['attribute_val'] ?? '');
+                        $isTurutMengundang = $fieldKey === 'turut_mengundang';
                         ?>
-                        <div>
+                        <div class="<?= $isTurutMengundang ? 'sm:col-span-2' : '' ?>">
                             <p class="text-xs font-bold uppercase text-slate-500 mb-1"><?= esc($fieldLabel) ?></p>
                             <?php if ($fieldType === 'file' && $attrVal !== ''): ?>
                                 <a
@@ -368,8 +387,19 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                                     class="text-[#2E5CE6] underline text-sm">
                                     Lihat File
                                 </a>
+                            <?php elseif ($isTurutMengundang): ?>
+                                <?php $turutList = parseTurutMengundangList($attrVal); ?>
+                                <?php if ($turutList === []): ?>
+                                    <p class="text-sm text-slate-400">—</p>
+                                <?php else: ?>
+                                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-slate-700 pl-0.5">
+                                        <?php foreach ($turutList as $namaTurut): ?>
+                                            <li class="leading-relaxed"><?= esc($namaTurut) ?></li>
+                                        <?php endforeach; ?>
+                                    </ol>
+                                <?php endif; ?>
                             <?php else: ?>
-                                <p class="text-sm text-slate-700"><?= esc($attrVal) ?></p>
+                                <p class="text-sm text-slate-700 whitespace-pre-line"><?= esc($attrVal) ?></p>
                             <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
@@ -379,7 +409,10 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
             <div class="flex flex-wrap justify-between items-center gap-2 mb-2 pb-3 border-b border-slate-100">
-                <h2 class="font-bold text-[#051747]">🎨 Revisi Desain</h2>
+                <h2 class="font-bold text-[#051747] flex items-center gap-2">
+                    <?= view('partials/order_detail_svg_icon', ['icon' => 'palette', 'class' => 'h-5 w-5']) ?>
+                    Revisi Desain
+                </h2>
                 <p class="text-sm text-slate-600">
                     Sisa Kuota:
                     <span class="<?= $sisaKuota <= 1 ? 'text-red-600' : 'text-green-600' ?> font-bold">
@@ -389,8 +422,9 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
             </div>
             <?php if ($revisList !== []): ?>
                 <a href="<?= esc(site_url('revisi/history/' . $kodeOrder)) ?>"
-                    class="inline-block text-xs text-[#2E5CE6] hover:underline mb-4">
-                    Lihat riwayat lengkap →
+                    class="inline-flex items-center gap-1 text-xs text-[#2E5CE6] hover:underline mb-4">
+                    Lihat riwayat lengkap
+                    <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-3.5 w-3.5']) ?>
                 </a>
             <?php endif; ?>
             <?php if ($role === 'pelanggan' && $sisaKuota > 0 && $sisaKuota <= 1): ?>
@@ -679,7 +713,10 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
             </div>
         <?php elseif ($isCustom && $status === 'menunggu_konfirmasi_harga' && $role === 'pelanggan'): ?>
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-5">
-                <p class="font-bold text-amber-800">⏳ Menunggu Konfirmasi Harga</p>
+                <p class="font-bold text-amber-800 flex items-center gap-2">
+                    <?= view('partials/order_detail_svg_icon', ['icon' => 'waiting', 'class' => 'h-5 w-5']) ?>
+                    Menunggu Konfirmasi Harga
+                </p>
                 <p class="text-sm text-amber-700 mt-1">
                     Admin sedang meninjau spesifikasi custom Anda.
                     Estimasi kisaran harga akan diinformasikan maksimal 2 hari kerja setelah pengajuan pesanan custom diterima.
@@ -784,7 +821,10 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                 : 'Bukti Pelunasan Sedang Diverifikasi';
             ?>
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-5">
-                <p class="font-bold text-amber-800">⏳ <?= esc($verifKeuanganJudul) ?></p>
+                <p class="font-bold text-amber-800 flex items-center gap-2">
+                    <?= view('partials/order_detail_svg_icon', ['icon' => 'waiting', 'class' => 'h-5 w-5']) ?>
+                    <?= esc($verifKeuanganJudul) ?>
+                </p>
                 <p class="text-sm text-amber-700 mt-1">
                     Bukti transfer Anda sedang ditinjau tim keuangan.
                     Verifikasi dilakukan maksimal <strong>1 hari kerja</strong> (Senin–Jumat, tidak termasuk Sabtu &amp; Minggu).
@@ -794,7 +834,10 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
         <?php endif; ?>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-            <h2 class="font-bold text-[#051747] mb-4">📍 Status Pesanan</h2>
+            <h2 class="font-bold text-[#051747] mb-4 flex items-center gap-2">
+                <?= view('partials/order_detail_svg_icon', ['icon' => 'location', 'class' => 'h-5 w-5']) ?>
+                Status Pesanan
+            </h2>
             <div class="pl-1">
                 <?php foreach ($statusList as $key => $label): ?>
                     <?php
@@ -826,7 +869,10 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                                 <?= esc($label) ?>
                             </p>
                             <?php if ($isActive): ?>
-                                <span class="text-xs text-[#2E5CE6]">← Status saat ini</span>
+                                <span class="inline-flex items-center gap-1 text-xs text-[#2E5CE6]">
+                                    <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-3 w-3']) ?>
+                                    Status saat ini
+                                </span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -835,7 +881,10 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-            <h2 class="font-bold text-[#051747] mb-4 pb-3 border-b border-slate-100">💳 Pembayaran</h2>
+            <h2 class="font-bold text-[#051747] mb-4 pb-3 border-b border-slate-100 flex items-center gap-2">
+                <?= view('partials/order_detail_svg_icon', ['icon' => 'payment', 'class' => 'h-5 w-5']) ?>
+                Pembayaran
+            </h2>
 
             <?php
             $nominalSetengah  = nominalDpFromTotal((float) $totalHarga);
@@ -897,7 +946,10 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
 
                     <?php if ($dpMenungguVerif): ?>
                         <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-3">
-                            <p class="font-bold text-amber-800 text-sm">⏳ Bukti DP sedang diverifikasi</p>
+                            <p class="font-bold text-amber-800 text-sm flex items-center gap-2">
+                                <?= view('partials/order_detail_svg_icon', ['icon' => 'waiting', 'class' => 'h-4 w-4']) ?>
+                                Bukti DP sedang diverifikasi
+                            </p>
                             <?php if (!empty($dpRecord['tgl_upload'])): ?>
                                 <p class="text-xs text-amber-700 mt-1">
                                     Diunggah: <?= esc(date('d M Y H:i', strtotime((string) $dpRecord['tgl_upload']))) ?>
@@ -934,23 +986,27 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                             <?= csrf_field() ?>
                             <div class="bg-white border border-slate-200 rounded-xl p-5">
                                 <h3 class="font-bold text-[#051747] mb-4">Unggah Bukti Transfer DP</h3>
-                                <div class="bg-slate-50 rounded-lg p-3 mb-4">
-                                    <p class="text-sm font-semibold text-[#051747]">
+                                <div class="mb-4">
+                                    <p class="text-sm font-semibold text-[#051747] mb-3">
                                         Nominal DP (50%): Rp <?= esc(number_format($nominalSetengah, 0, ',', '.')) ?>
                                     </p>
-                                    <p class="text-xs text-slate-500 mt-1">
-                                        Transfer ke rekening Z'Plack: BCA 1234567890 a/n Z'Plack Percetakan
-                                    </p>
+                                    <p class="text-xs text-slate-500 mb-3">Transfer ke rekening berikut sebelum mengunggah bukti:</p>
+                                    <?= view('partials/payment_rekening_card') ?>
                                 </div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">
                                     Bukti Transfer (JPG/PNG/PDF, maks 2MB)
                                 </label>
                                 <input
+                                    id="inputBuktiDp"
                                     type="file"
                                     name="bukti_dp"
                                     accept=".jpg,.jpeg,.png,.pdf"
                                     required
                                     class="block w-full text-sm text-slate-500 border border-slate-200 rounded-xl px-3 py-2 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#051747] file:text-white hover:file:bg-[#2E5CE6] focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
+                                <div id="previewBuktiDp" class="hidden mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                    <img id="previewBuktiDpImg" src="" alt="Preview bukti DP" role="button" tabindex="0" title="Klik untuk memperbesar" class="hidden max-h-48 w-full mx-auto rounded-lg object-contain cursor-zoom-in transition-transform hover:scale-[1.01]">
+                                    <p id="previewBuktiDpPdf" class="hidden text-sm text-slate-600 text-center"></p>
+                                </div>
                                 <button
                                     type="submit"
                                     class="mt-4 bg-[#051747] text-white text-xs font-bold uppercase px-5 py-2.5 rounded-full hover:bg-[#2E5CE6] transition-colors">
@@ -1011,13 +1067,20 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                         data-confirm-variant="upload-bukti">
                         <?= csrf_field() ?>
                         <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Unggah Bukti Pelunasan</label>
+                        <p class="text-xs text-slate-500 mb-3">Transfer ke rekening berikut sebelum mengunggah bukti:</p>
+                        <?= view('partials/payment_rekening_card') ?>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 mt-4">Unggah Bukti Pelunasan</label>
                         <input
+                            id="inputBuktiPelunasan"
                             type="file"
                             name="bukti_tf"
                             accept=".jpg,.jpeg,.png,.pdf"
                             required
                             class="block w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#051747] file:text-white hover:file:bg-[#2E5CE6]">
+                        <div id="previewBuktiPelunasan" class="hidden mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <img id="previewBuktiPelunasanImg" src="" alt="Preview bukti pelunasan" role="button" tabindex="0" title="Klik untuk memperbesar" class="hidden max-h-48 w-full mx-auto rounded-lg object-contain cursor-zoom-in transition-transform hover:scale-[1.01]">
+                            <p id="previewBuktiPelunasanPdf" class="hidden text-sm text-slate-600 text-center"></p>
+                        </div>
                         <p class="text-xs text-slate-400 mt-1">JPG, PNG, PDF-Maks 2MB</p>
                         <button
                             type="submit"
@@ -1137,6 +1200,30 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
     </div>
 <?php endif; ?>
 
+<div
+    id="buktiBayarZoomModal"
+    class="hidden fixed inset-0 z-[90] bg-black/75 p-4 sm:p-6 flex items-center justify-center"
+    aria-hidden="true"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="buktiBayarZoomCaption">
+    <button
+        type="button"
+        id="buktiBayarZoomClose"
+        class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/15 text-white text-xl font-bold hover:bg-white/25 transition-colors"
+        aria-label="Tutup preview bukti">
+        ×
+    </button>
+    <div class="flex flex-col items-center max-w-[95vw]">
+        <img
+            id="buktiBayarZoomImg"
+            src=""
+            alt=""
+            class="max-w-full max-h-[82vh] rounded-2xl object-contain shadow-2xl bg-white/5">
+        <p id="buktiBayarZoomCaption" class="mt-3 text-sm text-white/90 text-center font-medium"></p>
+    </div>
+</div>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
@@ -1250,4 +1337,129 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
     </script>
     <?= view('partials/custom_estimasi_deadline_sync_script') ?>
 <?php endif; ?>
+<script>
+(function () {
+    const zoomModal = document.getElementById('buktiBayarZoomModal');
+    const zoomImg = document.getElementById('buktiBayarZoomImg');
+    const zoomCaption = document.getElementById('buktiBayarZoomCaption');
+    const zoomClose = document.getElementById('buktiBayarZoomClose');
+
+    function openBuktiZoom(src, alt) {
+        if (!zoomModal || !zoomImg || !src) {
+            return;
+        }
+        zoomImg.src = src;
+        zoomImg.alt = alt || 'Preview bukti pembayaran';
+        if (zoomCaption) {
+            zoomCaption.textContent = alt || '';
+        }
+        zoomModal.classList.remove('hidden');
+        zoomModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closeBuktiZoom() {
+        if (!zoomModal) {
+            return;
+        }
+        zoomModal.classList.add('hidden');
+        zoomModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    zoomClose?.addEventListener('click', closeBuktiZoom);
+    zoomModal?.addEventListener('click', function (event) {
+        if (event.target === zoomModal) {
+            closeBuktiZoom();
+        }
+    });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && zoomModal && !zoomModal.classList.contains('hidden')) {
+            closeBuktiZoom();
+        }
+    });
+
+    function bindBuktiZoom(imgEl) {
+        if (!imgEl) {
+            return;
+        }
+
+        imgEl.addEventListener('click', function () {
+            if (imgEl.classList.contains('hidden') || !imgEl.src) {
+                return;
+            }
+            openBuktiZoom(imgEl.src, imgEl.alt);
+        });
+
+        imgEl.addEventListener('keydown', function (event) {
+            if ((event.key === 'Enter' || event.key === ' ') && !imgEl.classList.contains('hidden') && imgEl.src) {
+                event.preventDefault();
+                openBuktiZoom(imgEl.src, imgEl.alt);
+            }
+        });
+    }
+
+    function bindBuktiBayarPreview(input, wrap, imgEl, pdfEl) {
+        if (!input || !wrap || !imgEl || !pdfEl) {
+            return;
+        }
+
+        bindBuktiZoom(imgEl);
+
+        input.addEventListener('change', function () {
+            const file = input.files && input.files[0];
+
+            if (!file) {
+                wrap.classList.add('hidden');
+                imgEl.classList.add('hidden');
+                pdfEl.classList.add('hidden');
+                imgEl.removeAttribute('src');
+                pdfEl.textContent = '';
+                return;
+            }
+
+            const isImage = /^image\/(jpe?g|png)$/i.test(file.type)
+                || /\.(jpe?g|png)$/i.test(file.name);
+            const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+
+            wrap.classList.remove('hidden');
+
+            if (isImage) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    imgEl.src = e.target.result;
+                    imgEl.classList.remove('hidden');
+                    pdfEl.classList.add('hidden');
+                    pdfEl.textContent = '';
+                };
+                reader.readAsDataURL(file);
+                return;
+            }
+
+            if (isPdf) {
+                imgEl.classList.add('hidden');
+                imgEl.removeAttribute('src');
+                pdfEl.textContent = '📄 ' + file.name;
+                pdfEl.classList.remove('hidden');
+                return;
+            }
+
+            wrap.classList.add('hidden');
+        });
+    }
+
+    bindBuktiBayarPreview(
+        document.getElementById('inputBuktiDp'),
+        document.getElementById('previewBuktiDp'),
+        document.getElementById('previewBuktiDpImg'),
+        document.getElementById('previewBuktiDpPdf')
+    );
+    bindBuktiBayarPreview(
+        document.getElementById('inputBuktiPelunasan'),
+        document.getElementById('previewBuktiPelunasan'),
+        document.getElementById('previewBuktiPelunasanImg'),
+        document.getElementById('previewBuktiPelunasanPdf')
+    );
+})();
+</script>
 <?= $this->endSection() ?>

@@ -93,6 +93,13 @@ class KatalogController extends BaseController
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }
 
+        helper('notification');
+        if (parseRupiahAmount($this->request->getPost('harga_dasar')) <= 0) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Harga dasar wajib diisi dan harus lebih dari 0.');
+        }
+
         $katalogModel = model(KatalogModel::class);
         $data         = $this->buildKatalogDataFromPost();
         $data['is_active'] = 1;
@@ -114,6 +121,14 @@ class KatalogController extends BaseController
                 ->withInput()
                 ->with('error', 'Gagal menambahkan produk. Silakan coba lagi.');
         }
+
+        helper('activity_log');
+        logActivity(
+            'tambah',
+            'katalog',
+            'Menambahkan katalog ' . (string) ($data['nama_produk'] ?? 'baru')
+            . ' — harga ' . formatLogRupiah((int) ($data['harga_dasar'] ?? 0))
+        );
 
         return redirect()->to(site_url('katalog/kelola'))
             ->with('success', 'Produk berhasil ditambahkan.');
@@ -197,6 +212,13 @@ class KatalogController extends BaseController
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }
 
+        helper('notification');
+        if (parseRupiahAmount($this->request->getPost('harga_dasar')) <= 0) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Harga dasar wajib diisi dan harus lebih dari 0.');
+        }
+
         $isActive = (int) $this->request->getPost('is_active') === 1 ? 1 : 0;
 
         $uploadResult = $this->processGambarUpload($existing['gambar'] ?? null);
@@ -219,6 +241,25 @@ class KatalogController extends BaseController
                 ->withInput()
                 ->with('error', 'Gagal memperbarui produk. Silakan coba lagi.');
         }
+
+        helper('activity_log');
+        $namaProduk = (string) ($existing['nama_produk'] ?? 'Produk');
+        $changes    = [];
+        if ((int) ($existing['harga_dasar'] ?? 0) !== (int) ($payload['harga_dasar'] ?? 0)) {
+            $changes[] = 'harga ' . formatLogRupiah((int) $existing['harga_dasar'])
+                . ' → ' . formatLogRupiah((int) $payload['harga_dasar']);
+        }
+        if ((int) ($existing['min_order'] ?? 0) !== (int) ($payload['min_order'] ?? 0)) {
+            $changes[] = 'min order ' . (int) $existing['min_order']
+                . ' → ' . (int) $payload['min_order'] . ' ' . (string) ($payload['satuan'] ?? '');
+        }
+        if ((int) ($existing['is_active'] ?? 1) !== $isActive) {
+            $changes[] = $isActive === 1 ? 'status diaktifkan' : 'status dinonaktifkan';
+        }
+        $keterangan = $changes === []
+            ? "Mengubah data katalog {$namaProduk}"
+            : "Mengubah katalog {$namaProduk} — " . implode(', ', $changes);
+        logActivity('ubah', 'katalog', $keterangan);
 
         return redirect()->to(site_url('katalog/kelola'))
             ->with('success', 'Produk berhasil diperbarui.');
@@ -258,6 +299,16 @@ class KatalogController extends BaseController
                 ->with('error', 'Gagal mengubah status produk.');
         }
 
+        helper('activity_log');
+        $namaProduk = (string) ($katalog['nama_produk'] ?? 'Produk');
+        logActivity(
+            'ubah',
+            'katalog',
+            $newStatus === 1
+                ? "Mengaktifkan katalog {$namaProduk}"
+                : "Menonaktifkan katalog {$namaProduk}"
+        );
+
         $msg = $newStatus === 1 ? 'Produk diaktifkan.' : 'Produk dinonaktifkan.';
 
         return redirect()->back()->with('success', $msg);
@@ -289,6 +340,14 @@ class KatalogController extends BaseController
             if ($orderCount > 0) {
                 $katalogModel->update($id, ['is_active' => 0]);
 
+                helper('activity_log');
+                logActivity(
+                    'ubah',
+                    'katalog',
+                    'Menonaktifkan katalog ' . (string) ($katalog['nama_produk'] ?? 'Produk')
+                    . ' (memiliki riwayat pesanan, tidak dapat dihapus)'
+                );
+
                 return redirect()->to(site_url('katalog/kelola'))
                     ->with('warning', 'Produk tidak dapat dihapus karena memiliki riwayat pesanan. Produk telah dinonaktifkan.');
             }
@@ -303,6 +362,13 @@ class KatalogController extends BaseController
             }
 
             $katalogModel->delete($id);
+
+            helper('activity_log');
+            logActivity(
+                'hapus',
+                'katalog',
+                'Menghapus katalog ' . (string) ($katalog['nama_produk'] ?? 'Produk')
+            );
 
             return redirect()->to(site_url('katalog/kelola'))
                 ->with('success', 'Produk berhasil dihapus.');
@@ -332,7 +398,6 @@ class KatalogController extends BaseController
         return [
             'nama_produk'          => 'required|max_length[150]',
             'kategori'             => 'required|in_list[desain_grafis,cetak_digital,cetak_offset,media_promosi]',
-            'harga_dasar'          => 'required|numeric|greater_than[0]',
             'kuota_revisi_default' => 'required|integer|greater_than[0]|less_than_equal_to[10]',
             'min_order'            => 'required|integer|greater_than[0]',
             'satuan'               => 'required|max_length[30]',
@@ -388,13 +453,13 @@ class KatalogController extends BaseController
      */
     private function buildKatalogDataFromPost(): array
     {
-        helper('deadline');
+        helper(['deadline', 'notification']);
         $estimasiHari = (int) $this->request->getPost('estimasi_hari');
 
         return [
             'nama_produk'          => $this->request->getPost('nama_produk'),
             'kategori'             => $this->request->getPost('kategori'),
-            'harga_dasar'          => $this->request->getPost('harga_dasar'),
+            'harga_dasar'          => parseRupiahAmount($this->request->getPost('harga_dasar')),
             'kuota_revisi_default' => $this->request->getPost('kuota_revisi_default'),
             'min_order'            => $this->request->getPost('min_order'),
             'satuan'               => $this->request->getPost('satuan'),

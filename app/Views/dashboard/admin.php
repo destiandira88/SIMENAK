@@ -13,20 +13,14 @@ $pendingKirim  = (int) ($cards[3]['value'] ?? 0);
 <?= $this->section('title') ?>Beranda<?= $this->endSection() ?>
 <?= $this->section('page_title') ?>Beranda Admin<?= $this->endSection() ?>
 
+<?= $this->section('banner_title') ?>Selamat Datang, Admin 👋<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Pantau seluruh aktivitas pesanan.<?= $this->endSection() ?>
+
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-
-<div class="mb-6">
-    <h2 class="text-2xl font-extrabold text-[#051747]">
-        Selamat Datang, Admin 👋
-    </h2>
-    <p class="mt-1 text-sm text-slate-500">
-        Pantau seluruh aktivitas pesanan.
-    </p>
-</div>
 
 <?= view('dashboard/_partials/summary_cards', ['cards' => $cards]) ?>
 
@@ -40,8 +34,9 @@ $pendingKirim  = (int) ($cards[3]['value'] ?? 0);
                         <span class="mr-1">⭐</span>
                         <?= esc((string) $pendingCustom) ?> pesanan custom menunggu konfirmasi harga
                     </p>
-                    <a href="<?= site_url('list-pemesanan?tab=menunggu-harga') ?>" class="inline-flex shrink-0 items-center justify-center rounded-lg bg-amber-800 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-amber-900">
-                        Tinjau →
+                    <a href="<?= site_url('list-pemesanan?tab=menunggu-harga') ?>" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-lg bg-amber-800 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-amber-900">
+                        Tinjau
+                        <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-3.5 w-3.5 shrink-0']) ?>
                     </a>
                 </div>
             <?php endif; ?>
@@ -51,8 +46,9 @@ $pendingKirim  = (int) ($cards[3]['value'] ?? 0);
                         <span class="mr-1">🚚</span>
                         <?= esc((string) $pendingKirim) ?> pesanan siap untuk dikirim
                     </p>
-                    <a href="<?= site_url('pengiriman') ?>" class="inline-flex shrink-0 items-center justify-center rounded-lg bg-amber-800 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-amber-900">
-                        Kelola →
+                    <a href="<?= site_url('pengiriman') ?>" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-lg bg-amber-800 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-amber-900">
+                        Kelola
+                        <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-3.5 w-3.5 shrink-0']) ?>
                     </a>
                 </div>
             <?php endif; ?>

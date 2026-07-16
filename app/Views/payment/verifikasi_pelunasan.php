@@ -10,19 +10,21 @@
 <?= $this->section('title') ?><?= esc($title ?? 'Verifikasi Pelunasan') ?><?= $this->endSection() ?>
 <?= $this->section('page_title') ?><?= esc($page_title ?? 'Verifikasi Pelunasan') ?><?= $this->endSection() ?>
 
-<?= $this->section('content') ?>
+<?= $this->section('banner_title') ?>Verifikasi Pelunasan<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Daftar bukti pelunasan yang menunggu verifikasi<?= $this->endSection() ?>
 
-<div class="mb-6">
-    <h2 class="text-xl font-extrabold text-[#051747]">Verifikasi Pelunasan</h2>
-    <p class="text-sm text-slate-500 mt-1">Daftar bukti pelunasan yang menunggu verifikasi</p>
-</div>
+<?= $this->section('styles') ?>
+<?= view('partials/admin_data_table_styles') ?>
+<?= $this->endSection() ?>
+
+<?= $this->section('content') ?>
 
 <?php if (empty($payments)): ?>
     <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-8 text-center">
         <p class="text-slate-500 text-sm">Tidak ada pelunasan yang perlu diverifikasi</p>
     </div>
 <?php else: ?>
-    <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+    <div class="admin-data-table-wrap">
         <div class="table-responsive">
             <table class="w-full text-sm">
                 <thead>
@@ -32,19 +34,26 @@
                         <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
                         <th class="px-4 py-3 text-left font-semibold">Nominal</th>
                         <th class="px-4 py-3 text-left font-semibold">Tgl Unggah</th>
+                        <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="deadline">
+                            Deadline Pengerjaan<span class="sort-icon">↕</span>
+                        </th>
                         <th class="px-4 py-3 text-left font-semibold">Bukti</th>
                         <th class="px-4 py-3 text-left font-semibold">Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="verifikasiPelunasanBody">
+                    <?php helper('deadline'); ?>
                     <?php foreach ($payments as $index => $p): ?>
                         <?php
                         $idPayment = (int) ($p['id_payment'] ?? 0);
                         $buktiFile = (string) ($p['bukti_tf'] ?? '');
                         $kodeOrder = (string) ($p['kode_order'] ?? '-');
                         $nominal   = (int) ($p['nominal'] ?? 0);
+                        $deadlineRaw = trim((string) ($p['deadline_produksi'] ?? ''));
+                        $tsDeadline  = $deadlineRaw !== '' ? strtotime($deadlineRaw) : 0;
                         ?>
-                        <tr class="border-b border-slate-100 hover:bg-[#F8FAFF]">
+                        <tr class="data-table-row border-b border-slate-100 hover:bg-[#F8FAFF]"
+                            data-deadline="<?= esc((string) $tsDeadline) ?>">
                             <td class="px-4 py-3 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3 font-mono font-semibold text-[#051747]">
                                 <?= esc($kodeOrder) ?>
@@ -63,6 +72,9 @@
                                     ? esc(date('d M Y H:i', strtotime((string) $p['tgl_upload'])))
                                     : '-' ?>
                             </td>
+                            <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
+                                <?= $deadlineRaw !== '' ? esc(formatTanggalId($deadlineRaw)) : '-' ?>
+                            </td>
                             <td class="px-4 py-3">
                                 <?php if ($buktiFile !== ''): ?>
                                     <a href="<?= esc(base_url('uploads/bukti_bayar/' . $buktiFile)) ?>"
@@ -76,32 +88,32 @@
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3">
-                                <div class="flex flex-col gap-2 min-w-[200px]">
+                                <div class="flex items-center gap-2 min-w-[280px]">
                                     <form method="post"
                                         action="<?= esc(site_url('verifikasi-pelunasan/' . $idPayment . '/acc')) ?>"
-                                        class="inline js-action-confirm-form"
+                                        class="shrink-0 js-action-confirm-form"
                                         data-confirm-variant="payment-accept"
                                         data-confirm-kode="<?= esc($kodeOrder) ?>"
                                         data-confirm-nominal="<?= esc((string) $nominal) ?>"
                                         data-confirm-jenis="Pelunasan">
                                         <?= csrf_field() ?>
                                         <button type="submit"
-                                            class="bg-emerald-500 text-white rounded-full text-xs font-bold px-3 py-1 hover:bg-emerald-600 transition-colors">
+                                            class="bg-emerald-500 text-white rounded-full text-xs font-bold px-3 py-1.5 hover:bg-emerald-600 transition-colors whitespace-nowrap">
                                             ACC
                                         </button>
                                     </form>
                                     <form method="post"
                                         action="<?= esc(site_url('verifikasi-pelunasan/' . $idPayment . '/tolak')) ?>"
-                                        class="flex flex-wrap items-center gap-2 js-action-confirm-form"
+                                        class="flex flex-1 items-center gap-2 min-w-0 js-action-confirm-form"
                                         data-confirm-variant="payment-reject"
                                         data-confirm-kode="<?= esc($kodeOrder) ?>"
                                         data-confirm-jenis="Pelunasan">
                                         <?= csrf_field() ?>
                                         <input type="text" name="catatan_tolak" required
                                             placeholder="Alasan penolakan..."
-                                            class="border border-slate-200 rounded-lg px-2 py-1 text-xs flex-1 min-w-[120px] focus:border-[#2E5CE6] focus:outline-none">
+                                            class="flex-1 min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:border-[#2E5CE6] focus:outline-none">
                                         <button type="submit"
-                                            class="bg-red-500 text-white rounded-full text-xs font-bold px-3 py-1 hover:bg-red-600 transition-colors shrink-0">
+                                            class="shrink-0 bg-red-500 text-white rounded-full text-xs font-bold px-3 py-1.5 hover:bg-red-600 transition-colors whitespace-nowrap">
                                             Tolak
                                         </button>
                                     </form>
@@ -115,4 +127,15 @@
     </div>
 <?php endif; ?>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+    window.adminDataTableConfig = {
+        tbodyId: 'verifikasiPelunasanBody',
+        rowSelector: 'tr.data-table-row',
+        enableSort: true,
+    };
+</script>
+<?= view('partials/admin_data_table_scripts') ?>
 <?= $this->endSection() ?>

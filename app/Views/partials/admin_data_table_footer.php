@@ -38,11 +38,13 @@ $entryOptions  = $entryOptions ?? null;
 </div>
 
 <div id="<?= esc($paginationId) ?>" class="hidden items-center justify-between px-4 py-3 border-t border-slate-100">
-    <button type="button" id="<?= esc($prevPageId) ?>" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-        ← Sebelumnya
+    <button type="button" id="<?= esc($prevPageId) ?>" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+        <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-3.5 w-3.5 shrink-0']) ?>
+        Sebelumnya
     </button>
     <span id="<?= esc($pageInfoId) ?>" class="text-xs text-slate-500"></span>
-    <button type="button" id="<?= esc($nextPageId) ?>" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-        Selanjutnya →
+    <button type="button" id="<?= esc($nextPageId) ?>" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+        Selanjutnya
+        <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-3.5 w-3.5 shrink-0']) ?>
     </button>
 </div>

@@ -1,6 +1,10 @@
+<?php helper('notification'); ?>
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('title') ?>Manajemen Pengiriman<?= $this->endSection() ?>
 <?= $this->section('page_title') ?>Manajemen Pengiriman<?= $this->endSection() ?>
+
+<?= $this->section('banner_title') ?>Manajemen Pengiriman<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Pantau pesanan yang siap dikirim atau menunggu konfirmasi pengambilan.<?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
@@ -8,39 +12,57 @@
 
 <?= $this->section('content') ?>
 
-<div class="mb-6">
-    <h2 class="text-xl font-extrabold text-[#051747]">Manajemen Pengiriman</h2>
-    <p class="text-sm text-slate-500 mt-1">
-        Pantau pesanan yang siap dikirim atau menunggu konfirmasi pengambilan.
-    </p>
+<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end mb-4">
+    <label for="pengirimanSearch" class="sr-only">Cari pengiriman</label>
+    <div class="search-control w-full sm:w-auto">
+        <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+        </svg>
+        <input
+            id="pengirimanSearch"
+            type="search"
+            placeholder="Cari kode, pelanggan, jenis, status, alamat..."
+            autocomplete="off">
+    </div>
 </div>
 
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="admin-data-table-wrap">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
                 <tr class="bg-[#051747] text-white text-xs uppercase">
                     <th class="px-4 py-3 text-left font-semibold w-12">No</th>
-                    <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
-                    <th class="px-4 py-3 text-left font-semibold">Pelanggan</th>
-                    <th class="px-4 py-3 text-left font-semibold">Jenis</th>
-                    <th class="px-4 py-3 text-left font-semibold">Status</th>
-                    <th class="px-4 py-3 text-left font-semibold">Metode</th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="kode">
+                        Kode Pesanan<span class="sort-icon">↕</span>
+                    </th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="pelanggan">
+                        Pelanggan<span class="sort-icon">↕</span>
+                    </th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="jenis">
+                        Jenis<span class="sort-icon">↕</span>
+                    </th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="status">
+                        Status<span class="sort-icon">↕</span>
+                    </th>
+                    <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="metode">
+                        Metode<span class="sort-icon">↕</span>
+                    </th>
                     <th class="px-4 py-3 text-left font-semibold min-w-[180px]">Alamat Tujuan</th>
                     <th class="px-4 py-3 text-left font-semibold">Aksi</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="pengirimanBody">
                 <?php if (empty($orders)): ?>
-                    <tr>
+                    <tr id="emptyDataRow">
                         <td colspan="8" class="py-12 text-center text-slate-500 text-sm">
                             Tidak ada pesanan dalam antrian pengiriman.
                         </td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($orders as $index => $o):
-                        helper('notification');
                         $idOrder      = (int) ($o['id_order'] ?? 0);
+                        $kodeOrder    = (string) ($o['kode_order'] ?? '');
+                        $namaPelanggan = (string) ($o['nama_pelanggan'] ?? '');
                         $status       = (string) ($o['status'] ?? '');
                         $jenis        = (string) ($o['jenis_pelanggan'] ?? 'perseorangan');
                         $metode       = (string) ($o['metode_pengiriman'] ?? 'kurir');
@@ -48,6 +70,13 @@
                         $beforeShip   = isPelunasanSebelumKirim($o);
                         $ambilSendiri = $metode === 'ambil_sendiri';
                         $alamatKirim  = trim((string) ($o['alamat_kirim'] ?? ''));
+                        $jenisLabel   = $jenis === 'perusahaan' ? 'perusahaan' : 'perseorangan';
+                        $metodeLabel  = str_replace('_', ' ', $metode);
+                        $statusLabel  = getOrderStatusLabel($o);
+                        $searchText   = mb_strtolower(trim(
+                            $kodeOrder . ' ' . $namaPelanggan . ' ' . $jenisLabel . ' ' . $jenis
+                            . ' ' . $status . ' ' . $statusLabel . ' ' . $metodeLabel . ' ' . $metode . ' ' . $alamatKirim
+                        ));
                         $alamatSingkat = '';
                         if (!$ambilSendiri && $alamatKirim !== '') {
                             $alamatSingkat = mb_strlen($alamatKirim) > 55
@@ -55,23 +84,29 @@
                                 : $alamatKirim;
                         }
                     ?>
-                        <tr class="border-b border-slate-100 hover:bg-[#F8FAFF] transition-colors">
-                            <td class="px-4 py-3 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
-                            <td class="px-4 py-3 font-semibold text-[#051747]"><?= esc($o['kode_order'] ?? '') ?></td>
-                            <td class="px-4 py-3 text-slate-600"><?= esc($o['nama_pelanggan'] ?? '') ?></td>
+                        <tr
+                            class="data-table-row border-b border-slate-100 hover:bg-[#F8FAFF] transition-colors"
+                            data-search="<?= esc($searchText) ?>"
+                            data-kode="<?= esc(mb_strtolower($kodeOrder)) ?>"
+                            data-pelanggan="<?= esc(mb_strtolower($namaPelanggan)) ?>"
+                            data-jenis="<?= esc($jenisLabel) ?>"
+                            data-status="<?= esc(mb_strtolower($status)) ?>"
+                            data-metode="<?= esc(mb_strtolower($metode)) ?>">
+                            <td class="row-num px-4 py-3 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
+                            <td class="px-4 py-3 font-semibold text-[#051747]"><?= esc($kodeOrder) ?></td>
+                            <td class="px-4 py-3 text-slate-600"><?= esc($namaPelanggan) ?></td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold <?= $jenis === 'perusahaan' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700' ?>">
                                     <?= $jenis === 'perusahaan' ? 'Perusahaan' : 'Perseorangan' ?>
                                 </span>
                             </td>
                             <td class="px-4 py-3">
-                                <?php helper('notification'); ?>
                                 <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
-                                    <?= esc(getOrderStatusLabel($o)) ?>
+                                    <?= esc($statusLabel) ?>
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-slate-600 text-xs capitalize">
-                                <?= esc(str_replace('_', ' ', $metode)) ?>
+                                <?= esc($metodeLabel) ?>
                             </td>
                             <td class="px-4 py-3 text-xs max-w-[220px]">
                                 <?php if ($ambilSendiri): ?>
@@ -84,7 +119,7 @@
                                     </p>
                                     <?php if (mb_strlen($alamatKirim) > 55): ?>
                                         <a
-                                            href="<?= esc(site_url('order/detail/' . ($o['kode_order'] ?? ''))) ?>"
+                                            href="<?= esc(site_url('order/detail/' . $kodeOrder)) ?>"
                                             class="inline-block mt-1 text-[10px] font-semibold text-[#2E5CE6] hover:underline">
                                             Lihat lengkap
                                         </a>
@@ -179,10 +214,47 @@
                             </td>
                         </tr>
                     <?php endforeach; ?>
+                    <tr id="emptyFilterRow" class="hidden">
+                        <td colspan="8" class="py-12 text-center text-slate-500 text-sm">
+                            Tidak ada data yang cocok dengan pencarian.
+                        </td>
+                    </tr>
                 <?php endif; ?>
             </tbody>
         </table>
     </div>
+
+    <?php if (!empty($orders)): ?>
+        <?= view('partials/admin_data_table_footer', [
+            'entriesId'     => 'pengirimanEntries',
+            'entriesInfoId' => 'pengirimanEntriesInfo',
+            'paginationId'  => 'pengirimanPagination',
+            'prevPageId'    => 'pengirimanPrevPage',
+            'nextPageId'    => 'pengirimanNextPage',
+            'pageInfoId'    => 'pengirimanPageInfo',
+        ]) ?>
+    <?php endif; ?>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<?php if (!empty($orders)): ?>
+<script>
+    window.adminDataTableConfig = {
+        searchId: 'pengirimanSearch',
+        tbodyId: 'pengirimanBody',
+        emptyFilterRowId: 'emptyFilterRow',
+        entriesId: 'pengirimanEntries',
+        entriesInfoId: 'pengirimanEntriesInfo',
+        paginationId: 'pengirimanPagination',
+        prevPageId: 'pengirimanPrevPage',
+        nextPageId: 'pengirimanNextPage',
+        pageInfoId: 'pengirimanPageInfo',
+        rowSelector: 'tr.data-table-row',
+        enableSort: true,
+    };
+</script>
+<?= view('partials/admin_data_table_scripts') ?>
+<?php endif; ?>
 <?= $this->endSection() ?>

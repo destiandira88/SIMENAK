@@ -257,8 +257,10 @@ $csrfField  = config('Security')->tokenName;
         if (count > 0) {
             bellBadge.textContent = count > 99 ? '99+' : String(count);
             bellBadge.classList.remove('hidden');
+            bellBadge.classList.add('is-pulsing');
         } else {
             bellBadge.classList.add('hidden');
+            bellBadge.classList.remove('is-pulsing');
         }
     };
 
