@@ -4,9 +4,6 @@
 # CI4 writable (cache, logs, session)
 writable/
 
-# CI4 system folder (framework core — install via Composer)
-system/
-
 # Vendor (Composer dependencies)
 vendor/
 
