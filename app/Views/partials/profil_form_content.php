@@ -33,7 +33,7 @@
                      class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
                  <p class="text-xs text-slate-400 mt-1">Hanya huruf, spasi, tanda kutip, atau titik (3–100 karakter).</p>
              </div>
-    
+
              <div>
                  <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Email</label>
                  <input type="email" value="<?= esc((string) ($user['email'] ?? '')) ?>" disabled
@@ -64,6 +64,93 @@
                  Simpan Perubahan
              </button>
          </form>
+     </div>
+
+     <?php
+        $isGoogleAkun = ! empty($user['google_id']);
+        ?>
+     <div class="<?= esc($sectionClass) ?>">
+         <h3 class="text-base font-bold text-[#051747] mb-1">Keamanan</h3>
+         <p class="text-sm text-slate-500 mb-4">Kelola keamanan akun Anda.</p>
+
+         <?php if ($isGoogleAkun): ?>
+             <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 space-y-2">
+                 <p>Akun ini terhubung dengan Google. Untuk mengubah password, gunakan fitur Lupa Password pada halaman utama.</p>
+                 <a href="<?= esc(site_url('lupa-sandi')) ?>"
+                     class="inline-flex font-semibold text-[#2E5CE6] hover:underline">
+                     Buka Lupa Password
+                 </a>
+             </div>
+         <?php else: ?>
+             <form id="profilPasswordForm" method="post" action="<?= esc(site_url('profil/ubah-password')) ?>" class="space-y-4" novalidate>
+                 <?= csrf_field() ?>
+
+                 <div id="profilPasswordAlert" class="hidden rounded-xl px-4 py-3 text-sm font-medium"></div>
+
+                 <div>
+                     <label for="profil_password_lama" class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Password Saat Ini</label>
+                     <div class="relative">
+                         <input id="profil_password_lama" type="password" name="password_lama" required autocomplete="current-password"
+                             class="w-full border border-slate-200 rounded-xl px-3 py-2.5 pr-11 text-sm bg-white focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"
+                             placeholder="Masukkan password saat ini">
+                         <button type="button" data-toggle-password="profil_password_lama"
+                             class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-[#2E5CE6] transition-colors"
+                             aria-label="Tampilkan password">
+                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                             </svg>
+                         </button>
+                     </div>
+                 </div>
+
+                 <div>
+                     <label for="profil_password_baru" class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Password Baru</label>
+                     <div class="relative">
+                         <input id="profil_password_baru" type="password" name="password" required minlength="8" autocomplete="new-password"
+                             class="w-full border border-slate-200 rounded-xl px-3 py-2.5 pr-11 text-sm bg-white focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"
+                             placeholder="Minimal 8 karakter">
+                         <button type="button" data-toggle-password="profil_password_baru"
+                             class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-[#2E5CE6] transition-colors"
+                             aria-label="Tampilkan password">
+                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                             </svg>
+                         </button>
+                     </div>
+                     <p class="text-xs text-slate-400 mt-1">Minimal 8 karakter.</p>
+                 </div>
+
+                 <div>
+                     <label for="profil_password_confirm" class="block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">Konfirmasi Password Baru</label>
+                     <div class="relative">
+                         <input id="profil_password_confirm" type="password" name="password_confirm" required minlength="8" autocomplete="new-password"
+                             class="w-full border border-slate-200 rounded-xl px-3 py-2.5 pr-11 text-sm bg-white focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"
+                             placeholder="Ulangi password baru">
+                         <button type="button" data-toggle-password="profil_password_confirm"
+                             class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-[#2E5CE6] transition-colors"
+                             aria-label="Tampilkan password">
+                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                             </svg>
+                         </button>
+                     </div>
+                 </div>
+
+                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
+                     <button type="submit" id="profilPasswordSubmitBtn"
+                         class="bg-[#051747] text-white rounded-full px-5 py-2.5 text-sm font-bold uppercase hover:bg-[#2E5CE6] transition-colors">
+                         Ubah Password
+                     </button>
+                     <a href="<?= esc(site_url('lupa-sandi')) ?>"
+                         class="text-sm font-semibold text-[#2E5CE6] hover:underline">
+                         Lupa password saat ini?
+                     </a>
+                 </div>
+             </form>
+         <?php endif; ?>
      </div>
 
      <?php if ($isKerjasama): ?>

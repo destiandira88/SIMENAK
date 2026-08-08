@@ -225,5 +225,57 @@ $isKerjasamaProfil = pelangganIsKerjasamaPerusahaan($pelanggan);
                 }
             });
         }
+
+        const passwordForm = document.getElementById('profilPasswordForm');
+        const passwordAlert = document.getElementById('profilPasswordAlert');
+
+        const showPasswordAlert = (message) => {
+            if (!passwordAlert) return;
+            passwordAlert.textContent = message;
+            passwordAlert.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800');
+            passwordAlert.classList.add('bg-[#FEE2E2]', 'text-[#991B1B]');
+        };
+
+        document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const inputId = btn.getAttribute('data-toggle-password');
+                const input = inputId ? document.getElementById(inputId) : null;
+                if (!input) return;
+                const show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                btn.setAttribute('aria-label', show ? 'Sembunyikan password' : 'Tampilkan password');
+            });
+        });
+
+        if (passwordForm) {
+            passwordForm.addEventListener('submit', (event) => {
+                const lama = document.getElementById('profil_password_lama')?.value || '';
+                const baru = document.getElementById('profil_password_baru')?.value || '';
+                const confirm = document.getElementById('profil_password_confirm')?.value || '';
+
+                if (!lama) {
+                    event.preventDefault();
+                    showPasswordAlert('Password saat ini wajib diisi.');
+                    return;
+                }
+
+                if (baru.length < 8) {
+                    event.preventDefault();
+                    showPasswordAlert('Password baru minimal 8 karakter.');
+                    return;
+                }
+
+                if (baru !== confirm) {
+                    event.preventDefault();
+                    showPasswordAlert('Konfirmasi password baru tidak sama.');
+                    return;
+                }
+
+                if (baru === lama) {
+                    event.preventDefault();
+                    showPasswordAlert('Password baru harus berbeda dari password saat ini.');
+                }
+            });
+        }
     })();
 </script>

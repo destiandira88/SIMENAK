@@ -109,6 +109,7 @@ $menusByRole = [
         ['label' => 'Pesanan',            'url' => 'list-pemesanan',     'icon' => 'clipboard'],
         ['label' => 'Katalog',            'url' => 'katalog/kelola',     'icon' => 'grid'],
         ['label' => 'Pengguna',           'url' => 'pengguna',           'icon' => 'users'],
+        ['label' => 'Pengiriman',         'url' => 'pengiriman',         'icon' => 'truck'],
         ['label' => 'Riwayat Pembayaran', 'url' => 'riwayat-pembayaran', 'icon' => 'clock'],
         ['label' => 'Riwayat Aktivitas',  'url' => 'riwayat-aktivitas',  'icon' => 'shield'],
         ['label' => 'Manajemen Desain',   'url' => 'manajemen-desain',   'icon' => 'edit'],
@@ -155,7 +156,7 @@ $iconSvg = static function (string $icon): string {
         'users'        => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>',
         'shield'       => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>',
         'star'         => '<path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>',
-        'truck'        => '<path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0h4m-4 0a2 2 0 11-4 0m4 0a2 2 0 10-4 0M4 16h4m0 0a2 2 0 11-4 0m4 0a2 2 0 10-4 0"/>',
+        'truck'        => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 6.5h9.5V16H3V6.5zm9.5 3H16l3.5 3.5V16h-7V9.5zm0-3h2.5l2 3H12.5V6.5zM6.5 17.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm11 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>',
         'chart'        => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>',
         'wallet'       => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>',
         'check-circle' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
@@ -189,6 +190,7 @@ $iconSvg = static function (string $icon): string {
     </script>
     <?= view('partials/csrf_meta') ?>
     <title><?= esc($this->renderSection('title') ?: 'SIMENAK') ?>-Z'Plack</title>
+    <link rel="icon" type="image/png" href="<?= base_url('assets/favicon1.png') ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -231,15 +233,56 @@ $iconSvg = static function (string $icon): string {
             width: var(--sidebar-width-collapsed);
         }
 
-        html.sidebar-collapsed .sidebar-brand-detail,
         html.sidebar-collapsed .sidebar-label,
         html.sidebar-collapsed .sidebar-chevron {
             display: none;
         }
 
         html.sidebar-collapsed .sidebar-brand {
-            padding-left: 1rem;
-            padding-right: 1rem;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-left: 18px;
+            padding-right: 18px;
+        }
+
+        /* PNG punya padding transparan besar (konten 68..1716 x 631..1184 dari 2000px)
+           — crop supaya lebar visual = 70% / max 180px */
+        .sidebar-logo-frame {
+            position: relative;
+            display: block;
+            width: 70%;
+            max-width: 180px;
+            aspect-ratio: 1649 / 554;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .sidebar-logo-img {
+            position: absolute;
+            width: calc(100% * 2000 / 1649);
+            height: auto;
+            max-width: none;
+            left: calc(-100% * 68 / 1649);
+            /* top% mengacu tinggi frame (W*554/1649), jadi -631/554 */
+            top: calc(-100% * 631 / 554);
+        }
+
+        html.sidebar-collapsed .sidebar-logo-frame {
+            width: 40px;
+            max-width: 40px;
+            aspect-ratio: 1;
+        }
+
+        html.sidebar-collapsed .sidebar-logo-img {
+            width: calc(40px * 2000 / 554);
+            left: calc(-40px * 68 / 554);
+            top: calc(-40px * 631 / 554);
         }
 
         html.sidebar-collapsed .sidebar-link,
@@ -294,7 +337,7 @@ $iconSvg = static function (string $icon): string {
                 transform .28s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .sidebar-link > svg:not(.sidebar-chevron) {
+        .sidebar-link>svg:not(.sidebar-chevron) {
             flex-shrink: 0;
             transition: transform .28s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -309,8 +352,8 @@ $iconSvg = static function (string $icon): string {
             transform: scale(1.06);
         }
 
-        .sidebar-link:not(.active):hover > svg:not(.sidebar-chevron),
-        .sidebar-link-parent:not(.active):hover > svg:not(.sidebar-chevron) {
+        .sidebar-link:not(.active):hover>svg:not(.sidebar-chevron),
+        .sidebar-link-parent:not(.active):hover>svg:not(.sidebar-chevron) {
             transform: scale(1.08);
         }
 
@@ -679,7 +722,9 @@ $iconSvg = static function (string $icon): string {
         }
 
         @keyframes notifBadgePulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 opacity: 1;
                 transform: scale(1);
             }
@@ -1101,11 +1146,11 @@ $iconSvg = static function (string $icon): string {
             border-color: rgba(131, 141, 244, 0.28) !important;
         }
 
-        html[data-theme="dark"] .peer:checked ~ .peer-checked\:bg-blue-50 {
+        html[data-theme="dark"] .peer:checked~.peer-checked\:bg-blue-50 {
             background-color: rgba(131, 141, 244, 0.12) !important;
         }
 
-        html[data-theme="dark"] .peer:checked ~ .peer-checked\:border-\[\#051747\] {
+        html[data-theme="dark"] .peer:checked~.peer-checked\:border-\[\#051747\] {
             border-color: #838df4 !important;
         }
 
@@ -1316,12 +1361,9 @@ $iconSvg = static function (string $icon): string {
 
     <!-- Sidebar -->
     <aside id="mainSidebar" class="sidebar fixed left-0 top-0 bottom-0 z-40 flex flex-col border-r" style="border-color:var(--border);">
-        <div class="sidebar-brand px-6 py-6 border-b" style="border-color:var(--border);">
-            <a href="<?= site_url('dashboard') ?>" class="block" title="Z'Plack SIMENAK">
-                <div class="sidebar-brand-detail">
-                    <span class="text-xl font-extrabold tracking-tight" style="color:var(--navy);">Z'PLACK</span>
-                    <span class="block text-sm font-bold tracking-widest" style="color:#6b9fff;">SIMENAK</span>
-                </div>
+        <div class="sidebar-brand py-6 border-b" style="border-color:var(--border);">
+            <a href="<?= site_url('dashboard') ?>" class="sidebar-logo-frame" title="SIMENAK">
+                <img src="<?= base_url('assets/simenak_logo.png') ?>" alt="SIMENAK" class="sidebar-logo-img">
             </a>
         </div>
 
@@ -1392,9 +1434,9 @@ $iconSvg = static function (string $icon): string {
                     aria-expanded="true"
                     title="Ciutkan sidebar">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" d="M4 7h11"/>
-                        <path stroke-linecap="round" d="M4 12h16"/>
-                        <path stroke-linecap="round" d="M4 17h8"/>
+                        <path stroke-linecap="round" d="M4 7h11" />
+                        <path stroke-linecap="round" d="M4 12h16" />
+                        <path stroke-linecap="round" d="M4 17h8" />
                     </svg>
                 </button>
                 <span class="topbar-divider" aria-hidden="true"></span>
@@ -1410,10 +1452,10 @@ $iconSvg = static function (string $icon): string {
                     title="Ubah tema tampilan"
                     aria-label="Ubah tema tampilan">
                     <svg id="themeIconSun" class="hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M3 12h2m14 0h2M4.22 19.78l1.42-1.42M17.36 6.64l1.42-1.42M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M3 12h2m14 0h2M4.22 19.78l1.42-1.42M17.36 6.64l1.42-1.42M12 8a4 4 0 100 8 4 4 0 000-8z" />
                     </svg>
                     <svg id="themeIconMoon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
                     </svg>
                 </button>
 

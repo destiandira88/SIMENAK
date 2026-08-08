@@ -17,6 +17,7 @@ $routes->post('login-ajax', 'AuthController::loginAjax');
 $routes->get('register', 'AuthController::register');
 $routes->post('register', 'AuthController::registerProcess');
 $routes->post('register-ajax', 'AuthController::registerAjax');
+$routes->get('lupa-sandi', 'AuthController::showForgotPasswordForm');
 $routes->post('lupa-sandi', 'AuthController::processForgotPassword');
 $routes->get('atur-ulang-sandi', 'AuthController::showResetPasswordForm');
 $routes->post('atur-ulang-sandi', 'AuthController::processResetPassword');
@@ -27,6 +28,8 @@ $routes->post('reset-password', 'AuthController::processResetPassword');
 $routes->get('check-session', 'AuthController::checkSession');
 $routes->get('csrf-sync', 'AuthController::csrfSync');
 $routes->get('logout', 'AuthController::logout');
+$routes->get('buat-password-baru', 'AuthController::showBuatPasswordBaru');
+$routes->post('buat-password-baru', 'AuthController::processBuatPasswordBaru');
 $routes->get('auth/google', 'AuthController::redirectToGoogle');
 $routes->get('auth/google/callback', 'AuthController::googleCallback');
 
@@ -86,6 +89,7 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->get('pesanan-saya/(:segment)', 'OrderController::redirectPesananSayaDetail/$1');
         $routes->get('profil', 'ProfilController::index');
         $routes->post('profil', 'ProfilController::update');
+        $routes->post('profil/ubah-password', 'ProfilController::ubahPassword');
         $routes->post('revisi/acc', 'RevisiController::acc');
         $routes->post('revisi/ajukan', 'RevisiController::ajukan');
         $routes->post('pesanan/konfirmasi-diterima', 'PengirimanController::konfirmasiDiterimaPelanggan');
@@ -113,6 +117,11 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->post('pengguna/(:num)/toggle-status', 'ProfilController::toggleStatusStaff/$1');
     });
 
+    // ─── Admin + Owner: lihat pengiriman (Owner read-only di controller/view) ──
+    $routes->group('', ['filter' => 'role:admin,owner'], static function ($routes) {
+        $routes->get('pengiriman', 'PengirimanController::index');
+    });
+
     // ─── Admin ─────────────────────────────────────────────────────────────────
     $routes->group('', ['filter' => 'role:admin'], static function ($routes) {
         $routes->post('list-pemesanan/(:num)/status', 'OrderController::updateStatus/$1');
@@ -120,7 +129,6 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->get('custom-order', 'CustomOrderController::redirectToList');
         $routes->post('list-pemesanan/set-harga', 'CustomOrderController::setHarga');
         $routes->post('custom-order/set-harga', 'CustomOrderController::setHarga');
-        $routes->get('pengiriman', 'PengirimanController::index');
         $routes->post('pengiriman/(:num)', 'PengirimanController::proses/$1');
     });
 

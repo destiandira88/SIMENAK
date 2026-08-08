@@ -139,7 +139,7 @@ nama_perusahaan VARCHAR(150) NOT NULL
 no_npwp VARCHAR(30)
 dokumen_npwp VARCHAR(255)
 dokumen_ktp_pic VARCHAR(255)
-status ENUM('pending','verified','rejected') DEFAULT 'pending'
+status ENUM('verified','rejected') NOT NULL DEFAULT 'verified'
 catatan_admin TEXT
 tgl_pengajuan DATETIME DEFAULT CURRENT_TIMESTAMP
 tgl_verifikasi DATETIME

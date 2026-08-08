@@ -22,6 +22,7 @@
         })();
     </script>
     <title><?= esc($title ?? 'Bukti Pembayaran Pelunasan') ?>-<?= esc((string) ($order['kode_order'] ?? '')) ?></title>
+    <link rel="icon" type="image/png" href="<?= base_url('assets/favicon1.png') ?>">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -54,19 +55,36 @@
         .btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
-            padding: 10px 18px;
+            padding: 10px 20px;
             border-radius: 999px;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 700;
             text-decoration: none;
             border: none;
             cursor: pointer;
+            transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+            flex-shrink: 0;
         }
 
         .btn-primary { background: var(--navy); color: #fff; }
         .btn-primary:hover { background: var(--blue-accent); }
-        .btn-outline { background: #fff; color: var(--navy); border: 1.5px solid var(--navy); }
+        .btn-outline {
+            background: #fff;
+            color: var(--navy);
+            border: 2px solid var(--navy);
+        }
+        .btn-outline:hover {
+            background: var(--navy);
+            color: #fff;
+        }
+
+        .btn svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
 
         .invoice-wrap {
             max-width: 860px;
@@ -300,7 +318,12 @@
             <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4 shrink-0']) ?>
             Kembali ke Detail Pesanan
         </a>
-        <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Cetak / Simpan PDF</button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Cetak / Simpan PDF
+        </button>
     </div>
 
     <div class="invoice-wrap">

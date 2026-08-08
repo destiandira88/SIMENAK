@@ -18,29 +18,7 @@ $namaPerusahaan = (string) ($verifikasiTerbaru['nama_perusahaan'] ?? $pelanggan[
 <?= view('partials/flash_toast') ?>
 
 <div class="max-w-3xl mx-auto">
-    <?php if ($verifStatus === 'pending'): ?>
-        <div class="bg-white rounded-[20px] border border-[#E2E8F0] shadow-sm p-8 text-center">
-            <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </div>
-            <h2 class="text-2xl font-extrabold text-[#051747]">Menunggu Verifikasi Owner</h2>
-            <p class="mt-3 text-sm text-slate-600 leading-relaxed">
-                Pengajuan kerjasama untuk <strong><?= esc($namaPerusahaan) ?></strong> sedang ditinjau oleh Owner Z'Plack.
-            </p>
-            <p class="mt-2 text-xs text-slate-500">
-                Diajukan: <?= !empty($verifikasiTerbaru['tgl_pengajuan'])
-                    ? esc(date('d M Y H:i', strtotime((string) $verifikasiTerbaru['tgl_pengajuan'])))
-                    : '-' ?>
-            </p>
-            <p class="mt-6 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 leading-relaxed space-y-2">
-                <span class="block">Proses verifikasi dilakukan paling lambat 1–2 hari kerja sejak pengajuan diterima.</span>
-                <span class="block">Akses pemesanan akan tersedia setelah pengajuan disetujui.</span>
-            </p>
-        </div>
-
-    <?php elseif ($verifStatus === 'rejected' && !$showAjukanForm): ?>
+    <?php if ($verifStatus === 'rejected' && !$showAjukanForm): ?>
         <div class="bg-white rounded-[20px] border border-red-200 shadow-sm p-8">
             <div class="text-center mb-6">
                 <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-700 text-2xl">✕</div>

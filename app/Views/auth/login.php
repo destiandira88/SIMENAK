@@ -76,6 +76,11 @@
                 </svg>
             </button>
         </div>
+        <div class="mt-2 text-right">
+            <a href="<?= site_url('/?open=forgotPasswordModal') ?>" class="text-xs font-semibold hover:underline" style="color:var(--blue-accent);">
+                Lupa Password?
+            </a>
+        </div>
     </div>
 
     <button

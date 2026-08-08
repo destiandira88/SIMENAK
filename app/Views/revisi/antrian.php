@@ -313,14 +313,7 @@ $tabDefs  = $showAll
                     <th class="sortable-th px-4 py-3 text-left font-semibold" data-sort="deadline">
                         Deadline<span class="sort-icon">↕</span>
                     </th>
-                    <th class="px-4 py-3 text-left font-semibold">
-                        Status
-                        <?php if ($showAll && ! $readOnly): ?>
-                            <span class="block mt-0.5 text-[9px] font-normal normal-case tracking-normal text-white/55">
-                                Proses Cetak → klik badge
-                            </span>
-                        <?php endif; ?>
-                    </th>
+                    <th class="px-4 py-3 text-left font-semibold">Status</th>
                     <th class="px-4 py-3 text-left font-semibold">Kuota</th>
                     <th class="px-4 py-3 text-left font-semibold">Catatan Revisi</th>
                     <th class="px-4 py-3 text-left font-semibold w-12"></th>
@@ -399,11 +392,12 @@ $tabDefs  = $showAll
                                 <?php endif; ?>
                             </td>
                             <?= view('partials/produksi_status_badge_cell', [
-                                'status'   => $status,
-                                'order'    => $a,
-                                'idOrder'  => $idOrder,
-                                'showAll'  => $showAll,
-                                'readOnly' => $readOnly,
+                                'status'    => $status,
+                                'order'     => $a,
+                                'idOrder'   => $idOrder,
+                                'kodeOrder' => $kodeOrder,
+                                'showAll'   => $showAll,
+                                'readOnly'  => $readOnly,
                             ]) ?>
                             <td class="px-4 py-3.5 <?= esc($kuotaClass) ?>">
                                 <?= esc((string) $sisaKuota) ?>/<?= esc((string) $kuotaRevisi) ?>
@@ -659,8 +653,8 @@ $tabDefs  = $showAll
 
         stack.appendChild(toast);
 
-        if (typeof initFlashToast === 'function') {
-            initFlashToast(toast);
+        if (typeof window.initFlashToast === 'function') {
+            window.initFlashToast(toast);
         } else {
             window.setTimeout(function () {
                 toast.remove();
@@ -773,9 +767,26 @@ $tabDefs  = $showAll
                 e.stopPropagation();
                 const wrap = option.closest('.produksi-status-quick');
                 const btn = wrap?.querySelector('[data-status-quick-trigger]');
-                if (btn) {
-                    antrianSubmitFinishingStatus(btn);
+                if (!btn) {
+                    return;
                 }
+
+                antrianStatusQuickCloseMenu();
+
+                const kode = btn.getAttribute('data-kode-order') || '-';
+                if (typeof window.openActionConfirmCustom === 'function') {
+                    window.openActionConfirmCustom({
+                        variant: 'status-finishing',
+                        title: 'Ubah status ke Finishing?',
+                        message: kode,
+                        onConfirm: function () {
+                            antrianSubmitFinishingStatus(btn);
+                        },
+                    });
+                    return;
+                }
+
+                antrianSubmitFinishingStatus(btn);
             });
         });
 

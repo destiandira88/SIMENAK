@@ -1,6 +1,31 @@
 <?php
 
 /**
+ * Batas bawah retensi riwayat aktivitas (Y-m-d).
+ * Aturan dosbing: selama bulan berjalan tampil dari tgl 1;
+ * saat ganti bulan, sisa bulan lalu maksimal 7 hari ke belakang.
+ * cutoff = min(awal_bulan_ini, hari_ini - 7 hari)
+ */
+function activityLogRetentionCutoffDate(?\DateTimeInterface $now = null): string
+{
+    $today = $now instanceof \DateTimeInterface
+        ? \DateTimeImmutable::createFromInterface($now)->setTime(0, 0, 0)
+        : new \DateTimeImmutable('today');
+
+    $startOfMonth = $today->modify('first day of this month');
+    $sevenDaysAgo = $today->modify('-7 days');
+
+    $cutoff = $startOfMonth <= $sevenDaysAgo ? $startOfMonth : $sevenDaysAgo;
+
+    return $cutoff->format('Y-m-d');
+}
+
+function activityLogRetentionCutoffDateTime(?\DateTimeInterface $now = null): string
+{
+    return activityLogRetentionCutoffDate($now) . ' 00:00:00';
+}
+
+/**
  * Catat aktivitas internal sistem (audit trail sederhana).
  */
 function logActivity(string $aksi, string $modul, string $keterangan): void

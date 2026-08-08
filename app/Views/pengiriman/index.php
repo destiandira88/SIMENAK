@@ -1,10 +1,20 @@
-<?php helper('notification'); ?>
+<?php
+helper('notification');
+/**
+ * @var list<array<string, mixed>> $orders
+ * @var array<int, array<string, mixed>> $pengirimanByOrder
+ * @var bool $readOnly
+ */
+$readOnly = (bool) ($readOnly ?? false);
+?>
 <?= $this->extend('layouts/main') ?>
-<?= $this->section('title') ?>Manajemen Pengiriman<?= $this->endSection() ?>
-<?= $this->section('page_title') ?>Manajemen Pengiriman<?= $this->endSection() ?>
+<?= $this->section('title') ?><?= $readOnly ? 'Pengiriman' : 'Manajemen Pengiriman' ?><?= $this->endSection() ?>
+<?= $this->section('page_title') ?><?= $readOnly ? 'Pengiriman' : 'Manajemen Pengiriman' ?><?= $this->endSection() ?>
 
-<?= $this->section('banner_title') ?>Manajemen Pengiriman<?= $this->endSection() ?>
-<?= $this->section('banner_subtitle') ?>Pantau pesanan yang siap dikirim atau menunggu konfirmasi pengambilan.<?= $this->endSection() ?>
+<?= $this->section('banner_title') ?><?= $readOnly ? 'Pengiriman' : 'Manajemen Pengiriman' ?><?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?><?= $readOnly
+    ? 'Pantau antrian pengiriman dan pengambilan (hanya lihat).'
+    : 'Pantau pesanan yang siap dikirim atau menunggu konfirmasi pengambilan.' ?><?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
@@ -48,7 +58,7 @@
                         Metode<span class="sort-icon">↕</span>
                     </th>
                     <th class="px-4 py-3 text-left font-semibold min-w-[180px]">Alamat Tujuan</th>
-                    <th class="px-4 py-3 text-left font-semibold">Aksi</th>
+                    <th class="px-4 py-3 text-left font-semibold"><?= $readOnly ? 'Info' : 'Aksi' ?></th>
                 </tr>
             </thead>
             <tbody id="pengirimanBody">
@@ -73,9 +83,11 @@
                         $jenisLabel   = $jenis === 'perusahaan' ? 'perusahaan' : 'perseorangan';
                         $metodeLabel  = str_replace('_', ' ', $metode);
                         $statusLabel  = getOrderStatusLabel($o);
+                        $kodeKirim    = trim((string) ($pg['kode_kirim'] ?? ''));
                         $searchText   = mb_strtolower(trim(
                             $kodeOrder . ' ' . $namaPelanggan . ' ' . $jenisLabel . ' ' . $jenis
                             . ' ' . $status . ' ' . $statusLabel . ' ' . $metodeLabel . ' ' . $metode . ' ' . $alamatKirim
+                            . ' ' . $kodeKirim
                         ));
                         $alamatSingkat = '';
                         if (!$ambilSendiri && $alamatKirim !== '') {
@@ -131,8 +143,49 @@
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3 min-w-[220px]">
-                                <?php if ($status === 'finishing'): ?>
-                                    <form method="post" action="<?= esc(site_url('pengiriman/' . $idOrder)) ?>" class="flex gap-2 flex-wrap items-center">
+                                <?php if ($readOnly): ?>
+                                    <div class="text-xs text-slate-500 space-y-0.5">
+                                        <?php if ($kodeKirim !== ''): ?>
+                                            <p>Kode: <strong class="text-slate-700"><?= esc($kodeKirim) ?></strong></p>
+                                        <?php endif; ?>
+                                        <?php if ($pg && !empty($pg['no_resi'])): ?>
+                                            <p>Resi: <strong class="text-slate-700"><?= esc((string) $pg['no_resi']) ?></strong>
+                                                <?php if (!empty($pg['nama_ekspedisi'])): ?>
+                                                    <span class="text-slate-400">via <?= esc((string) $pg['nama_ekspedisi']) ?></span>
+                                                <?php endif; ?>
+                                            </p>
+                                            <?php if (!empty($pg['tgl_kirim'])): ?>
+                                                <p class="text-slate-400">Dikirim: <?= esc(date('d M Y', strtotime((string) $pg['tgl_kirim']))) ?></p>
+                                            <?php endif; ?>
+                                        <?php elseif ($status === 'finishing'): ?>
+                                            <p class="text-slate-400 italic">Menunggu admin set siap kirim/ambil</p>
+                                        <?php elseif (in_array($status, ['siap_kirim', 'siap_diambil', 'menunggu_verifikasi_lunas'], true) && $beforeShip): ?>
+                                            <p class="text-amber-700">Menunggu pelunasan &amp; verifikasi keuangan</p>
+                                        <?php elseif ($status === 'siap_kirim'): ?>
+                                            <p class="text-slate-400 italic">Menunggu input resi oleh admin</p>
+                                        <?php elseif ($status === 'siap_diambil'): ?>
+                                            <p class="text-slate-400 italic">Menunggu konfirmasi diambil oleh admin</p>
+                                        <?php elseif ($status === 'pelunasan_terverifikasi'): ?>
+                                            <p class="text-slate-400 italic"><?= $ambilSendiri ? 'Siap dikonfirmasi diambil' : 'Siap dikirim (input resi)' ?></p>
+                                        <?php elseif ($status === 'dikirim'): ?>
+                                            <p>Sedang dikirim — menunggu konfirmasi pelanggan.</p>
+                                        <?php else: ?>
+                                            <span class="text-slate-400">-</span>
+                                        <?php endif; ?>
+                                        <a href="<?= esc(site_url('order/detail/' . $kodeOrder)) ?>"
+                                            class="inline-block mt-1 text-[10px] font-semibold text-[#2E5CE6] hover:underline">
+                                            Detail pesanan
+                                        </a>
+                                    </div>
+
+                                <?php elseif ($status === 'finishing'): ?>
+                                    <form method="post"
+                                        action="<?= esc(site_url('pengiriman/' . $idOrder)) ?>"
+                                        class="js-action-confirm-form flex gap-2 flex-wrap items-center"
+                                        data-confirm-variant="status-pengiriman"
+                                        data-confirm-title="Ubah status pengiriman?"
+                                        data-confirm-kode="<?= esc($kodeOrder) ?>"
+                                        data-confirm-message="<?= esc($kodeOrder) ?>">
                                         <?= csrf_field() ?>
                                         <input type="hidden" name="aksi" value="set_siap">
                                         <span class="text-xs text-slate-500 italic">

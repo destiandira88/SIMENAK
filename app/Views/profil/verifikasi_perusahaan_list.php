@@ -7,11 +7,10 @@
  * @var array<string, int>           $counts
  */
 $tabs = [
-    'pending'  => 'Menunggu (' . ($counts['pending'] ?? 0) . ')',
     'verified' => 'Disetujui (' . ($counts['verified'] ?? 0) . ')',
     'rejected' => 'Ditolak (' . ($counts['rejected'] ?? 0) . ')',
 ];
-$colspan = $filter === 'pending' ? 7 : 8;
+$colspan = 8;
 ?>
 <?= $this->extend('layouts/main') ?>
 
@@ -19,7 +18,7 @@ $colspan = $filter === 'pending' ? 7 : 8;
 <?= $this->section('page_title') ?><?= esc($page_title ?? 'Verifikasi Perusahaan') ?><?= $this->endSection() ?>
 
 <?= $this->section('banner_title') ?>Verifikasi Perusahaan<?= $this->endSection() ?>
-<?= $this->section('banner_subtitle') ?>Tinjau pengajuan verifikasi akun perusahaan pelanggan (Owner)<?= $this->endSection() ?>
+<?= $this->section('banner_subtitle') ?>Arsip penetapan dan pencabutan kerja sama perusahaan<?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
@@ -70,28 +69,21 @@ $colspan = $filter === 'pending' ? 7 : 8;
                     <th class="px-4 py-3 text-left font-semibold">Perusahaan</th>
                     <th class="px-4 py-3 text-left font-semibold">NPWP</th>
                     <th class="px-4 py-3 text-left font-semibold">Dokumen</th>
-                    <th class="px-4 py-3 text-left font-semibold">Diajukan</th>
-                    <?php if ($filter !== 'pending'): ?>
-                        <th class="px-4 py-3 text-left font-semibold">Diproses</th>
-                    <?php endif; ?>
-                    <?php if ($filter === 'pending'): ?>
-                        <th class="px-4 py-3 text-left font-semibold">Aksi</th>
-                    <?php else: ?>
-                        <th class="px-4 py-3 text-left font-semibold">Catatan</th>
-                    <?php endif; ?>
+                    <th class="px-4 py-3 text-left font-semibold">Dicatat</th>
+                    <th class="px-4 py-3 text-left font-semibold">Diproses</th>
+                    <th class="px-4 py-3 text-left font-semibold">Catatan</th>
                 </tr>
             </thead>
             <tbody id="verifikasiPerusahaanBody">
                 <?php if ($pengajuan === []): ?>
                     <tr>
                         <td colspan="<?= (int) $colspan ?>" class="py-12 text-center text-slate-500 text-sm">
-                            Tidak ada pengajuan pada filter ini.
+                            Tidak ada data pada filter ini.
                         </td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($pengajuan as $index => $row): ?>
                         <?php
-                        $idVerify   = (int) ($row['id_verify'] ?? 0);
                         $docNpwp    = (string) ($row['dokumen_npwp'] ?? '');
                         $docKtp     = (string) ($row['dokumen_ktp_pic'] ?? '');
                         $docMou     = (string) ($row['dokumen_mou'] ?? '');
@@ -156,62 +148,22 @@ $colspan = $filter === 'pending' ? 7 : 8;
                                     ? esc(date('d M Y H:i', strtotime((string) $row['tgl_pengajuan'])))
                                     : '-' ?>
                             </td>
-
-                            <?php if ($filter !== 'pending'): ?>
-                                <td class="px-4 py-3 text-slate-600">
-                                    <?php if (!empty($row['tgl_verifikasi'])): ?>
-                                        <p><?= esc(date('d M Y H:i', strtotime((string) $row['tgl_verifikasi']))) ?></p>
-                                        <p class="text-xs text-slate-400">oleh <?= esc((string) ($row['nama_admin'] ?? 'Owner')) ?></p>
-                                    <?php else: ?>
-                                        —
-                                    <?php endif; ?>
-                                    <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold <?= $statusRow === 'verified'
-                                        ? 'bg-emerald-100 text-emerald-800'
-                                        : 'bg-red-100 text-red-800' ?>">
-                                        <?= $statusRow === 'verified' ? 'Disetujui' : 'Ditolak' ?>
-                                    </span>
-                                </td>
-                            <?php endif; ?>
-
-                            <?php if ($filter === 'pending'): ?>
-                                <td class="px-4 py-3 min-w-[220px]">
-                                    <div class="flex flex-col gap-2">
-                                        <form method="post"
-                                            action="<?= esc(site_url('verifikasi-perusahaan/' . $idVerify)) ?>"
-                                            class="js-action-confirm-form"
-                                            data-confirm-variant="accept"
-                                            data-confirm-title="Setujui Verifikasi Perusahaan?"
-                                            data-confirm-message="Apakah Anda yakin ingin menyetujui verifikasi perusahaan <?= esc((string) ($row['nama_perusahaan'] ?? '')) ?> untuk pelanggan <?= esc((string) ($row['nama_pelanggan'] ?? '')) ?>?">
-                                            <?= csrf_field() ?>
-                                            <input type="hidden" name="aksi" value="acc">
-                                            <button type="submit"
-                                                class="w-full bg-emerald-500 text-white rounded-full text-xs font-bold px-3 py-1.5 hover:bg-emerald-600 transition-colors">
-                                                Setujui
-                                            </button>
-                                        </form>
-                                        <form method="post"
-                                            action="<?= esc(site_url('verifikasi-perusahaan/' . $idVerify)) ?>"
-                                            class="js-action-confirm-form space-y-2"
-                                            data-confirm-variant="reject"
-                                            data-confirm-title="Tolak Verifikasi Perusahaan?"
-                                            data-confirm-message="Apakah Anda yakin ingin menolak verifikasi perusahaan <?= esc((string) ($row['nama_perusahaan'] ?? '')) ?>? Pelanggan dapat melanjutkan sebagai perseorangan atau mengajukan ulang.">
-                                            <?= csrf_field() ?>
-                                            <input type="hidden" name="aksi" value="tolak">
-                                            <input type="text" name="catatan_admin" required
-                                                placeholder="Alasan penolakan..."
-                                                class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:border-[#2E5CE6] focus:outline-none">
-                                            <button type="submit"
-                                                class="w-full bg-red-500 text-white rounded-full text-xs font-bold px-3 py-1.5 hover:bg-red-600 transition-colors">
-                                                Tolak
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            <?php else: ?>
-                                <td class="px-4 py-3 text-slate-600 text-xs">
-                                    <?= esc((string) ($row['catatan_admin'] ?? '—')) ?>
-                                </td>
-                            <?php endif; ?>
+                            <td class="px-4 py-3 text-slate-600">
+                                <?php if (!empty($row['tgl_verifikasi'])): ?>
+                                    <p><?= esc(date('d M Y H:i', strtotime((string) $row['tgl_verifikasi']))) ?></p>
+                                    <p class="text-xs text-slate-400">oleh <?= esc((string) ($row['nama_admin'] ?? 'Admin')) ?></p>
+                                <?php else: ?>
+                                    —
+                                <?php endif; ?>
+                                <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold <?= $statusRow === 'verified'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : 'bg-red-100 text-red-800' ?>">
+                                    <?= $statusRow === 'verified' ? 'Ditetapkan' : 'Dicabut' ?>
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-slate-600 text-xs">
+                                <?= esc((string) ($row['catatan_admin'] ?? '—')) ?>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                     <tr id="verifikasiPerusahaanEmptyFilter" class="hidden">

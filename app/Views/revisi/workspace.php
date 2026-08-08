@@ -37,15 +37,15 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
 
 <?= $this->section('content') ?>
 
-<p class="text-xs text-slate-400 mb-4">
+<div class="text-xs text-slate-400 mb-2">
     <a href="<?= esc(site_url($readOnly ? 'manajemen-desain' : 'antrian-desain')) ?>" class="hover:text-[#051747]">
         <?= $readOnly ? 'Manajemen Desain' : 'Antrian Desain' ?>
     </a>
-    <span class="mx-1">/</span>
-    <span class="font-semibold text-[#051747]">
+    <span class="mx-1">›</span>
+    <span class="text-slate-500">
         <?= $readOnly ? 'Detail-' : 'Ruang Kerja-' ?><?= esc($kodeOrder) ?>
     </span>
-</p>
+</div>
 
 <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
     <div class="lg:col-span-2">
@@ -137,8 +137,11 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
                         $revStatus  = (string) ($r['status'] ?? 'uploaded');
                         $badge      = $revisiBadges[$revStatus] ?? ['label' => $revStatus, 'dot' => 'bg-slate-400', 'class' => 'bg-slate-100 text-slate-600'];
                         $versi      = (int) ($r['versi'] ?? 0);
-                        $revCode    = 'REV-' . str_pad((string) $idOrder, 4, '0', STR_PAD_LEFT)
-                            . '-' . str_pad((string) $versi, 2, '0', STR_PAD_LEFT);
+                        $revCode    = (string) ($r['kode_revisi'] ?? '');
+                        if ($revCode === '') {
+                            $revCode = 'REV-' . str_pad((string) $idOrder, 4, '0', STR_PAD_LEFT)
+                                . '-' . str_pad((string) $versi, 2, '0', STR_PAD_LEFT);
+                        }
                         $fileDraft  = (string) ($r['file_draft'] ?? '');
                         $isAccDraft = $revStatus === 'acc';
                         $cardClass  = $isAccDraft

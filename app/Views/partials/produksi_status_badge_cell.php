@@ -6,11 +6,12 @@
  * @var bool                 $showAll
  * @var bool                 $readOnly
  */
-$status   = (string) ($status ?? '');
-$order    = is_array($order ?? null) ? $order : [];
-$idOrder  = (int) ($idOrder ?? 0);
-$showAll  = (bool) ($showAll ?? false);
-$readOnly = (bool) ($readOnly ?? false);
+$status    = (string) ($status ?? '');
+$order     = is_array($order ?? null) ? $order : [];
+$idOrder   = (int) ($idOrder ?? 0);
+$kodeOrder = (string) ($kodeOrder ?? ($order['kode_order'] ?? ''));
+$showAll   = (bool) ($showAll ?? false);
+$readOnly  = (bool) ($readOnly ?? false);
 $badgeClass = getStatusBadgeClass($status);
 $label      = getOrderStatusLabel($order);
 $clickable  = $showAll && ! $readOnly && $status === 'proses_cetak';
@@ -23,6 +24,7 @@ $clickable  = $showAll && ! $readOnly && $status === 'proses_cetak';
                 class="produksi-status-badge-btn produksi-status-badge-btn--editable inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold <?= esc($badgeClass) ?>"
                 data-status-quick-trigger
                 data-id-order="<?= esc((string) $idOrder) ?>"
+                data-kode-order="<?= esc($kodeOrder) ?>"
                 aria-expanded="false"
                 aria-haspopup="menu"
                 title="Klik untuk ubah ke Finishing"

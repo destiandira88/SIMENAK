@@ -13,6 +13,7 @@ $pageTitle = $readOnly ? 'Detail Produk' : 'Ubah Produk';
 
 <?= $this->section('content') ?>
 <?php
+$katalog = isset($katalog) && is_array($katalog) ? $katalog : [];
 $kategoriOptions = [
     'desain_grafis' => 'Desain Grafis',
     'cetak_digital' => 'Cetak Digital',
@@ -148,8 +149,6 @@ if ($estimasiFormValue === null || $estimasiFormValue === '') {
         </a>
     </div>
 </div>
-
-<?= $this->include('partials/katalog_gambar_zoom') ?>
 
 <?php else: ?>
 
@@ -288,11 +287,19 @@ if ($estimasiFormValue === null || $estimasiFormValue === '') {
             </label>
 
             <?php if (!empty($katalog['gambar'])): ?>
+                <?php $gambarUrl = base_url('uploads/katalog/' . $katalog['gambar']); ?>
                 <div class="mb-3 flex items-center gap-4">
-                    <img
-                        src="<?= base_url('uploads/katalog/' . esc($katalog['gambar'])) ?>"
-                        alt="Gambar produk"
-                        class="w-24 h-24 object-cover rounded-xl border border-slate-200">
+                    <button
+                        type="button"
+                        class="group relative block rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/40"
+                        data-katalog-zoom="<?= esc($gambarUrl) ?>"
+                        data-katalog-zoom-alt="<?= esc((string) ($katalog['nama_produk'] ?? 'Gambar produk')) ?>"
+                        aria-label="Perbesar foto produk">
+                        <img
+                            src="<?= esc($gambarUrl) ?>"
+                            alt="<?= esc((string) ($katalog['nama_produk'] ?? 'Gambar produk')) ?>"
+                            class="w-24 h-24 object-cover rounded-xl border border-slate-200 cursor-zoom-in transition-opacity group-hover:opacity-90">
+                    </button>
                     <p class="form-upload-text">Gambar saat ini. Unggah baru untuk mengganti.</p>
                 </div>
             <?php endif; ?>
@@ -342,6 +349,8 @@ if ($estimasiFormValue === null || $estimasiFormValue === '') {
 </div>
 
 <?php endif; ?>
+
+<?= $this->include('partials/katalog_gambar_zoom') ?>
 
 <?= $this->endSection() ?>
 

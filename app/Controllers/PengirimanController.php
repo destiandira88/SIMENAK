@@ -8,14 +8,16 @@ class PengirimanController extends BaseController
 {
     protected $helpers = ['form', 'url', 'notification'];
 
-    /** Daftar pesanan yang perlu diproses pengirimannya (admin). */
+    /** Daftar pesanan yang perlu diproses pengirimannya (admin; owner hanya lihat). */
     public function index(): string|RedirectResponse
     {
-        if ((string) session()->get('role') !== 'admin') {
+        $role = (string) session()->get('role');
+        if (! in_array($role, ['admin', 'owner'], true)) {
             return redirect()->to(site_url('dashboard'));
         }
 
-        $db = \Config\Database::connect();
+        $readOnly = $role === 'owner';
+        $db       = \Config\Database::connect();
 
         $orders = $db->table('orders o')
             ->select('o.id_order, o.kode_order, o.status, o.jenis_pelanggan,
@@ -47,10 +49,11 @@ class PengirimanController extends BaseController
         }
 
         return view('pengiriman/index', [
-            'title'              => 'Manajemen Pengiriman',
-            'page_title'         => 'Manajemen Pengiriman',
-            'orders'             => $orders,
-            'pengirimanByOrder'  => $pengirimanByOrder,
+            'title'             => $readOnly ? 'Pengiriman' : 'Manajemen Pengiriman',
+            'page_title'        => $readOnly ? 'Pengiriman' : 'Manajemen Pengiriman',
+            'orders'            => $orders,
+            'pengirimanByOrder' => $pengirimanByOrder,
+            'readOnly'          => $readOnly,
         ]);
     }
 
@@ -169,6 +172,7 @@ class PengirimanController extends BaseController
                 } else {
                     $db->table('pengiriman')->insert([
                         'id_order'       => $idOrder,
+                        'kode_kirim'     => 'KRM-' . $kodeOrder,
                         'no_resi'        => $noResi,
                         'nama_ekspedisi' => $namaEkspedisi ?: null,
                         'status_kirim'   => 'dikirim',
@@ -220,6 +224,7 @@ class PengirimanController extends BaseController
                     } else {
                         $db->table('pengiriman')->insert([
                             'id_order'     => $idOrder,
+                            'kode_kirim'   => 'KRM-' . $kodeOrder,
                             'status_kirim' => 'diterima',
                             'tgl_kirim'    => $now,
                             'tgl_diterima' => $now,
@@ -259,6 +264,7 @@ class PengirimanController extends BaseController
                     } else {
                         $db->table('pengiriman')->insert([
                             'id_order'     => $idOrder,
+                            'kode_kirim'   => 'KRM-' . $kodeOrder,
                             'status_kirim' => 'diambil',
                             'tgl_kirim'    => $now,
                             'tgl_diterima' => $now,

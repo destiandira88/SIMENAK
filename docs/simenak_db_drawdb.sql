@@ -38,7 +38,7 @@ CREATE TABLE `verifikasi_perusahaan` (
   `dokumen_npwp` varchar(255) DEFAULT NULL,
   `dokumen_ktp_pic` varchar(255) DEFAULT NULL,
   `dokumen_mou` varchar(255) DEFAULT NULL,
-  `status` enum('pending','verified','rejected') DEFAULT 'pending',
+  `status` enum('verified','rejected') NOT NULL DEFAULT 'verified',
   `catatan_admin` text DEFAULT NULL,
   `tgl_pengajuan` datetime DEFAULT current_timestamp(),
   `tgl_verifikasi` datetime DEFAULT NULL,

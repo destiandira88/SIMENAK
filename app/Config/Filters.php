@@ -3,6 +3,7 @@
 namespace Config;
 
 use App\Filters\AuthFilter;
+use App\Filters\ForcePasswordChangeFilter;
 use App\Filters\RoleFilter;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
@@ -31,6 +32,7 @@ class Filters extends BaseFilters
         'honeypot'      => \CodeIgniter\Filters\Honeypot::class,
         'auth'          => \App\Filters\AuthFilter::class,
         'role'          => \App\Filters\RoleFilter::class,
+        'forcepassword' => ForcePasswordChangeFilter::class,
         'invalidchars'  => InvalidChars::class,
         'secureheaders' => SecureHeaders::class,
         'cors'          => Cors::class,
@@ -73,6 +75,7 @@ class Filters extends BaseFilters
     public array $globals = [
         'before' => [
             'csrf',
+            'forcepassword',
         ],
         'after' => [
             'secureheaders',

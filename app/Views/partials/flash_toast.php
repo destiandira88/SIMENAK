@@ -47,10 +47,6 @@ foreach (array_keys($flashMap) as $flashKey) {
         ];
     }
 }
-
-if ($flashMessages === []) {
-    return;
-}
 ?>
 <style>
     #flash-toast-stack {
@@ -178,6 +174,7 @@ if ($flashMessages === []) {
     }
 </style>
 
+<?php if ($flashMessages !== []): ?>
 <div id="flash-toast-stack" aria-live="polite" aria-atomic="true">
     <?php foreach ($flashMessages as $flash): ?>
         <?php $s = $flash['style']; ?>
@@ -199,6 +196,7 @@ if ($flashMessages === []) {
         </div>
     <?php endforeach; ?>
 </div>
+<?php endif; ?>
 
 <script>
     (function() {
@@ -274,6 +272,7 @@ if ($flashMessages === []) {
             startCountdown();
         }
 
+        window.initFlashToast = initFlashToast;
         document.querySelectorAll('[data-flash-toast]').forEach(initFlashToast);
     })();
 </script>

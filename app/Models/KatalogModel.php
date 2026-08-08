@@ -20,6 +20,7 @@ class KatalogModel extends Model
         'deskripsi',
         'is_active',
         'gambar',
+        'kode_katalog',
     ];
 
     /**

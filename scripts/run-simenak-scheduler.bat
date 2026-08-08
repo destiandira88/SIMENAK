@@ -1,5 +1,6 @@
 @echo off
 REM Task Scheduler SIMENAK — reminder verifikasi DP/pelunasan + cek deadline upload DP
+REM + cleanup riwayat aktivitas Owner
 REM Sesuaikan path PHP/XAMPP jika instalasi berbeda.
 
 set "PHP=C:\xampp\php\php.exe"
@@ -34,6 +35,11 @@ if errorlevel 1 (
 "%PHP%" spark reminder-konfirmasi-harga-custom >> "%LOG%" 2>&1
 if errorlevel 1 (
     echo [%date% %time%] reminder-konfirmasi-harga-custom FAILED>> "%LOG%"
+)
+
+"%PHP%" spark cleanup-activity-logs >> "%LOG%" 2>&1
+if errorlevel 1 (
+    echo [%date% %time%] cleanup-activity-logs FAILED>> "%LOG%"
 )
 
 echo [%date% %time%] === SIMENAK scheduler end ===>> "%LOG%"

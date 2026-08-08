@@ -193,10 +193,11 @@ foreach ($payments as $p) {
                             Tgl Verifikasi<span class="sort-icon">↕</span>
                         </th>
                         <th class="px-4 py-3 text-left font-semibold">Bukti</th>
+                        <th class="px-4 py-3 text-left font-semibold">Dokumen</th>
                     </tr>
                 </thead>
                 <tbody id="riwayatTableBody">
-                    <?php helper('deadline'); ?>
+                    <?php helper(['deadline', 'notification']); ?>
                     <?php foreach ($filtered as $index => $p): ?>
                         <?php
                         $jenis   = (string) ($p['jenis'] ?? '');
@@ -208,6 +209,14 @@ foreach ($payments as $p) {
                         $verifikasiTs = !empty($p['tgl_verifikasi']) ? strtotime((string) $p['tgl_verifikasi']) : 0;
                         $deadlineRaw = trim((string) ($p['deadline_produksi'] ?? ''));
                         $tsDeadline  = $deadlineRaw !== '' ? strtotime($deadlineRaw) : 0;
+                        $canNota = $kodeOrderRow !== '' && canViewNotaTagihan([
+                            'status'      => (string) ($p['order_status'] ?? ''),
+                            'total_harga' => $p['total_harga'] ?? 0,
+                        ]);
+                        $canBuktiResmi = canViewBuktiPembayaranPelunasan([
+                            'jenis'  => $jenis,
+                            'status' => $status,
+                        ]);
                         ?>
                         <tr class="data-table-row border-b border-slate-100 hover:bg-[#F8FAFF]"
                             data-kodebayar="<?= esc(mb_strtolower($kodePayment)) ?>"
@@ -278,7 +287,37 @@ foreach ($payments as $p) {
                                         Lihat
                                     </a>
                                 <?php else: ?>
-                                    <span class="text-slate-400 text-xs">—</span>
+                                    <span class="text-slate-400 text-xs">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="px-4 py-3">
+                                <?php if ($canNota || $canBuktiResmi): ?>
+                                    <div class="flex flex-col gap-1.5 items-start">
+                                        <?php if ($canNota): ?>
+                                            <a href="<?= esc(site_url('order/' . $kodeOrderRow . '/nota-tagihan')) ?>"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="inline-flex items-center gap-1 text-xs font-bold text-[#2E5CE6] hover:underline">
+                                                <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                Nota Tagihan
+                                            </a>
+                                        <?php endif; ?>
+                                        <?php if ($canBuktiResmi): ?>
+                                            <a href="<?= esc(site_url('order/' . $kodeOrderRow . '/bukti-pembayaran-pelunasan')) ?>"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline">
+                                                <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                Bukti Lunas
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <span class="text-slate-400 text-xs">-</span>
                                 <?php endif; ?>
                             </td>
                         </tr>

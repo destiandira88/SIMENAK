@@ -113,7 +113,14 @@ class KatalogController extends BaseController
         $data['gambar'] = $uploadResult['path'];
 
         try {
-            $katalogModel->insert($data);
+            $idKatalog = (int) $katalogModel->insert($data, true);
+
+            if ($idKatalog > 0) {
+                $kodeKatalog = 'PRD-' . str_pad((string) $idKatalog, 3, '0', STR_PAD_LEFT);
+                $katalogModel->update($idKatalog, [
+                    'kode_katalog' => $kodeKatalog,
+                ]);
+            }
         } catch (\Throwable $e) {
             log_message('error', 'Katalog store: {message}', ['message' => $e->getMessage()]);
 

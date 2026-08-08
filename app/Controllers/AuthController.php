@@ -17,6 +17,10 @@ class AuthController extends BaseController
     public function login()
     {
         if (session()->get('isLoggedIn')) {
+            if (session()->get('wajib_ganti_password')) {
+                return redirect()->to(site_url('buat-password-baru'));
+            }
+
             $role = (string) session()->get('role');
 
             if ($role === 'pelanggan') {
@@ -329,7 +333,9 @@ class AuthController extends BaseController
         ];
 
         if ($isLoggedIn) {
-            $data['redirect'] = $this->dashboardPathForRole($role);
+            $data['redirect'] = session()->get('wajib_ganti_password')
+                ? site_url('buat-password-baru')
+                : $this->dashboardPathForRole($role);
         }
 
         return $this->response->setJSON($data);
@@ -364,8 +370,9 @@ class AuthController extends BaseController
 
     public function showForgotPasswordForm()
     {
+        // Modal lupa sandi hanya untuk guest — logout dulu jika masih login.
         if (session()->get('isLoggedIn')) {
-            return redirect()->to('/');
+            session()->destroy();
         }
 
         return redirect()->to(site_url('/?open=forgotPasswordModal'));
@@ -565,15 +572,39 @@ class AuthController extends BaseController
         }
 
         $successMessage = 'Password berhasil diubah. Silakan masuk dengan kata sandi baru.';
+        $redirectUrl    = $this->loginUrlAfterPasswordReset($email);
 
         if ($this->request->isAJAX()) {
             return $this->jsonResponse(true, $successMessage, [
-                'redirect' => site_url('/?open=loginModal&reset_success=1'),
+                'redirect' => $redirectUrl,
             ]);
         }
 
-        return redirect()->to(site_url('/?open=loginModal&reset_success=1'))
-            ->with('success', $successMessage);
+        return redirect()->to($redirectUrl)->with('success', $successMessage);
+    }
+
+    /**
+     * Staf (admin/keuangan/produksi/owner) kembali ke portal; pelanggan ke landing login modal.
+     */
+    private function loginUrlAfterPasswordReset(string $email): string
+    {
+        try {
+            $user = \Config\Database::connect()
+                ->table('users')
+                ->select('role')
+                ->where('email', $email)
+                ->get()
+                ->getRowArray();
+
+            $role = (string) ($user['role'] ?? '');
+            if (in_array($role, ['admin', 'keuangan', 'produksi', 'owner'], true)) {
+                return site_url('portal');
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'loginUrlAfterPasswordReset: {message}', ['message' => $e->getMessage()]);
+        }
+
+        return site_url('/?open=loginModal&reset_success=1');
     }
 
     /**
@@ -626,6 +657,21 @@ class AuthController extends BaseController
                 ];
             }
 
+            $mustChangePassword = $db->fieldExists('wajib_ganti_password', 'users')
+                && (int) ($user['wajib_ganti_password'] ?? 0) === 1;
+
+            if ($mustChangePassword) {
+                $sessionInfo = $this->establishUserSession($user, true);
+
+                return [
+                    'success'  => true,
+                    'message'  => 'Login berhasil. Silakan buat password baru.',
+                    'redirect' => $sessionInfo['redirect'],
+                    'role'     => $sessionInfo['role'],
+                    'nama'     => $sessionInfo['nama'],
+                ];
+            }
+
             $sessionInfo = $this->establishUserSession($user);
 
             return [
@@ -650,13 +696,14 @@ class AuthController extends BaseController
      *
      * @return array{redirect: string, role: string, nama: string}
      */
-    private function establishUserSession(array $user): array
+    private function establishUserSession(array $user, bool $forcePasswordChange = false): array
     {
         $sessionData = [
-            'isLoggedIn' => true,
-            'id_user'    => (int) $user['id_user'],
-            'nama'       => (string) $user['nama'],
-            'role'       => (string) $user['role'],
+            'isLoggedIn'            => true,
+            'id_user'               => (int) $user['id_user'],
+            'nama'                  => (string) $user['nama'],
+            'role'                  => (string) $user['role'],
+            'wajib_ganti_password'  => $forcePasswordChange,
         ];
 
         if ($user['role'] === 'pelanggan') {
@@ -674,10 +721,94 @@ class AuthController extends BaseController
         session()->set($sessionData);
 
         return [
-            'redirect' => $this->dashboardPathForRole((string) $user['role']),
+            'redirect' => $forcePasswordChange
+                ? site_url('buat-password-baru')
+                : $this->dashboardPathForRole((string) $user['role']),
             'role'     => (string) $user['role'],
             'nama'     => (string) $user['nama'],
         ];
+    }
+
+    /**
+     * Halaman wajib ganti password (login pertama staf).
+     */
+    public function showBuatPasswordBaru()
+    {
+        if (! session()->get('isLoggedIn')) {
+            return redirect()->to(site_url('login'))
+                ->with('error', 'Silakan login terlebih dahulu.');
+        }
+
+        if (! session()->get('wajib_ganti_password')) {
+            return redirect()->to($this->dashboardPathForRole((string) session()->get('role')));
+        }
+
+        return view('auth/buat_password_baru', [
+            'title' => 'Buat Password Baru',
+            'nama'  => (string) session()->get('nama'),
+        ]);
+    }
+
+    public function processBuatPasswordBaru()
+    {
+        if (! session()->get('isLoggedIn')) {
+            return redirect()->to(site_url('login'))
+                ->with('error', 'Silakan login terlebih dahulu.');
+        }
+
+        if (! session()->get('wajib_ganti_password')) {
+            return redirect()->to($this->dashboardPathForRole((string) session()->get('role')));
+        }
+
+        $rules = [
+            'password'         => 'required|min_length[8]',
+            'password_confirm' => 'required|matches[password]',
+        ];
+
+        $messages = [
+            'password' => [
+                'required'   => 'Password baru wajib diisi.',
+                'min_length' => 'Password baru minimal 8 karakter.',
+            ],
+            'password_confirm' => [
+                'required' => 'Konfirmasi password wajib diisi.',
+                'matches'  => 'Konfirmasi password tidak sama.',
+            ],
+        ];
+
+        if (! $this->validate($rules, $messages)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', implode(' ', $this->validator->getErrors()));
+        }
+
+        $idUser       = (int) session()->get('id_user');
+        $plainPassword = (string) $this->request->getPost('password');
+
+        try {
+            $db = \Config\Database::connect();
+            $update = [
+                'password' => password_hash($plainPassword, PASSWORD_DEFAULT),
+            ];
+
+            if ($db->fieldExists('wajib_ganti_password', 'users')) {
+                $update['wajib_ganti_password'] = 0;
+            }
+
+            $db->table('users')->where('id_user', $idUser)->update($update);
+        } catch (\Throwable $e) {
+            log_message('error', 'processBuatPasswordBaru: {message}', ['message' => $e->getMessage()]);
+
+            return redirect()->back()
+                ->with('error', 'Gagal menyimpan password baru. Silakan coba lagi.');
+        }
+
+        session()->remove('wajib_ganti_password');
+
+        $role = (string) session()->get('role');
+
+        return redirect()->to($this->dashboardPathForRole($role))
+            ->with('success', 'Password berhasil diperbarui. Selamat bekerja.');
     }
 
     private function googleProvider(GoogleOAuth $googleConfig): Google
@@ -767,7 +898,18 @@ class AuthController extends BaseController
                 'alamat'      => $this->truncateAlamatPelanggan((string) ($postData['alamat'] ?? '')),
             ];
 
+            // kode_user & kode_pelanggan adalah identitas bisnis kosmetik (bukan untuk URL lookup).
+            $kodeUser = 'USR-' . str_pad((string) $idUser, 5, '0', STR_PAD_LEFT);
+            $db->table('users')->where('id_user', $idUser)->update([
+                'kode_user' => $kodeUser,
+            ]);
+
             $db->table('pelanggan')->insert($pelangganData);
+            $idPelanggan = (int) $db->insertID();
+            $kodePelanggan = 'PLG-' . str_pad((string) $idPelanggan, 5, '0', STR_PAD_LEFT);
+            $db->table('pelanggan')->where('id_pelanggan', $idPelanggan)->update([
+                'kode_pelanggan' => $kodePelanggan,
+            ]);
 
             $db->transComplete();
 

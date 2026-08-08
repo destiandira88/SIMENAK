@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title><?= lang('Errors.badRequest') ?></title>
+    <link rel="icon" type="image/png" href="<?= base_url('assets/favicon1.png') ?>">
 
     <style>
         div.logo {

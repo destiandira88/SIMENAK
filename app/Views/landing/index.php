@@ -890,6 +890,69 @@
         filter: blur(44px);
     }
 
+    /* Hero (section 1): CSS keyframes on first paint.
+       Use translateY (not X) — #hero-landing has overflow-x:clip which
+       otherwise hides left/right slide and makes the entrance feel like none. */
+    @media (prefers-reduced-motion: no-preference) {
+        .hero-enter {
+            opacity: 0;
+            animation: hero-reveal-up 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+            animation-delay: var(--hero-enter-delay, 0ms);
+            will-change: opacity, transform;
+        }
+
+        /* Stagger children only — parent stays static so motion isn’t doubled. */
+        .hero-enter.hero-enter--stagger {
+            opacity: 1;
+            animation: none;
+            will-change: auto;
+        }
+
+        .hero-enter--stagger > *:nth-child(1) {
+            --hero-enter-delay: 80ms;
+        }
+
+        .hero-enter--stagger > *:nth-child(2) {
+            --hero-enter-delay: 180ms;
+        }
+
+        .hero-enter--stagger > *:nth-child(3) {
+            --hero-enter-delay: 280ms;
+        }
+
+        .hero-enter--stagger > * {
+            opacity: 0;
+            animation: hero-reveal-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+            animation-delay: var(--hero-enter-delay, 0ms);
+            will-change: opacity, transform;
+        }
+
+        .hero-enter--visual {
+            --hero-enter-delay: 200ms;
+            animation-duration: 1.05s;
+        }
+
+        @keyframes hero-reveal-up {
+            from {
+                opacity: 0;
+                transform: translate3d(0, 40px, 0);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate3d(0, 0, 0);
+            }
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .hero-enter,
+        .hero-enter--stagger > * {
+            opacity: 1;
+            animation: none;
+        }
+    }
+
     @media (prefers-reduced-motion: no-preference) {
         .scroll-reveal {
             opacity: 0;
@@ -997,8 +1060,7 @@ $pesanSekarangHref = $isLoggedIn ? site_url('katalog') : '#';
 
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="hero-grid grid gap-8 lg:gap-10 items-center">
-            <div class="hero-copy">
-                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white text-[10px] uppercase tracking-[0.2em] text-[#2E5CE6] font-bold shadow-sm border border-slate-100">Cetak Presisi Tinggi Selaras Kebutuhan</span>
+            <div class="hero-copy hero-enter hero-enter--stagger">
                 <h1 class="mt-3 md:mt-4 text-4xl md:text-6xl leading-tight font-extrabold text-[#051747]">
                     Layanan Cetak
                     <span class="block bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-950 bg-clip-text text-transparent">Profesional &amp; Estetik.</span>
@@ -1014,7 +1076,7 @@ $pesanSekarangHref = $isLoggedIn ? site_url('katalog') : '#';
                 </div>
             </div>
 
-            <div class="hero-visual-col">
+            <div class="hero-visual-col hero-enter hero-enter--visual">
                 <div class="hero-illustration-frame">
                     <img src="<?= esc($heroUrl ?? base_url('assets/1.png')) ?>"
                         alt="Ilustrasi Mesin Cetak Z'Plack"
@@ -1622,16 +1684,6 @@ $faqItems = [
         }
 
         const revealGroups = [{
-                selector: '#hero-landing .hero-copy',
-                variant: 'left',
-                delay: 0
-            },
-            {
-                selector: '#hero-landing .hero-visual-col',
-                variant: 'right',
-                delay: 120
-            },
-            {
                 selector: '#about .grid > div:first-child',
                 variant: 'up'
             },

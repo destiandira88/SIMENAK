@@ -1,0 +1,192 @@
+@startuml ERD_SIMENAK
+!theme plain
+title ERD SIMENAK (Sesuai Implementasi)
+' Sumber: docs/backups/simenak_db_20260705_utf8.sql + migration activity_logs
+' Tempel di https://www.plantuml.com/plantuml atau VS Code PlantUML
+
+entity "users" as users {
+  * id_user : INT <<PK>>
+  --
+  * nama : VARCHAR(100)
+  * email : VARCHAR(100) <<UK>>
+  google_id : VARCHAR(100) <<UK>>
+  * password : VARCHAR(255)
+  * role : ENUM
+  * is_active : TINYINT
+  created_at : DATETIME
+}
+
+entity "pelanggan" as pelanggan {
+  * id_pelanggan : INT <<PK>>
+  --
+  * id_user : INT <<FK>>
+  no_telp : VARCHAR(20)
+  alamat : VARCHAR(150)
+  jenis : ENUM
+  nama_perusahaan : VARCHAR(150)
+  is_verified : TINYINT
+  is_suspended : TINYINT
+}
+
+entity "verifikasi_perusahaan" as vp {
+  * id_verify : INT <<PK>>
+  --
+  * id_pelanggan : INT <<FK>>
+  * nama_perusahaan : VARCHAR(150)
+  no_npwp : VARCHAR(30)
+  jabatan_pic : VARCHAR(100)
+  wa_perusahaan : VARCHAR(20)
+  alamat_kantor : VARCHAR(255)
+  dokumen_npwp : VARCHAR(255)
+  dokumen_ktp_pic : VARCHAR(255)
+  dokumen_mou : VARCHAR(255)
+  status : ENUM
+  catatan_admin : TEXT
+  tgl_pengajuan : DATETIME
+  tgl_verifikasi : DATETIME
+  id_admin : INT <<FK>>
+}
+
+entity "katalog" as katalog {
+  * id_katalog : INT <<PK>>
+  --
+  * nama_produk : VARCHAR(150)
+  * kategori : ENUM
+  * harga_dasar : DECIMAL
+  * kuota_revisi_default : INT
+  * min_order : INT
+  * satuan : VARCHAR(30)
+  estimasi_hari : VARCHAR(50)
+  deskripsi : TEXT
+  gambar : VARCHAR(255)
+  is_active : TINYINT
+}
+
+entity "form_templates" as ft {
+  * id_template : INT <<PK>>
+  --
+  * id_katalog : INT <<FK>>
+  * field_key : VARCHAR(50)
+  * field_label : VARCHAR(100)
+  * field_type : ENUM
+  placeholder : VARCHAR(150)
+  is_required : TINYINT
+  urutan : INT
+}
+
+entity "orders" as orders {
+  * id_order : INT <<PK>>
+  --
+  * kode_order : VARCHAR(25) <<UK>>
+  * id_pelanggan : INT <<FK>>
+  * id_katalog : INT <<FK>>
+  * jenis_pelanggan : ENUM
+  is_custom : TINYINT
+  * jumlah_order : INT
+  total_harga : DECIMAL
+  require_dp : TINYINT
+  * metode_pengiriman : ENUM
+  alamat_kirim : TEXT
+  * kuota_revisi : INT
+  * sisa_kuota : INT
+  * status : ENUM
+  created_at : DATETIME
+}
+
+entity "order_attributes" as oa {
+  * id_attr : INT <<PK>>
+  --
+  * id_order : INT <<FK>>
+  * attribute_key : VARCHAR(50)
+  attribute_val : TEXT
+}
+
+entity "payments" as pay {
+  * id_payment : INT <<PK>>
+  --
+  * kode_payment : VARCHAR(25) <<UK>>
+  * id_order : INT <<FK>>
+  * jenis : ENUM
+  * nominal : DECIMAL
+  bukti_tf : VARCHAR(255)
+  status : ENUM
+  catatan_tolak : TEXT
+  id_verifikator : INT <<FK>>
+  tgl_upload : DATETIME
+  tgl_verifikasi : DATETIME
+}
+
+entity "revisi_desain" as rd {
+  * id_revisi : INT <<PK>>
+  --
+  * id_order : INT <<FK>>
+  * id_produksi : INT <<FK>>
+  * versi : INT
+  * file_draft : VARCHAR(255)
+  catatan_prod : TEXT
+  catatan_revisi : TEXT
+  status : ENUM
+  created_at : DATETIME
+}
+
+entity "pengiriman" as pg {
+  * id_kirim : INT <<PK>>
+  --
+  * id_order : INT <<FK,UK>>
+  no_resi : VARCHAR(100)
+  nama_ekspedisi : VARCHAR(50)
+  status_kirim : ENUM
+  tgl_kirim : DATETIME
+  tgl_diterima : DATETIME
+}
+
+entity "notifications" as notif {
+  * id_notif : INT <<PK>>
+  --
+  * id_user : INT <<FK>>
+  id_order : INT <<FK>>
+  judul : VARCHAR(150)
+  pesan : TEXT
+  is_read : TINYINT
+  created_at : DATETIME
+}
+
+entity "password_resets" as pr {
+  * id : INT <<PK>>
+  --
+  * email : VARCHAR(100)
+  * token : VARCHAR(64)
+  * expired_at : DATETIME
+  created_at : DATETIME
+}
+
+entity "activity_logs" as al {
+  * id : INT <<PK>>
+  --
+  * id_user : INT
+  nama_user : VARCHAR(100)
+  role : VARCHAR(20)
+  * aksi : VARCHAR(50)
+  * modul : VARCHAR(50)
+  * keterangan : TEXT
+  * created_at : DATETIME
+}
+
+users ||--o| pelanggan
+pelanggan ||--o{ vp
+users ||--o{ vp
+katalog ||--o{ ft
+pelanggan ||--o{ orders
+katalog ||--o{ orders
+orders ||--o{ oa
+orders ||--o{ pay
+users ||--o{ pay
+orders ||--o{ rd
+users ||--o{ rd
+orders ||--o| pg
+users ||--o{ notif
+orders ||--o{ notif
+users ..o{ pr : "email (logis)"
+users ..o{ al : "id_user (logis)"
+
+@enduml

@@ -128,21 +128,22 @@ if ($jenisPelanggan === 'perusahaan' && !$pelunasanSebelumKirim) {
     }
 } else {
     $statusList = [
-        'menunggu_verifikasi_dp'    => getOrderStatusLabel($orderStatusRow),
+        'menunggu_verifikasi_dp'    => 'Menunggu Pembayaran DP',
         'terverifikasi'             => 'DP Terverifikasi',
         'proses_desain'             => 'Proses Desain',
         'proses_revisi'             => 'Proses Revisi',
         'proses_cetak'              => 'Proses Cetak',
         'finishing'                 => 'Finishing',
         'siap_kirim'                => 'Siap Dikirim',
-        'siap_diambil'              => 'Siap Diambil',
-        'menunggu_verifikasi_lunas' => $labelMenungguLunas,
+        'siap_diambil'              => 'Siap Diambil (menunggu pelunasan)',
         'pelunasan_terverifikasi'   => 'Pelunasan Terverifikasi',
         'dikirim'                   => 'Dalam Pengiriman',
         'selesai'                   => 'Selesai',
     ];
     if ($metodePengiriman === 'ambil_sendiri') {
-        unset($statusList['dikirim']);
+        unset($statusList['siap_kirim'], $statusList['dikirim']);
+    } else {
+        unset($statusList['siap_diambil']);
     }
 }
 if ($isCustom) {
@@ -153,8 +154,15 @@ if ($isCustom) {
             : 'Menunggu Konfirmasi Pelanggan',
     ], $statusList);
 }
-$statusKeys  = array_keys($statusList);
-$currentIdx  = array_search($status, $statusKeys, true);
+$statusKeys = array_keys($statusList);
+$timelineStatus = $status;
+if (
+    $pelunasanSebelumKirim
+    && $status === 'menunggu_verifikasi_lunas'
+) {
+    $timelineStatus = $metodePengiriman === 'ambil_sendiri' ? 'siap_diambil' : 'siap_kirim';
+}
+$currentIdx = array_search($timelineStatus, $statusKeys, true);
 
 $revisiStatusBadges = [
     'uploaded'         => ['label' => 'Diunggah', 'class' => 'bg-blue-100 text-blue-800'],
@@ -202,27 +210,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
 
 <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
     <div>
-        <?php if ($role !== 'pelanggan'): ?>
-        <p class="text-xs text-slate-400 mb-1">
-            <?php if ($role === 'admin'): ?>
-                <a href="<?= site_url('list-pemesanan') ?>" class="hover:text-[#051747]">List Pemesanan</a>
-            <?php elseif ($role === 'owner'): ?>
-                <a href="<?= site_url('list-pemesanan') ?>" class="hover:text-[#051747]">Pesanan</a>
-            <?php elseif ($role === 'keuangan'): ?>
-                <a href="<?= site_url('verifikasi-dp') ?>" class="hover:text-[#051747]">Verifikasi Pembayaran</a>
-            <?php elseif ($role === 'produksi'): ?>
-                <a href="<?= site_url('antrian-desain') ?>" class="hover:text-[#051747]">Antrian Desain</a>
-            <?php else: ?>
-                <a href="<?= site_url('dashboard') ?>" class="hover:text-[#051747]">Beranda</a>
-            <?php endif; ?>
-            <span class="mx-1">/</span>
-            <span class="text-slate-500"><?= esc($kodeOrder) ?></span>
-        </p>
-        <?php endif; ?>
-        <?php if ($role !== 'pelanggan'): ?>
-        <h1 class="font-mono font-extrabold text-2xl text-[#051747]"><?= esc($kodeOrder) ?></h1>
-        <?php endif; ?>
-        <span class="inline-flex <?= $role === 'pelanggan' ? '' : 'mt-2 ' ?>px-4 py-1.5 rounded-full text-sm font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
+        <span class="inline-flex px-4 py-1.5 rounded-full text-sm font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
             <?= esc(getOrderStatusLabel($orderStatusRow, $role)) ?>
         </span>
     </div>
@@ -286,8 +274,14 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                 </div>
                 <div>
                     <p class="text-xs font-semibold uppercase text-slate-400 mb-1">Jenis Pelanggan</p>
+                    <?php
+                    $namaPerusahaanOrder = trim((string) ($order['nama_perusahaan'] ?? ''));
+                    $labelJenisPelanggan = $jenisPelanggan === 'perusahaan'
+                        ? ('Perusahaan' . ($namaPerusahaanOrder !== '' ? '-' . $namaPerusahaanOrder : ''))
+                        : 'Perseorangan';
+                    ?>
                     <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">
-                        <?= $jenisPelanggan === 'perusahaan' ? 'Perusahaan' : 'Perseorangan' ?>
+                        <?= esc($labelJenisPelanggan) ?>
                     </span>
                 </div>
                 <div>
@@ -491,8 +485,11 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                     $revisStatus = (string) ($r['status'] ?? 'uploaded');
                     $revBadge    = $revisiStatusBadges[$revisStatus] ?? ['label' => $revisStatus, 'class' => 'bg-slate-100 text-slate-600'];
                     $isLatest    = $idx === $revisCount - 1;
-                    $revCode     = 'REV-' . str_pad((string) $idOrder, 4, '0', STR_PAD_LEFT)
-                        . '-' . str_pad((string) ($r['versi'] ?? 0), 2, '0', STR_PAD_LEFT);
+                    $revCode     = (string) ($r['kode_revisi'] ?? '');
+                    if ($revCode === '') {
+                        $revCode = 'REV-' . str_pad((string) $idOrder, 4, '0', STR_PAD_LEFT)
+                            . '-' . str_pad((string) ($r['versi'] ?? 0), 2, '0', STR_PAD_LEFT);
+                    }
                     $fileDraft   = (string) ($r['file_draft'] ?? '');
                     $isAccDraft  = $revisStatus === 'acc';
                     $cardClass   = $isAccDraft
@@ -843,7 +840,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                     <?php
                     $idx       = array_search($key, $statusKeys, true);
                     $isDone    = $currentIdx !== false && $idx !== false && $idx < $currentIdx;
-                    $isActive  = $key === $status;
+                    $isActive  = $key === $timelineStatus;
                     $isPending = $currentIdx !== false && $idx !== false && $idx > $currentIdx;
                     $isLast    = $key === $statusKeys[array_key_last($statusKeys)];
                     ?>
@@ -1054,7 +1051,10 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                     <a href="<?= esc(site_url('order/' . $kodeOrder . '/nota-tagihan')) ?>"
                         target="_blank"
                         class="inline-flex items-center gap-2 mt-3 text-xs font-bold text-[#2E5CE6] hover:underline">
-                        📄 Lihat / Cetak Nota Tagihan
+                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Lihat / Cetak Nota Tagihan
                     </a>
                 <?php endif; ?>
 
@@ -1107,7 +1107,10 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                     <a href="<?= esc(site_url('order/' . $kodeOrder . '/bukti-pembayaran-pelunasan')) ?>"
                         target="_blank"
                         class="inline-flex items-center gap-2 mt-3 text-xs font-bold text-emerald-700 hover:underline">
-                        🧾 Lihat / Cetak Bukti Pembayaran Resmi
+                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Lihat / Cetak Bukti Pembayaran Resmi
                     </a>
                 <?php endif; ?>
             </div>
@@ -1116,7 +1119,12 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
         <?php if ($pengiriman !== null): ?>
             <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
                 <div class="border border-slate-200 rounded-xl p-4">
-                    <p class="font-semibold text-sm text-[#051747] mb-2">🚚 Info Pengiriman</p>
+                    <p class="font-semibold text-sm text-[#051747] mb-2 flex items-center gap-2">
+                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 6.5h9.5V16H3V6.5zm9.5 3H16l3.5 3.5V16h-7V9.5zm0-3h2.5l2 3H12.5V6.5zM6.5 17.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm11 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                        </svg>
+                        Info Pengiriman
+                    </p>
                     <?php if ($metodeKirim === 'kurir' && $alamatKirim !== ''): ?>
                         <div class="mb-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
                             <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Alamat Tujuan</p>
@@ -1338,128 +1346,128 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
     <?= view('partials/custom_estimasi_deadline_sync_script') ?>
 <?php endif; ?>
 <script>
-(function () {
-    const zoomModal = document.getElementById('buktiBayarZoomModal');
-    const zoomImg = document.getElementById('buktiBayarZoomImg');
-    const zoomCaption = document.getElementById('buktiBayarZoomCaption');
-    const zoomClose = document.getElementById('buktiBayarZoomClose');
+    (function() {
+        const zoomModal = document.getElementById('buktiBayarZoomModal');
+        const zoomImg = document.getElementById('buktiBayarZoomImg');
+        const zoomCaption = document.getElementById('buktiBayarZoomCaption');
+        const zoomClose = document.getElementById('buktiBayarZoomClose');
 
-    function openBuktiZoom(src, alt) {
-        if (!zoomModal || !zoomImg || !src) {
-            return;
-        }
-        zoomImg.src = src;
-        zoomImg.alt = alt || 'Preview bukti pembayaran';
-        if (zoomCaption) {
-            zoomCaption.textContent = alt || '';
-        }
-        zoomModal.classList.remove('hidden');
-        zoomModal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('overflow-hidden');
-    }
-
-    function closeBuktiZoom() {
-        if (!zoomModal) {
-            return;
-        }
-        zoomModal.classList.add('hidden');
-        zoomModal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('overflow-hidden');
-    }
-
-    zoomClose?.addEventListener('click', closeBuktiZoom);
-    zoomModal?.addEventListener('click', function (event) {
-        if (event.target === zoomModal) {
-            closeBuktiZoom();
-        }
-    });
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && zoomModal && !zoomModal.classList.contains('hidden')) {
-            closeBuktiZoom();
-        }
-    });
-
-    function bindBuktiZoom(imgEl) {
-        if (!imgEl) {
-            return;
-        }
-
-        imgEl.addEventListener('click', function () {
-            if (imgEl.classList.contains('hidden') || !imgEl.src) {
+        function openBuktiZoom(src, alt) {
+            if (!zoomModal || !zoomImg || !src) {
                 return;
             }
-            openBuktiZoom(imgEl.src, imgEl.alt);
+            zoomImg.src = src;
+            zoomImg.alt = alt || 'Preview bukti pembayaran';
+            if (zoomCaption) {
+                zoomCaption.textContent = alt || '';
+            }
+            zoomModal.classList.remove('hidden');
+            zoomModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeBuktiZoom() {
+            if (!zoomModal) {
+                return;
+            }
+            zoomModal.classList.add('hidden');
+            zoomModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        zoomClose?.addEventListener('click', closeBuktiZoom);
+        zoomModal?.addEventListener('click', function(event) {
+            if (event.target === zoomModal) {
+                closeBuktiZoom();
+            }
+        });
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && zoomModal && !zoomModal.classList.contains('hidden')) {
+                closeBuktiZoom();
+            }
         });
 
-        imgEl.addEventListener('keydown', function (event) {
-            if ((event.key === 'Enter' || event.key === ' ') && !imgEl.classList.contains('hidden') && imgEl.src) {
-                event.preventDefault();
+        function bindBuktiZoom(imgEl) {
+            if (!imgEl) {
+                return;
+            }
+
+            imgEl.addEventListener('click', function() {
+                if (imgEl.classList.contains('hidden') || !imgEl.src) {
+                    return;
+                }
                 openBuktiZoom(imgEl.src, imgEl.alt);
-            }
-        });
-    }
+            });
 
-    function bindBuktiBayarPreview(input, wrap, imgEl, pdfEl) {
-        if (!input || !wrap || !imgEl || !pdfEl) {
-            return;
+            imgEl.addEventListener('keydown', function(event) {
+                if ((event.key === 'Enter' || event.key === ' ') && !imgEl.classList.contains('hidden') && imgEl.src) {
+                    event.preventDefault();
+                    openBuktiZoom(imgEl.src, imgEl.alt);
+                }
+            });
         }
 
-        bindBuktiZoom(imgEl);
-
-        input.addEventListener('change', function () {
-            const file = input.files && input.files[0];
-
-            if (!file) {
-                wrap.classList.add('hidden');
-                imgEl.classList.add('hidden');
-                pdfEl.classList.add('hidden');
-                imgEl.removeAttribute('src');
-                pdfEl.textContent = '';
+        function bindBuktiBayarPreview(input, wrap, imgEl, pdfEl) {
+            if (!input || !wrap || !imgEl || !pdfEl) {
                 return;
             }
 
-            const isImage = /^image\/(jpe?g|png)$/i.test(file.type)
-                || /\.(jpe?g|png)$/i.test(file.name);
-            const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+            bindBuktiZoom(imgEl);
 
-            wrap.classList.remove('hidden');
+            input.addEventListener('change', function() {
+                const file = input.files && input.files[0];
 
-            if (isImage) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    imgEl.src = e.target.result;
-                    imgEl.classList.remove('hidden');
+                if (!file) {
+                    wrap.classList.add('hidden');
+                    imgEl.classList.add('hidden');
                     pdfEl.classList.add('hidden');
+                    imgEl.removeAttribute('src');
                     pdfEl.textContent = '';
-                };
-                reader.readAsDataURL(file);
-                return;
-            }
+                    return;
+                }
 
-            if (isPdf) {
-                imgEl.classList.add('hidden');
-                imgEl.removeAttribute('src');
-                pdfEl.textContent = '📄 ' + file.name;
-                pdfEl.classList.remove('hidden');
-                return;
-            }
+                const isImage = /^image\/(jpe?g|png)$/i.test(file.type) ||
+                    /\.(jpe?g|png)$/i.test(file.name);
+                const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
 
-            wrap.classList.add('hidden');
-        });
-    }
+                wrap.classList.remove('hidden');
 
-    bindBuktiBayarPreview(
-        document.getElementById('inputBuktiDp'),
-        document.getElementById('previewBuktiDp'),
-        document.getElementById('previewBuktiDpImg'),
-        document.getElementById('previewBuktiDpPdf')
-    );
-    bindBuktiBayarPreview(
-        document.getElementById('inputBuktiPelunasan'),
-        document.getElementById('previewBuktiPelunasan'),
-        document.getElementById('previewBuktiPelunasanImg'),
-        document.getElementById('previewBuktiPelunasanPdf')
-    );
-})();
+                if (isImage) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imgEl.src = e.target.result;
+                        imgEl.classList.remove('hidden');
+                        pdfEl.classList.add('hidden');
+                        pdfEl.textContent = '';
+                    };
+                    reader.readAsDataURL(file);
+                    return;
+                }
+
+                if (isPdf) {
+                    imgEl.classList.add('hidden');
+                    imgEl.removeAttribute('src');
+                    pdfEl.textContent = '📄 ' + file.name;
+                    pdfEl.classList.remove('hidden');
+                    return;
+                }
+
+                wrap.classList.add('hidden');
+            });
+        }
+
+        bindBuktiBayarPreview(
+            document.getElementById('inputBuktiDp'),
+            document.getElementById('previewBuktiDp'),
+            document.getElementById('previewBuktiDpImg'),
+            document.getElementById('previewBuktiDpPdf')
+        );
+        bindBuktiBayarPreview(
+            document.getElementById('inputBuktiPelunasan'),
+            document.getElementById('previewBuktiPelunasan'),
+            document.getElementById('previewBuktiPelunasanImg'),
+            document.getElementById('previewBuktiPelunasanPdf')
+        );
+    })();
 </script>
 <?= $this->endSection() ?>

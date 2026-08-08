@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @var string                       $title
  * @var string                       $page_title
@@ -62,45 +63,68 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
 <?= $this->section('banner_title') ?>Manajemen Pengguna<?= $this->endSection() ?>
 <?= $this->section('banner_subtitle') ?>
 <?php if (($viewerRole ?? '') === 'admin'): ?>
-Kelola akun pelanggan — daftar staff internal tampil read-only.
+    Kelola akun pelanggan · Data staf internal hanya dapat dilihat
 <?php elseif (($viewerRole ?? '') === 'owner'): ?>
-Kelola staff internal — data pelanggan tampil read-only.
+    Kelola staff internal - data pelanggan tampil read-only.
 <?php else: ?>
-Kelola akun pelanggan & staff internal.
+    Kelola akun pelanggan & staff internal.
 <?php endif; ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
 <style>
-.pengguna-tab {
-    padding: 10px 4px;
-    margin-right: 24px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #64748B;
-    border-bottom: 2px solid transparent;
-    transition: color .2s, border-color .2s;
-    white-space: nowrap;
-}
+    .pengguna-tab {
+        padding: 10px 4px;
+        margin-right: 24px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748B;
+        border-bottom: 2px solid transparent;
+        transition: color .2s, border-color .2s;
+        white-space: nowrap;
+    }
 
-.pengguna-tab:hover {
-    color: #051747;
-}
+    .pengguna-tab:hover {
+        color: #051747;
+    }
 
-.pengguna-tab.is-active {
-    color: #2E5CE6;
-    border-bottom-color: #2E5CE6;
-}
+    .pengguna-tab.is-active {
+        color: #2E5CE6;
+        border-bottom-color: #2E5CE6;
+    }
 
-#kerjasamaModal { display: none; }
-#kerjasamaModal.is-open { display: flex; }
-#tambahPenggunaModal { display: none; }
-#tambahPenggunaModal.is-open { display: flex; }
-#editPelangganModal { display: none; }
-#editPelangganModal.is-open { display: flex; }
-#editStaffModal { display: none; }
-#editStaffModal.is-open { display: flex; }
+    #kerjasamaModal {
+        display: none;
+    }
+
+    #kerjasamaModal.is-open {
+        display: flex;
+    }
+
+    #tambahPenggunaModal {
+        display: none;
+    }
+
+    #tambahPenggunaModal.is-open {
+        display: flex;
+    }
+
+    #editPelangganModal {
+        display: none;
+    }
+
+    #editPelangganModal.is-open {
+        display: flex;
+    }
+
+    #editStaffModal {
+        display: none;
+    }
+
+    #editStaffModal.is-open {
+        display: flex;
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -118,13 +142,13 @@ Kelola akun pelanggan & staff internal.
     <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900 mb-4">
         <p class="font-bold text-[#051747] flex items-center gap-2 mb-2">
             <svg class="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
             </svg>
             Kata Sandi Akun Baru (tampil sekali)
         </p>
         <p>Akun: <strong><?= esc((string) $generatedNama) ?></strong> · Email: <strong><?= esc((string) $generatedEmail) ?></strong></p>
         <p class="mt-1">Password: <code class="bg-white/80 px-2 py-0.5 rounded font-mono text-[#051747]"><?= esc((string) $generatedPassword) ?></code></p>
-        <p class="text-xs text-amber-800 mt-2">Sampaikan ke pengguna melalui channel aman. Password tidak ditampilkan lagi setelah halaman di-refresh.</p>
+        <p class="text-xs text-amber-800 mt-2">Simpan/salin password ini, lalu sampaikan kepada pengguna melalui media yang aman. Demi keamanan, password tidak akan ditampilkan kembali setelah halaman ditutup atau di-refresh.</p>
     </div>
 <?php endif; ?>
 
@@ -142,18 +166,18 @@ Kelola akun pelanggan & staff internal.
 
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap sm:justify-end mb-3 sm:mb-4">
         <?php if ($filterSegment !== 'internal'): ?>
-        <form method="get" action="<?= esc(site_url('pengguna')) ?>"
-            class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <?php if ($filterSegment !== 'semua'): ?>
-                <input type="hidden" name="segment" value="<?= esc($filterSegment) ?>">
-            <?php endif; ?>
-            <label for="filterJenis" class="sr-only">Filter skema pelanggan</label>
-            <select id="filterJenis" name="jenis" onchange="this.form.submit()" class="filter-select min-w-[220px]">
-                <?php foreach ($jenisOptions as $val => $label): ?>
-                    <option value="<?= esc($val) ?>" <?= ($filterJenis ?? '') === $val ? 'selected' : '' ?>><?= esc($label) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </form>
+            <form method="get" action="<?= esc(site_url('pengguna')) ?>"
+                class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <?php if ($filterSegment !== 'semua'): ?>
+                    <input type="hidden" name="segment" value="<?= esc($filterSegment) ?>">
+                <?php endif; ?>
+                <label for="filterJenis" class="sr-only">Filter skema pelanggan</label>
+                <select id="filterJenis" name="jenis" onchange="this.form.submit()" class="filter-select min-w-[220px]">
+                    <?php foreach ($jenisOptions as $val => $label): ?>
+                        <option value="<?= esc($val) ?>" <?= ($filterJenis ?? '') === $val ? 'selected' : '' ?>><?= esc($label) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </form>
         <?php endif; ?>
 
         <label for="penggunaSearch" class="sr-only">Cari pengguna</label>
@@ -360,403 +384,403 @@ Kelola akun pelanggan & staff internal.
 <?= $this->section('scripts') ?>
 <?= view('partials/pelanggan_akun_field_scripts') ?>
 <?php if ($users !== []): ?>
-<script>
-    window.adminDataTableConfig = {
-        searchId: 'penggunaSearch',
-        tbodyId: 'penggunaBody',
-        emptyFilterRowId: 'penggunaEmptyFilter',
-        entriesId: 'penggunaEntries',
-        entriesInfoId: 'penggunaEntriesInfo',
-        paginationId: 'penggunaPagination',
-        prevPageId: 'penggunaPrevPage',
-        nextPageId: 'penggunaNextPage',
-        pageInfoId: 'penggunaPageInfo',
-        rowSelector: 'tr.data-table-row',
-    };
-</script>
-<?= view('partials/admin_data_table_scripts') ?>
+    <script>
+        window.adminDataTableConfig = {
+            searchId: 'penggunaSearch',
+            tbodyId: 'penggunaBody',
+            emptyFilterRowId: 'penggunaEmptyFilter',
+            entriesId: 'penggunaEntries',
+            entriesInfoId: 'penggunaEntriesInfo',
+            paginationId: 'penggunaPagination',
+            prevPageId: 'penggunaPrevPage',
+            nextPageId: 'penggunaNextPage',
+            pageInfoId: 'penggunaPageInfo',
+            rowSelector: 'tr.data-table-row',
+        };
+    </script>
+    <?= view('partials/admin_data_table_scripts') ?>
 <?php endif; ?>
 <script>
-(function () {
-    const modal = document.getElementById('kerjasamaModal');
-    const wrap = document.getElementById('kerjasamaModalFormWrap');
-    const tpl = document.getElementById('kerjasamaFormTemplate');
-    const namaEl = document.getElementById('kerjasamaModalNama');
-    const closeBtn = document.getElementById('kerjasamaModalClose');
-    if (!modal || !wrap || !tpl) return;
+    (function() {
+        const modal = document.getElementById('kerjasamaModal');
+        const wrap = document.getElementById('kerjasamaModalFormWrap');
+        const tpl = document.getElementById('kerjasamaFormTemplate');
+        const namaEl = document.getElementById('kerjasamaModalNama');
+        const closeBtn = document.getElementById('kerjasamaModalClose');
+        if (!modal || !wrap || !tpl) return;
 
-    function closeModal() {
-        modal.classList.remove('is-open');
-        wrap.innerHTML = '';
-    }
-
-    function formatNpwpValue(raw) {
-        const digits = String(raw || '').replace(/\D/g, '').slice(0, 15);
-        if (digits.length <= 2) return digits;
-        if (digits.length <= 5) return digits.slice(0, 2) + '.' + digits.slice(2);
-        if (digits.length <= 8) return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5);
-        if (digits.length <= 9) {
-            return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '.' + digits.slice(8);
+        function closeModal() {
+            modal.classList.remove('is-open');
+            wrap.innerHTML = '';
         }
-        if (digits.length <= 12) {
-            return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '.'
-                + digits.slice(8, 9) + '-' + digits.slice(9);
+
+        function formatNpwpValue(raw) {
+            const digits = String(raw || '').replace(/\D/g, '').slice(0, 15);
+            if (digits.length <= 2) return digits;
+            if (digits.length <= 5) return digits.slice(0, 2) + '.' + digits.slice(2);
+            if (digits.length <= 8) return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5);
+            if (digits.length <= 9) {
+                return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '.' + digits.slice(8);
+            }
+            if (digits.length <= 12) {
+                return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '.' +
+                    digits.slice(8, 9) + '-' + digits.slice(9);
+            }
+            return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '.' +
+                digits.slice(8, 9) + '-' + digits.slice(9, 12) + '.' + digits.slice(12);
         }
-        return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '.'
-            + digits.slice(8, 9) + '-' + digits.slice(9, 12) + '.' + digits.slice(12);
-    }
 
-    function bindKerjasamaFormValidation(form) {
-        if (!form || form.dataset.kerjasamaBound === '1') {
-            return;
-        }
-        form.dataset.kerjasamaBound = '1';
+        function bindKerjasamaFormValidation(form) {
+            if (!form || form.dataset.kerjasamaBound === '1') {
+                return;
+            }
+            form.dataset.kerjasamaBound = '1';
 
-        const phonePattern = /^(\+62|08|022)[0-9]{8,13}$/;
-        const waInput = form.querySelector('[data-wa-perusahaan-input]');
-        const npwpInput = form.querySelector('[data-npwp-input]');
+            const phonePattern = /^(\+62|08|022)[0-9]{8,13}$/;
+            const waInput = form.querySelector('[data-wa-perusahaan-input]');
+            const npwpInput = form.querySelector('[data-npwp-input]');
 
-        if (waInput) {
-            waInput.addEventListener('input', function () {
-                let value = waInput.value.replace(/[^\d+]/g, '');
-                if (value.includes('+')) {
-                    value = '+' + value.replace(/\+/g, '');
+            if (waInput) {
+                waInput.addEventListener('input', function() {
+                    let value = waInput.value.replace(/[^\d+]/g, '');
+                    if (value.includes('+')) {
+                        value = '+' + value.replace(/\+/g, '');
+                    }
+                    waInput.value = value.slice(0, 20);
+                });
+            }
+
+            if (npwpInput) {
+                npwpInput.addEventListener('input', function() {
+                    npwpInput.value = formatNpwpValue(npwpInput.value);
+                });
+            }
+
+            form.addEventListener('submit', function(event) {
+                const wa = waInput?.value.trim() || '';
+                if (!phonePattern.test(wa)) {
+                    event.preventDefault();
+                    window.alert('Format no. HP/WA perusahaan harus berupa angka dan diawali dengan 08, +62, atau 022 (8–13 digit setelah awalan).');
+                    waInput?.focus();
+                    return;
                 }
-                waInput.value = value.slice(0, 20);
+
+                const npwp = npwpInput?.value.trim() || '';
+                if (npwp !== '') {
+                    const digits = npwp.replace(/\D/g, '');
+                    if (digits.length !== 15) {
+                        event.preventDefault();
+                        window.alert('Format NPWP tidak valid. Masukkan 15 digit angka.');
+                        npwpInput?.focus();
+                    }
+                }
             });
         }
 
-        if (npwpInput) {
-            npwpInput.addEventListener('input', function () {
-                npwpInput.value = formatNpwpValue(npwpInput.value);
+        document.querySelectorAll('.js-open-kerjasama-modal').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const id = btn.getAttribute('data-pelanggan-id');
+                const nama = btn.getAttribute('data-pelanggan-nama') || '—';
+                if (!id) return;
+                wrap.innerHTML = tpl.innerHTML;
+                const form = wrap.querySelector('form');
+                if (form) {
+                    form.action = form.action.replace('/0/', '/' + id + '/');
+                    bindKerjasamaFormValidation(form);
+                }
+                if (namaEl) namaEl.textContent = nama;
+                modal.classList.add('is-open');
             });
+        });
+
+        closeBtn?.addEventListener('click', closeModal);
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeModal();
+        });
+    })();
+</script>
+<script>
+    (function() {
+        const modal = document.getElementById('tambahPenggunaModal');
+        const openBtn = document.getElementById('openTambahPenggunaModal');
+        const closeBtn = document.getElementById('tambahPenggunaModalClose');
+        const cancelBtn = document.getElementById('tambahPenggunaModalCancel');
+        const form = document.getElementById('formTambahPengguna');
+        if (!modal || !form) return;
+
+        const pelangganFields = document.getElementById('tambahPelangganFields');
+        const staffFields = document.getElementById('tambahStaffFields');
+        const passwordManualWrap = document.getElementById('tpPasswordManualWrap');
+        const passwordAutoNote = document.getElementById('tpPasswordAutoNote');
+        const telpInput = document.getElementById('tp_no_telp');
+        const alamatInput = document.getElementById('tp_alamat');
+        const passwordInput = document.getElementById('tp_password');
+        const passwordConfirmInput = document.getElementById('tp_password_confirm');
+        const staffRoleSelect = document.getElementById('staff_role');
+
+        function accountType() {
+            const checked = form.querySelector('input[name="account_type"]:checked');
+            if (checked) {
+                return checked.value;
+            }
+            const hidden = form.querySelector('input[name="account_type"][type="hidden"]');
+            return hidden ? hidden.value : 'pelanggan';
         }
 
-        form.addEventListener('submit', function (event) {
-            const wa = waInput?.value.trim() || '';
-            if (!phonePattern.test(wa)) {
-                event.preventDefault();
-                window.alert('Format no. HP/WA perusahaan harus berupa angka dan diawali dengan 08, +62, atau 022 (8–13 digit setelah awalan).');
-                waInput?.focus();
+        function passwordMode() {
+            const checked = form.querySelector('input[name="password_mode"]:checked');
+            return checked ? checked.value : 'manual';
+        }
+
+        function syncPelangganRequired(isPelanggan) {
+            if (telpInput) telpInput.required = isPelanggan;
+            if (alamatInput) alamatInput.required = isPelanggan;
+            if (staffRoleSelect) staffRoleSelect.disabled = isPelanggan;
+            if (isPelanggan) {
+                const manual = passwordMode() === 'manual';
+                if (passwordInput) {
+                    passwordInput.required = manual;
+                    passwordInput.disabled = !manual;
+                }
+                if (passwordConfirmInput) {
+                    passwordConfirmInput.required = manual;
+                    passwordConfirmInput.disabled = !manual;
+                }
+            } else {
+                if (passwordInput) {
+                    passwordInput.required = false;
+                    passwordInput.disabled = true;
+                }
+                if (passwordConfirmInput) {
+                    passwordConfirmInput.required = false;
+                    passwordConfirmInput.disabled = true;
+                }
+            }
+        }
+
+        function syncPasswordMode() {
+            if (accountType() !== 'pelanggan') return;
+            const manual = passwordMode() === 'manual';
+            if (passwordManualWrap) passwordManualWrap.classList.toggle('hidden', !manual);
+            if (passwordAutoNote) passwordAutoNote.classList.toggle('hidden', manual);
+            syncPelangganRequired(true);
+        }
+
+        function syncAccountType() {
+            const isPelanggan = accountType() === 'pelanggan';
+            if (pelangganFields) pelangganFields.classList.toggle('hidden', !isPelanggan);
+            if (staffFields) staffFields.classList.toggle('hidden', isPelanggan);
+            syncPelangganRequired(isPelanggan);
+            if (isPelanggan) syncPasswordMode();
+        }
+
+        function openModal() {
+            modal.classList.add('is-open');
+            syncAccountType();
+            window.bindPelangganPhoneInputs(modal);
+        }
+
+        function closeModal() {
+            modal.classList.remove('is-open');
+        }
+
+        openBtn?.addEventListener('click', openModal);
+        closeBtn?.addEventListener('click', closeModal);
+        cancelBtn?.addEventListener('click', closeModal);
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeModal();
+        });
+
+        form.querySelectorAll('[data-account-type-radio]').forEach(function(radio) {
+            radio.addEventListener('change', syncAccountType);
+        });
+        form.querySelectorAll('[data-password-mode-radio]').forEach(function(radio) {
+            radio.addEventListener('change', syncPasswordMode);
+        });
+
+        form.querySelectorAll('.js-toggle-password').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const targetId = btn.getAttribute('data-target');
+                const input = targetId ? document.getElementById(targetId) : null;
+                if (!input) return;
+                input.type = input.type === 'password' ? 'text' : 'password';
+            });
+        });
+
+        form.addEventListener('submit', function(e) {
+            if (accountType() !== 'pelanggan') return;
+
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                form.reportValidity();
                 return;
             }
 
-            const npwp = npwpInput?.value.trim() || '';
-            if (npwp !== '') {
-                const digits = npwp.replace(/\D/g, '');
-                if (digits.length !== 15) {
-                    event.preventDefault();
-                    window.alert('Format NPWP tidak valid. Masukkan 15 digit angka.');
-                    npwpInput?.focus();
+            const err = window.validatePelangganAkunFormFields(form);
+            if (err) {
+                e.preventDefault();
+                alert(err);
+                return;
+            }
+
+            if (passwordMode() === 'manual') {
+                const pwd = passwordInput?.value || '';
+                const pwdConfirm = passwordConfirmInput?.value || '';
+                if (pwd.length < 8) {
+                    e.preventDefault();
+                    alert('Kata sandi minimal 8 karakter.');
+                    return;
+                }
+                if (pwd !== pwdConfirm) {
+                    e.preventDefault();
+                    alert('Konfirmasi kata sandi tidak sama.');
                 }
             }
         });
-    }
 
-    document.querySelectorAll('.js-open-kerjasama-modal').forEach(function (btn) {
-        btn.addEventListener('click', function () {
+        syncAccountType();
+        window.bindPelangganPhoneInputs(modal);
+
+        <?php if ($openTambahModal): ?>
+            openModal();
+        <?php endif; ?>
+    })();
+</script>
+<script>
+    (function() {
+        const modal = document.getElementById('editPelangganModal');
+        const wrap = document.getElementById('editPelangganFormWrap');
+        const tpl = document.getElementById('editPelangganFormTemplate');
+        const namaEl = document.getElementById('editPelangganModalNama');
+        const closeBtn = document.getElementById('editPelangganModalClose');
+        if (!modal || !wrap || !tpl) return;
+
+        function closeModal() {
+            modal.classList.remove('is-open');
+            wrap.innerHTML = '';
+        }
+
+        function openEditModal(btn) {
             const id = btn.getAttribute('data-pelanggan-id');
-            const nama = btn.getAttribute('data-pelanggan-nama') || '—';
             if (!id) return;
+
             wrap.innerHTML = tpl.innerHTML;
             const form = wrap.querySelector('form');
             if (form) {
-                form.action = form.action.replace('/0/', '/' + id + '/');
-                bindKerjasamaFormValidation(form);
+                form.action = form.action.replace(/\/update\/0$/, '/update/' + id);
             }
-            if (namaEl) namaEl.textContent = nama;
+
+            const setVal = function(name, value) {
+                const el = wrap.querySelector('[name="' + name + '"]');
+                if (el) el.value = value || '';
+            };
+
+            setVal('nama', btn.getAttribute('data-pelanggan-nama'));
+            setVal('email', btn.getAttribute('data-pelanggan-email'));
+            setVal('no_telp', btn.getAttribute('data-pelanggan-telp'));
+            setVal('alamat', btn.getAttribute('data-pelanggan-alamat'));
+
+            if (namaEl) namaEl.textContent = btn.getAttribute('data-pelanggan-nama') || '—';
+
+            wrap.querySelector('#editPelangganModalCancel')?.addEventListener('click', closeModal);
+            window.bindPelangganPhoneInputs(wrap);
             modal.classList.add('is-open');
+        }
+
+        document.querySelectorAll('.js-open-edit-pelanggan-modal').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                openEditModal(btn);
+            });
         });
-    });
 
-    closeBtn?.addEventListener('click', closeModal);
-    modal.addEventListener('click', function (e) {
-        if (e.target === modal) closeModal();
-    });
-})();
-</script>
-<script>
-(function () {
-    const modal = document.getElementById('tambahPenggunaModal');
-    const openBtn = document.getElementById('openTambahPenggunaModal');
-    const closeBtn = document.getElementById('tambahPenggunaModalClose');
-    const cancelBtn = document.getElementById('tambahPenggunaModalCancel');
-    const form = document.getElementById('formTambahPengguna');
-    if (!modal || !form) return;
-
-    const pelangganFields = document.getElementById('tambahPelangganFields');
-    const staffFields = document.getElementById('tambahStaffFields');
-    const passwordManualWrap = document.getElementById('tpPasswordManualWrap');
-    const passwordAutoNote = document.getElementById('tpPasswordAutoNote');
-    const telpInput = document.getElementById('tp_no_telp');
-    const alamatInput = document.getElementById('tp_alamat');
-    const passwordInput = document.getElementById('tp_password');
-    const passwordConfirmInput = document.getElementById('tp_password_confirm');
-    const staffRoleSelect = document.getElementById('staff_role');
-
-    function accountType() {
-        const checked = form.querySelector('input[name="account_type"]:checked');
-        if (checked) {
-            return checked.value;
-        }
-        const hidden = form.querySelector('input[name="account_type"][type="hidden"]');
-        return hidden ? hidden.value : 'pelanggan';
-    }
-
-    function passwordMode() {
-        const checked = form.querySelector('input[name="password_mode"]:checked');
-        return checked ? checked.value : 'manual';
-    }
-
-    function syncPelangganRequired(isPelanggan) {
-        if (telpInput) telpInput.required = isPelanggan;
-        if (alamatInput) alamatInput.required = isPelanggan;
-        if (staffRoleSelect) staffRoleSelect.disabled = isPelanggan;
-        if (isPelanggan) {
-            const manual = passwordMode() === 'manual';
-            if (passwordInput) {
-                passwordInput.required = manual;
-                passwordInput.disabled = !manual;
-            }
-            if (passwordConfirmInput) {
-                passwordConfirmInput.required = manual;
-                passwordConfirmInput.disabled = !manual;
-            }
-        } else {
-            if (passwordInput) {
-                passwordInput.required = false;
-                passwordInput.disabled = true;
-            }
-            if (passwordConfirmInput) {
-                passwordConfirmInput.required = false;
-                passwordConfirmInput.disabled = true;
-            }
-        }
-    }
-
-    function syncPasswordMode() {
-        if (accountType() !== 'pelanggan') return;
-        const manual = passwordMode() === 'manual';
-        if (passwordManualWrap) passwordManualWrap.classList.toggle('hidden', !manual);
-        if (passwordAutoNote) passwordAutoNote.classList.toggle('hidden', manual);
-        syncPelangganRequired(true);
-    }
-
-    function syncAccountType() {
-        const isPelanggan = accountType() === 'pelanggan';
-        if (pelangganFields) pelangganFields.classList.toggle('hidden', !isPelanggan);
-        if (staffFields) staffFields.classList.toggle('hidden', isPelanggan);
-        syncPelangganRequired(isPelanggan);
-        if (isPelanggan) syncPasswordMode();
-    }
-
-    function openModal() {
-        modal.classList.add('is-open');
-        syncAccountType();
-        window.bindPelangganPhoneInputs(modal);
-    }
-
-    function closeModal() {
-        modal.classList.remove('is-open');
-    }
-
-    openBtn?.addEventListener('click', openModal);
-    closeBtn?.addEventListener('click', closeModal);
-    cancelBtn?.addEventListener('click', closeModal);
-    modal.addEventListener('click', function (e) {
-        if (e.target === modal) closeModal();
-    });
-
-    form.querySelectorAll('[data-account-type-radio]').forEach(function (radio) {
-        radio.addEventListener('change', syncAccountType);
-    });
-    form.querySelectorAll('[data-password-mode-radio]').forEach(function (radio) {
-        radio.addEventListener('change', syncPasswordMode);
-    });
-
-    form.querySelectorAll('.js-toggle-password').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const targetId = btn.getAttribute('data-target');
-            const input = targetId ? document.getElementById(targetId) : null;
-            if (!input) return;
-            input.type = input.type === 'password' ? 'text' : 'password';
+        closeBtn?.addEventListener('click', closeModal);
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeModal();
         });
-    });
 
-    form.addEventListener('submit', function (e) {
-        if (accountType() !== 'pelanggan') return;
-
-        if (!form.checkValidity()) {
-            e.preventDefault();
-            form.reportValidity();
-            return;
-        }
-
-        const err = window.validatePelangganAkunFormFields(form);
-        if (err) {
-            e.preventDefault();
-            alert(err);
-            return;
-        }
-
-        if (passwordMode() === 'manual') {
-            const pwd = passwordInput?.value || '';
-            const pwdConfirm = passwordConfirmInput?.value || '';
-            if (pwd.length < 8) {
-                e.preventDefault();
-                alert('Kata sandi minimal 8 karakter.');
-                return;
-            }
-            if (pwd !== pwdConfirm) {
-                e.preventDefault();
-                alert('Konfirmasi kata sandi tidak sama.');
-            }
-        }
-    });
-
-    syncAccountType();
-    window.bindPelangganPhoneInputs(modal);
-
-    <?php if ($openTambahModal): ?>
-    openModal();
-    <?php endif; ?>
-})();
-</script>
-<script>
-(function () {
-    const modal = document.getElementById('editPelangganModal');
-    const wrap = document.getElementById('editPelangganFormWrap');
-    const tpl = document.getElementById('editPelangganFormTemplate');
-    const namaEl = document.getElementById('editPelangganModalNama');
-    const closeBtn = document.getElementById('editPelangganModalClose');
-    if (!modal || !wrap || !tpl) return;
-
-    function closeModal() {
-        modal.classList.remove('is-open');
-        wrap.innerHTML = '';
-    }
-
-    function openEditModal(btn) {
-        const id = btn.getAttribute('data-pelanggan-id');
-        if (!id) return;
-
-        wrap.innerHTML = tpl.innerHTML;
-        const form = wrap.querySelector('form');
-        if (form) {
-            form.action = form.action.replace(/\/update\/0$/, '/update/' + id);
-        }
-
-        const setVal = function (name, value) {
-            const el = wrap.querySelector('[name="' + name + '"]');
-            if (el) el.value = value || '';
-        };
-
-        setVal('nama', btn.getAttribute('data-pelanggan-nama'));
-        setVal('email', btn.getAttribute('data-pelanggan-email'));
-        setVal('no_telp', btn.getAttribute('data-pelanggan-telp'));
-        setVal('alamat', btn.getAttribute('data-pelanggan-alamat'));
-
-        if (namaEl) namaEl.textContent = btn.getAttribute('data-pelanggan-nama') || '—';
-
-        wrap.querySelector('#editPelangganModalCancel')?.addEventListener('click', closeModal);
-        window.bindPelangganPhoneInputs(wrap);
-        modal.classList.add('is-open');
-    }
-
-    document.querySelectorAll('.js-open-edit-pelanggan-modal').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            openEditModal(btn);
-        });
-    });
-
-    closeBtn?.addEventListener('click', closeModal);
-    modal.addEventListener('click', function (e) {
-        if (e.target === modal) closeModal();
-    });
-
-    <?php if ($openEditPelanggan > 0): ?>
-    (function () {
-        const btn = document.querySelector('.js-open-edit-pelanggan-modal[data-pelanggan-id="<?= (int) $openEditPelanggan ?>"]');
-        if (btn) {
-            openEditModal(btn);
-            const setVal = function (name, value) {
-                const el = wrap.querySelector('[name="' + name + '"]');
-                if (el && value !== '') el.value = value;
-            };
-            setVal('nama', <?= json_encode(old('nama', '')) ?>);
-            setVal('email', <?= json_encode(old('email', '')) ?>);
-            setVal('no_telp', <?= json_encode(old('no_telp', '')) ?>);
-            setVal('alamat', <?= json_encode(old('alamat', '')) ?>);
-        }
+        <?php if ($openEditPelanggan > 0): ?>
+                (function() {
+                    const btn = document.querySelector('.js-open-edit-pelanggan-modal[data-pelanggan-id="<?= (int) $openEditPelanggan ?>"]');
+                    if (btn) {
+                        openEditModal(btn);
+                        const setVal = function(name, value) {
+                            const el = wrap.querySelector('[name="' + name + '"]');
+                            if (el && value !== '') el.value = value;
+                        };
+                        setVal('nama', <?= json_encode(old('nama', '')) ?>);
+                        setVal('email', <?= json_encode(old('email', '')) ?>);
+                        setVal('no_telp', <?= json_encode(old('no_telp', '')) ?>);
+                        setVal('alamat', <?= json_encode(old('alamat', '')) ?>);
+                    }
+                })();
+        <?php endif; ?>
     })();
-    <?php endif; ?>
-})();
 </script>
 <script>
-(function () {
-    const modal = document.getElementById('editStaffModal');
-    const wrap = document.getElementById('editStaffFormWrap');
-    const tpl = document.getElementById('editStaffFormTemplate');
-    const namaEl = document.getElementById('editStaffModalNama');
-    const closeBtn = document.getElementById('editStaffModalClose');
-    if (!modal || !wrap || !tpl) return;
+    (function() {
+        const modal = document.getElementById('editStaffModal');
+        const wrap = document.getElementById('editStaffFormWrap');
+        const tpl = document.getElementById('editStaffFormTemplate');
+        const namaEl = document.getElementById('editStaffModalNama');
+        const closeBtn = document.getElementById('editStaffModalClose');
+        if (!modal || !wrap || !tpl) return;
 
-    function closeModal() {
-        modal.classList.remove('is-open');
-        wrap.innerHTML = '';
-    }
-
-    function openEditModal(btn) {
-        const id = btn.getAttribute('data-staff-id');
-        if (!id) return;
-
-        wrap.innerHTML = tpl.innerHTML;
-        const form = wrap.querySelector('form');
-        if (form) {
-            form.action = form.action.replace(/\/update\/0$/, '/update/' + id);
+        function closeModal() {
+            modal.classList.remove('is-open');
+            wrap.innerHTML = '';
         }
 
-        const setVal = function (name, value) {
-            const el = wrap.querySelector('[name="' + name + '"]');
-            if (el) el.value = value || '';
-        };
+        function openEditModal(btn) {
+            const id = btn.getAttribute('data-staff-id');
+            if (!id) return;
 
-        setVal('nama', btn.getAttribute('data-staff-nama'));
-        setVal('email', btn.getAttribute('data-staff-email'));
-        setVal('staff_role', btn.getAttribute('data-staff-role'));
+            wrap.innerHTML = tpl.innerHTML;
+            const form = wrap.querySelector('form');
+            if (form) {
+                form.action = form.action.replace(/\/update\/0$/, '/update/' + id);
+            }
 
-        if (namaEl) namaEl.textContent = btn.getAttribute('data-staff-nama') || '—';
-
-        wrap.querySelector('#editStaffModalCancel')?.addEventListener('click', closeModal);
-        modal.classList.add('is-open');
-    }
-
-    document.querySelectorAll('.js-open-edit-staff-modal').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            openEditModal(btn);
-        });
-    });
-
-    closeBtn?.addEventListener('click', closeModal);
-    modal.addEventListener('click', function (e) {
-        if (e.target === modal) closeModal();
-    });
-
-    <?php if ($openEditStaff > 0): ?>
-    (function () {
-        const btn = document.querySelector('.js-open-edit-staff-modal[data-staff-id="<?= (int) $openEditStaff ?>"]');
-        if (btn) {
-            openEditModal(btn);
-            const setVal = function (name, value) {
+            const setVal = function(name, value) {
                 const el = wrap.querySelector('[name="' + name + '"]');
-                if (el && value !== '') el.value = value;
+                if (el) el.value = value || '';
             };
-            setVal('nama', <?= json_encode(old('nama', '')) ?>);
-            setVal('email', <?= json_encode(old('email', '')) ?>);
-            setVal('staff_role', <?= json_encode(old('staff_role', '')) ?>);
+
+            setVal('nama', btn.getAttribute('data-staff-nama'));
+            setVal('email', btn.getAttribute('data-staff-email'));
+            setVal('staff_role', btn.getAttribute('data-staff-role'));
+
+            if (namaEl) namaEl.textContent = btn.getAttribute('data-staff-nama') || '—';
+
+            wrap.querySelector('#editStaffModalCancel')?.addEventListener('click', closeModal);
+            modal.classList.add('is-open');
         }
+
+        document.querySelectorAll('.js-open-edit-staff-modal').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                openEditModal(btn);
+            });
+        });
+
+        closeBtn?.addEventListener('click', closeModal);
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeModal();
+        });
+
+        <?php if ($openEditStaff > 0): ?>
+                (function() {
+                    const btn = document.querySelector('.js-open-edit-staff-modal[data-staff-id="<?= (int) $openEditStaff ?>"]');
+                    if (btn) {
+                        openEditModal(btn);
+                        const setVal = function(name, value) {
+                            const el = wrap.querySelector('[name="' + name + '"]');
+                            if (el && value !== '') el.value = value;
+                        };
+                        setVal('nama', <?= json_encode(old('nama', '')) ?>);
+                        setVal('email', <?= json_encode(old('email', '')) ?>);
+                        setVal('staff_role', <?= json_encode(old('staff_role', '')) ?>);
+                    }
+                })();
+        <?php endif; ?>
     })();
-    <?php endif; ?>
-})();
 </script>
 <?= $this->endSection() ?>

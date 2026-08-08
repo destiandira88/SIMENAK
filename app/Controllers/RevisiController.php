@@ -145,6 +145,7 @@ class RevisiController extends BaseController
                 'id_order'      => $idOrder,
                 'id_produksi'   => (int) session()->get('id_user'),
                 'versi'         => $versi,
+                'kode_revisi'   => 'REV-' . $kodeOrder . '-V' . $versi,
                 'file_draft'    => $newName,
                 'catatan_prod'  => $catatanProd !== '' ? $catatanProd : null,
                 'status'        => 'uploaded',

@@ -84,6 +84,82 @@ class ProfilController extends BaseController
             ->with('success', 'Profil berhasil diperbarui.');
     }
 
+    public function ubahPassword(): RedirectResponse
+    {
+        if ((string) session()->get('role') !== 'pelanggan') {
+            return redirect()->to(site_url('dashboard'));
+        }
+
+        $idUser = (int) session()->get('id_user');
+        $db     = \Config\Database::connect();
+        $user   = $db->table('users')
+            ->where('id_user', $idUser)
+            ->get()
+            ->getRowArray();
+
+        if ($user === null) {
+            return $this->backProfilModal()
+                ->with('error', 'Akun tidak ditemukan.');
+        }
+
+        if ($db->fieldExists('google_id', 'users') && ! empty($user['google_id'])) {
+            return $this->backProfilModal()
+                ->with('error', 'Akun Google tidak dapat mengubah password di sini. Gunakan Lupa Password di halaman utama.');
+        }
+
+        $rules = [
+            'password_lama'    => 'required',
+            'password'         => 'required|min_length[8]',
+            'password_confirm' => 'required|matches[password]',
+        ];
+
+        $messages = [
+            'password_lama' => [
+                'required' => 'Password saat ini wajib diisi.',
+            ],
+            'password' => [
+                'required'   => 'Password baru wajib diisi.',
+                'min_length' => 'Password baru minimal 8 karakter.',
+            ],
+            'password_confirm' => [
+                'required' => 'Konfirmasi password baru wajib diisi.',
+                'matches'  => 'Konfirmasi password baru tidak sama.',
+            ],
+        ];
+
+        if (! $this->validate($rules, $messages)) {
+            return $this->backProfilModal()
+                ->with('error', implode(' ', $this->validator->getErrors()));
+        }
+
+        $passwordLama = (string) $this->request->getPost('password_lama');
+        $passwordBaru = (string) $this->request->getPost('password');
+
+        if (! password_verify($passwordLama, (string) ($user['password'] ?? ''))) {
+            return $this->backProfilModal()
+                ->with('error', 'Password saat ini tidak sesuai.');
+        }
+
+        if (password_verify($passwordBaru, (string) ($user['password'] ?? ''))) {
+            return $this->backProfilModal()
+                ->with('error', 'Password baru harus berbeda dari password saat ini.');
+        }
+
+        try {
+            $db->table('users')->where('id_user', $idUser)->update([
+                'password' => password_hash($passwordBaru, PASSWORD_DEFAULT),
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', '[ProfilController::ubahPassword] {msg}', ['msg' => $e->getMessage()]);
+
+            return $this->backProfilModal()
+                ->with('error', 'Gagal mengubah password. Silakan coba lagi.');
+        }
+
+        return $this->backProfilModal()
+            ->with('success', 'Password berhasil diubah.');
+    }
+
     public function pengguna(): RedirectResponse|string
     {
         if ($deny = $this->denyUnlessPenggunaViewer()) {
@@ -878,12 +954,24 @@ class ProfilController extends BaseController
 
             $idUser = (int) $db->insertID();
 
+            // kode_user kosmetik: stabil karena diambil dari id_user (nomor urut polos).
+            $kodeUser = 'USR-' . str_pad((string) $idUser, 5, '0', STR_PAD_LEFT);
+            $db->table('users')->where('id_user', $idUser)->update([
+                'kode_user' => $kodeUser,
+            ]);
+
             $db->table('pelanggan')->insert([
                 'id_user'     => $idUser,
                 'no_telp'     => $noTelp,
                 'jenis'       => 'perseorangan',
                 'is_verified' => 0,
                 'alamat'      => $this->truncateAlamat($alamat),
+            ]);
+
+            $idPelanggan = (int) $db->insertID();
+            $kodePelanggan = 'PLG-' . str_pad((string) $idPelanggan, 5, '0', STR_PAD_LEFT);
+            $db->table('pelanggan')->where('id_pelanggan', $idPelanggan)->update([
+                'kode_pelanggan' => $kodePelanggan,
             ]);
 
             $db->transComplete();
@@ -959,13 +1047,26 @@ class ProfilController extends BaseController
         try {
             $db->transStart();
 
-            $db->table('users')->insert([
+            $userInsert = [
                 'nama'       => $nama,
                 'email'      => $email,
                 'password'   => password_hash($plainPassword, PASSWORD_DEFAULT),
                 'role'       => $staffRole,
                 'is_active'  => 1,
                 'created_at' => date('Y-m-d H:i:s'),
+            ];
+
+            // Login pertama wajib ganti password (staf baru dari Owner).
+            if ($db->fieldExists('wajib_ganti_password', 'users')) {
+                $userInsert['wajib_ganti_password'] = 1;
+            }
+
+            $db->table('users')->insert($userInsert);
+
+            $idUser = (int) $db->insertID();
+            $kodeUser = 'USR-' . str_pad((string) $idUser, 5, '0', STR_PAD_LEFT);
+            $db->table('users')->where('id_user', $idUser)->update([
+                'kode_user' => $kodeUser,
             ]);
 
             $db->transComplete();

@@ -40,7 +40,7 @@ $pctCetak  = $pesananAktif > 0 ? round(($tahapCetakFinish / $pesananAktif) * 100
                         <span class="w-3 h-3 rounded-full shrink-0" style="background-color: <?= esc((string) ($topSlice['color'] ?? '#2E5CE6')) ?>"></span>
                         <p class="text-sm font-bold text-[#051747]">
                             <?= esc((string) ($topSlice['label'] ?? '-')) ?>
-                            <span class="font-semibold text-slate-500">— <?= esc((string) $topCount) ?> pesanan</span>
+                            <span class="font-semibold text-slate-500">: <?= esc((string) $topCount) ?> pesanan</span>
                         </p>
                     </div>
                 </div>

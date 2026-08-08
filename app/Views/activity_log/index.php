@@ -7,11 +7,17 @@
  * @var array<string, string>        $filters
  * @var array<string, string>        $modulOptions
  * @var array<string, string>        $aksiLabels
+ * @var string                       $retentionFrom
+ * @var string                       $retentionTo
  */
 $filterDari   = (string) ($filters['dari'] ?? '');
 $filterSampai = (string) ($filters['sampai'] ?? '');
 $filterModul  = (string) ($filters['modul'] ?? '');
 $filterCari   = (string) ($filters['cari'] ?? '');
+$retentionFrom = (string) ($retentionFrom ?? date('Y-m-01'));
+$retentionTo   = (string) ($retentionTo ?? date('Y-m-d'));
+$retentionFromLabel = date('d M Y', strtotime($retentionFrom));
+$retentionToLabel   = date('d M Y', strtotime($retentionTo));
 ?>
 <?= $this->extend('layouts/main') ?>
 
@@ -26,6 +32,19 @@ $filterCari   = (string) ($filters['cari'] ?? '');
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
+
+<!-- <p class="text-xs text-slate-500 mb-4">
+    Retensi otomatis: menampilkan aktivitas sejak
+    <span class="font-semibold text-slate-700"><?= esc($retentionFromLabel) ?></span>
+    sampai
+    <span class="font-semibold text-slate-700"><?= esc($retentionToLabel) ?></span>.
+    Data lebih lama dihapus otomatis (awal bulan berjalan, atau 7 hari ke belakang saat ganti bulan).
+</p> -->
+
+<p class="text-xs text-slate-500 mb-4">
+    Retensi otomatis: menampilkan aktivitas 7 hari terakhir (<?= esc($retentionFromLabel) ?>–<?= esc($retentionToLabel) ?>).
+    Data yang lebih lama akan dihapus secara otomatis.
+</p>
 
 <form method="get" action="<?= esc(site_url('riwayat-aktivitas')) ?>" class="flex gap-3 mb-5 flex-wrap items-end">
     <select name="modul" onchange="this.form.submit()"
@@ -43,6 +62,8 @@ $filterCari   = (string) ($filters['cari'] ?? '');
             name="dari"
             type="date"
             value="<?= esc($filterDari) ?>"
+            min="<?= esc($retentionFrom) ?>"
+            max="<?= esc($retentionTo) ?>"
             onchange="this.form.submit()"
             class="list-pemesanan-date-input"
             aria-label="Filter tanggal mulai">
@@ -53,6 +74,8 @@ $filterCari   = (string) ($filters['cari'] ?? '');
             name="sampai"
             type="date"
             value="<?= esc($filterSampai) ?>"
+            min="<?= esc($retentionFrom) ?>"
+            max="<?= esc($retentionTo) ?>"
             onchange="this.form.submit()"
             class="list-pemesanan-date-input"
             aria-label="Filter tanggal akhir">

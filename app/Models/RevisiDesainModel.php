@@ -17,6 +17,7 @@ class RevisiDesainModel extends Model
         'catatan_prod',
         'catatan_revisi',
         'status',
+        'kode_revisi',
         'created_at',
     ];
 

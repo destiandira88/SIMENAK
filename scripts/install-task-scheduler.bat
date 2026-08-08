@@ -1,6 +1,6 @@
 @echo off
-REM Jalankan file ini sebagai Administrator (klik kanan ^> Run as administrator)
-REM Mendaftarkan task jam-an: reminder verifikasi DP/pelunasan + cek deadline upload DP
+REM Jalankan file ini sebagai Administrator (klik kanan > Run as administrator)
+REM Mendaftarkan task jam-an: reminder DP/pelunasan, deadline DP, harga custom, cleanup activity logs
 
 set "TASK=SIMENAK Spark Tasks"
 set "BAT=C:\xampp\htdocs\SIMENAK\scripts\run-simenak-scheduler.bat"

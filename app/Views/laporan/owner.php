@@ -92,25 +92,101 @@ $cards = [
 <?= $this->section('banner_title') ?>Laporan Pemilik<?= $this->endSection() ?>
 <?= $this->section('banner_subtitle') ?>Ringkasan performa bisnis Z'Plack <?= esc((string) ($period['label'] ?? '-')) ?><?= $this->endSection() ?>
 
+<?= $this->section('styles') ?>
+<style>
+    .btn-laporan-filter {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-radius: 14px;
+        border: 1px solid #E2E8F0;
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4A5568;
+        background: #fff;
+        transition: border-color .2s, background-color .2s, color .2s;
+    }
+
+    .btn-laporan-filter:hover,
+    .btn-laporan-filter.is-open {
+        border-color: #CBD5E1;
+        background: #F8FAFC;
+        color: #051747;
+    }
+
+    .laporan-admin-filter-panel {
+        position: absolute;
+        left: 0;
+        top: calc(100% + 0.5rem);
+        z-index: 40;
+        width: 18rem;
+        padding: 1rem;
+        border-radius: 16px;
+        border: 1px solid #E2E8F0;
+        background: #fff;
+        box-shadow: 0 12px 40px rgba(15, 23, 43, 0.12);
+    }
+
+    .laporan-admin-filter-panel .filter-field+.filter-field {
+        margin-top: 1rem;
+    }
+
+    .laporan-admin-filter-panel .filter-field label {
+        display: block;
+        margin-bottom: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748B;
+    }
+
+    .laporan-admin-filter-panel .filter-field input,
+    .laporan-admin-filter-panel .filter-field select {
+        width: 100%;
+    }
+</style>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 
-<form method="get" action="<?= esc(site_url('laporan')) ?>" class="flex flex-wrap gap-3 items-end mb-6">
-    <div>
-        <label for="dari" class="block text-xs font-semibold text-slate-500 mb-1.5">Dari</label>
-        <input type="date" id="dari" name="dari" value="<?= esc((string) ($filters['dari'] ?? '')) ?>"
-            class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
+<form method="get" action="<?= esc(site_url('laporan')) ?>" class="flex items-center justify-end gap-3 mb-6">
+    <div class="relative">
+        <button
+            type="button"
+            id="laporanOwnerFilterToggle"
+            class="btn-laporan-filter"
+            aria-expanded="false"
+            aria-controls="laporanOwnerFilterPanel"
+            aria-haspopup="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="w-4 h-4 shrink-0" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+            </svg>
+            Filter
+        </button>
+        <div id="laporanOwnerFilterPanel" class="laporan-admin-filter-panel hidden">
+            <div class="filter-field">
+                <label for="dari">Dari</label>
+                <input type="date" id="dari" name="dari" value="<?= esc((string) ($filters['dari'] ?? '')) ?>"
+                    class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
+            </div>
+            <div class="filter-field">
+                <label for="sampai">Sampai</label>
+                <input type="date" id="sampai" name="sampai" value="<?= esc((string) ($filters['sampai'] ?? '')) ?>"
+                    class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
+            </div>
+            <button type="submit" class="mt-4 w-full bg-[#051747] text-white rounded-[14px] text-sm font-bold px-4 py-2.5 hover:bg-[#2E5CE6] transition-colors">
+                Terapkan Filter
+            </button>
+        </div>
     </div>
-    <div>
-        <label for="sampai" class="block text-xs font-semibold text-slate-500 mb-1.5">Sampai</label>
-        <input type="date" id="sampai" name="sampai" value="<?= esc((string) ($filters['sampai'] ?? '')) ?>"
-            class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
-    </div>
-    <button type="submit" class="bg-[#051747] text-white rounded-full text-sm font-bold px-5 py-2.5 hover:bg-[#2E5CE6] transition-colors">
-        Terapkan Filter
-    </button>
     <a href="<?= esc(site_url('laporan/export?' . $exportQuery)) ?>"
-        class="inline-flex items-center justify-center border-2 border-[#051747] text-[#051747] rounded-full text-sm font-bold px-5 py-2.5 hover:bg-[#051747] hover:text-white transition-colors">
-        Ekspor Excel
+        class="btn-laporan-export inline-flex items-center gap-2 rounded-[14px] border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50"
+        title="Ekspor Excel"
+        aria-label="Ekspor Excel">
+        Ekspor
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="w-4 h-4 shrink-0" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V4" />
+        </svg>
     </a>
 </form>
 
@@ -218,9 +294,9 @@ $cards = [
 </div>
 
 <p class="text-xs text-slate-400 italic">
-    *Pesanan selesai dihitung dari <strong>tanggal selesai</strong> (konfirmasi terima / verifikasi pelunasan), bukan tanggal pesanan dibuat.
-    Total pendapatan dan grafik harian menggunakan pembayaran <strong>terverifikasi</strong> berdasarkan <code class="text-[11px]">tgl_verifikasi</code>.
-    Rekap kategori dan produk terlaris memakai <code class="text-[11px]">total_harga</code> pesanan selesai dalam periode yang sama.
+    *Pesanan selesai dihitung berdasarkan tanggal selesai.
+    Pendapatan dan grafik harian menggunakan tanggal verifikasi pembayaran,
+    sedangkan rekap kategori dan produk terlaris dihitung dari total nilai pesanan selesai pada periode yang dipilih.
 </p>
 
 <?= $this->endSection() ?>
@@ -359,5 +435,40 @@ $cards = [
             }
         });
     }
+</script>
+<script>
+    (() => {
+        const toggle = document.getElementById('laporanOwnerFilterToggle');
+        const panel = document.getElementById('laporanOwnerFilterPanel');
+        if (!toggle || !panel) {
+            return;
+        }
+
+        const setOpen = (open) => {
+            panel.classList.toggle('hidden', !open);
+            toggle.classList.toggle('is-open', open);
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        };
+
+        toggle.addEventListener('click', (event) => {
+            event.stopPropagation();
+            setOpen(panel.classList.contains('hidden'));
+        });
+
+        document.addEventListener('click', (event) => {
+            if (panel.classList.contains('hidden')) {
+                return;
+            }
+            if (!panel.contains(event.target) && !toggle.contains(event.target)) {
+                setOpen(false);
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !panel.classList.contains('hidden')) {
+                setOpen(false);
+            }
+        });
+    })();
 </script>
 <?= $this->endSection() ?>

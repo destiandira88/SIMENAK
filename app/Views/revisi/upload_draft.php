@@ -32,13 +32,13 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
 
 <?= $this->section('content') ?>
 
-<p class="text-xs text-slate-400 mb-4">
+<div class="text-xs text-slate-400 mb-2">
     <a href="<?= esc(site_url('antrian-desain')) ?>" class="hover:text-[#051747]">Antrian Desain</a>
-    <span class="mx-1">/</span>
+    <span class="mx-1">›</span>
     <span class="text-slate-500">Unggah Draf</span>
-    <span class="mx-1">/</span>
-    <span class="font-semibold text-[#051747]"><?= esc($kodeOrder) ?></span>
-</p>
+    <span class="mx-1">›</span>
+    <span class="text-slate-500"><?= esc($kodeOrder) ?></span>
+</div>
 
 <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
     <div class="lg:col-span-3 space-y-5">

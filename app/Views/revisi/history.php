@@ -117,8 +117,11 @@ $backLabel = $role === 'pelanggan' ? 'Detail Pesanan' : 'Antrian Desain';
                 $revStatus = (string) ($r['status'] ?? 'uploaded');
                 $badge     = $revisiBadges[$revStatus] ?? ['label' => $revStatus, 'dot' => 'bg-slate-400', 'class' => 'bg-slate-100 text-slate-600'];
                 $versi     = (int) ($r['versi'] ?? 0);
-                $revCode   = 'REV-' . str_pad((string) $idOrder, 4, '0', STR_PAD_LEFT)
-                    . '-' . str_pad((string) $versi, 2, '0', STR_PAD_LEFT);
+                $revCode   = (string) ($r['kode_revisi'] ?? '');
+                if ($revCode === '') {
+                    $revCode = 'REV-' . str_pad((string) $idOrder, 4, '0', STR_PAD_LEFT)
+                        . '-' . str_pad((string) $versi, 2, '0', STR_PAD_LEFT);
+                }
                 $fileDraft = (string) ($r['file_draft'] ?? '');
                 $isAccDraft = $revStatus === 'acc';
                 $cardClass  = $isAccDraft

@@ -422,7 +422,7 @@ class OrderController extends BaseController
                 'o.*, k.nama_produk, k.kategori, k.estimasi_hari, '
                 . 'k.gambar AS gambar_katalog, k.satuan, k.min_order, '
                 . 'k.kuota_revisi_default, u.nama AS nama_pelanggan, u.email AS email_pelanggan, '
-                . 'p.no_telp, p.is_verified, p.is_suspended'
+                . 'p.no_telp, p.nama_perusahaan, p.is_verified, p.is_suspended'
             )
             ->join('katalog k', 'k.id_katalog = o.id_katalog')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
