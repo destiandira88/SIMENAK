@@ -1,93 +1,93 @@
 <?php
 
-    /**
-     * @var array<string, mixed> $report
-     * @var array<string, string> $filters
-     * @var bool                 $readOnly
-     */
-    helper('notification');
-    helper('deadline');
+/**
+ * @var array<string, mixed> $report
+ * @var array<string, string> $filters
+ * @var bool                 $readOnly
+ */
+helper('notification');
+helper('deadline');
 
-    $range           = $report['range'] ?? [];
-    $rekapKategori   = $report['rekapKategori']['rows'] ?? [];
-    $rekapTotals     = $report['rekapKategori']['totals'] ?? [];
-    $daftarPesanan   = $report['daftarPesanan'] ?? [];
-    $potensiAktif    = (float) ($report['potensiAktif'] ?? 0);
-    $periodSubLabel  = (string) ($range['labelShort'] ?? $range['label'] ?? '-');
+$range           = $report['range'] ?? [];
+$rekapKategori   = $report['rekapKategori']['rows'] ?? [];
+$rekapTotals     = $report['rekapKategori']['totals'] ?? [];
+$daftarPesanan   = $report['daftarPesanan'] ?? [];
+$potensiAktif    = (float) ($report['potensiAktif'] ?? 0);
+$periodSubLabel  = (string) ($range['labelShort'] ?? $range['label'] ?? '-');
 
-    $exportQuery = http_build_query([
-        'dari'            => $filters['dari'] ?? '',
-        'sampai'          => $filters['sampai'] ?? '',
-        'status'          => $filters['status'] ?? 'semua',
-        'kategori'        => $filters['kategori'] ?? 'semua',
-        'jenis_pelanggan' => $filters['jenis_pelanggan'] ?? 'semua',
-        'tipe_pesanan'    => $filters['tipe_pesanan'] ?? 'semua',
-    ]);
+$exportQuery = http_build_query([
+    'dari'            => $filters['dari'] ?? '',
+    'sampai'          => $filters['sampai'] ?? '',
+    'status'          => $filters['status'] ?? 'semua',
+    'kategori'        => $filters['kategori'] ?? 'semua',
+    'jenis_pelanggan' => $filters['jenis_pelanggan'] ?? 'semua',
+    'tipe_pesanan'    => $filters['tipe_pesanan'] ?? 'semua',
+]);
 
-    $summaryCards    = $report['summaryCards'] ?? [];
+$summaryCards    = $report['summaryCards'] ?? [];
 
-    $cards = [
-        [
-            'label'    => 'Total Pesanan',
-            'value'    => (int) ($summaryCards['totalPesanan'] ?? 0),
-            'subLabel' => $periodSubLabel,
-            'icon'     => 'clipboard',
-            'color'    => '#051747',
-            'tooltip'  => 'Pesanan aktif, proses, dan dibatalkan dihitung berdasarkan tanggal dibuat. Pesanan selesai dihitung berdasarkan tanggal selesai.',
-        ],
-        [
-            'label'    => 'Pesanan Masuk',
-            'value'    => (int) ($summaryCards['pesananMasuk'] ?? 0),
-            'subLabel' => $periodSubLabel,
-            'icon'     => 'calendar',
-            'color'    => '#2E5CE6',
-            'tooltip'  => 'Jumlah pesanan baru yang dibuat berdasarkan periode yang dipilih.',
-        ],
-        [
-            'label'    => 'Pesanan Selesai',
-            'value'    => (int) ($summaryCards['pesananSelesai'] ?? 0),
-            'subLabel' => $periodSubLabel,
-            'icon'     => 'check',
-            'color'    => '#10B981',
-            'tooltip'  => 'Jumlah pesanan yang dibatalkan pada periode yang dipilih.',
-        ],
-        [
-            'label'    => 'Pesanan Dibatalkan',
-            'value'    => (int) ($summaryCards['pesananDibatalkan'] ?? 0),
-            'subLabel' => $periodSubLabel,
-            'icon'     => 'x-circle',
-            'color'    => '#EF4444',
-            'tooltip'  => 'Pesanan dibatalkan yang tanggal dibuatnya berada dalam periode filter.',
-        ],
-    ];
+$cards = [
+    [
+        'label'    => 'Total Pesanan',
+        'value'    => (int) ($summaryCards['totalPesanan'] ?? 0),
+        'subLabel' => $periodSubLabel,
+        'icon'     => 'clipboard',
+        'color'    => '#051747',
+        'tooltip'  => 'Pesanan aktif, proses, dan dibatalkan dihitung berdasarkan tanggal dibuat. Pesanan selesai dihitung berdasarkan tanggal selesai.',
+    ],
+    [
+        'label'    => 'Pesanan Masuk',
+        'value'    => (int) ($summaryCards['pesananMasuk'] ?? 0),
+        'subLabel' => $periodSubLabel,
+        'icon'     => 'calendar',
+        'color'    => '#2E5CE6',
+        'tooltip'  => 'Jumlah pesanan baru yang dibuat berdasarkan periode yang dipilih.',
+    ],
+    [
+        'label'    => 'Pesanan Selesai',
+        'value'    => (int) ($summaryCards['pesananSelesai'] ?? 0),
+        'subLabel' => $periodSubLabel,
+        'icon'     => 'check',
+        'color'    => '#10B981',
+        'tooltip'  => 'Jumlah pesanan yang dibatalkan pada periode yang dipilih.',
+    ],
+    [
+        'label'    => 'Pesanan Dibatalkan',
+        'value'    => (int) ($summaryCards['pesananDibatalkan'] ?? 0),
+        'subLabel' => $periodSubLabel,
+        'icon'     => 'x-circle',
+        'color'    => '#EF4444',
+        'tooltip'  => 'Pesanan dibatalkan yang tanggal dibuatnya berada dalam periode filter.',
+    ],
+];
 
-    $statusOptions = [
-        'semua'      => 'Semua',
-        'selesai'    => 'Selesai',
-        'proses'     => 'Proses',
-        'dibatalkan' => 'Dibatalkan',
-    ];
+$statusOptions = [
+    'semua'      => 'Semua',
+    'selesai'    => 'Selesai',
+    'proses'     => 'Proses',
+    'dibatalkan' => 'Dibatalkan',
+];
 
-    $kategoriOptions = [
-        'semua'         => 'Semua',
-        'cetak_offset'  => 'Cetak Offset',
-        'cetak_digital' => 'Cetak Digital',
-        'desain_grafis' => 'Desain Grafis',
-        'media_promosi' => 'Media Promosi',
-    ];
+$kategoriOptions = [
+    'semua'         => 'Semua',
+    'cetak_offset'  => 'Cetak Offset',
+    'cetak_digital' => 'Cetak Digital',
+    'desain_grafis' => 'Desain Grafis',
+    'media_promosi' => 'Media Promosi',
+];
 
-    $jenisPelangganOptions = [
-        'semua'        => 'Semua',
-        'perusahaan'   => 'Perusahaan',
-        'perseorangan' => 'Perseorangan',
-    ];
+$jenisPelangganOptions = [
+    'semua'        => 'Semua',
+    'perusahaan'   => 'Perusahaan',
+    'perseorangan' => 'Perseorangan',
+];
 
-    $tipePesananOptions = [
-        'semua'   => 'Semua',
-        'standar' => 'Standar (Katalog)',
-        'custom'  => 'Custom',
-    ];
-    ?>
+$tipePesananOptions = [
+    'semua'   => 'Semua',
+    'standar' => 'Standar (Katalog)',
+    'custom'  => 'Custom',
+];
+?>
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('title') ?>Laporan Admin<?= $this->endSection() ?>
@@ -133,7 +133,7 @@
         box-shadow: 0 12px 40px rgba(15, 23, 43, 0.12);
     }
 
-    .laporan-admin-filter-panel .filter-field + .filter-field {
+    .laporan-admin-filter-panel .filter-field+.filter-field {
         margin-top: 1rem;
     }
 
@@ -164,7 +164,7 @@
             aria-controls="laporanAdminFilterPanel"
             aria-haspopup="true">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="w-4 h-4 shrink-0" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
             </svg>
             Filter
         </button>
@@ -230,7 +230,7 @@
         aria-label="Ekspor Excel">
         Ekspor
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="w-4 h-4 shrink-0" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V4"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V4" />
         </svg>
     </a>
 </form>
@@ -369,11 +369,11 @@
                         $status      = (string) ($row['status'] ?? '');
                         $tglSelesai  = $row['tgl_selesai'] ?? null;
                         $isSelesai   = $status === 'selesai' && $tglSelesai;
-                        $tglText     = $isSelesai ? date('d M Y', strtotime((string) $tglSelesai)) : '—';
+                        $tglText     = $isSelesai ? date('d M Y', strtotime((string) $tglSelesai)) : '-';
                         $tsSelesai   = $isSelesai ? strtotime((string) $tglSelesai) : 0;
                         $createdAt   = (string) ($row['created_at'] ?? '');
                         $tsPesan     = $createdAt !== '' ? strtotime($createdAt) : 0;
-                        $tglPesan    = $tsPesan > 0 ? date('d M Y', $tsPesan) : '—';
+                        $tglPesan    = $tsPesan > 0 ? date('d M Y', $tsPesan) : '-';
                         $deadlineRaw = trim((string) ($row['deadline'] ?? ''));
                         $tsDeadline  = $deadlineRaw !== '' ? strtotime($deadlineRaw) : 0;
                         $deadlineOverdue = !$isSelesai
@@ -389,7 +389,7 @@
                         $metodeLabel   = $laporanModel->metodePengirimanLabel($metodeKey);
                         $namaProduk = trim((string) ($row['nama_produk'] ?? ''));
                         if ($namaProduk === '') {
-                            $namaProduk = '—';
+                            $namaProduk = '-';
                         }
                         $totalHarga = (float) ($row['total_harga'] ?? 0);
                         $searchBlob = strtolower(implode(' ', [
@@ -434,14 +434,14 @@
                                 <?php if ($deadlineRaw !== ''): ?>
                                     <?= esc(formatTanggalId($deadlineRaw)) ?>
                                 <?php else: ?>
-                                    —
+                                    -
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3 font-semibold text-[#051747]">
                                 Rp <?= esc(number_format((float) ($row['total_harga'] ?? 0), 0, ',', '.')) ?>
                             </td>
                             <td class="px-4 py-3">
-                                <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
+                                <span class="inline-flex whitespace-nowrap px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
                                     <?= esc(getOrderStatusLabel($row)) ?>
                                 </span>
                             </td>
@@ -450,9 +450,9 @@
                                 <?php if ($isSelesai): ?>
                                     <span class="text-emerald-600 font-medium"><?= esc($tglText) ?></span>
                                 <?php elseif ($deadlineOverdue): ?>
-                                    <span class="text-red-600 font-semibold cursor-help" title="Melewati deadline">—</span>
+                                    <span class="text-red-600 font-semibold cursor-help" title="Melewati deadline">-</span>
                                 <?php else: ?>
-                                    <span class="text-slate-500">—</span>
+                                    <span class="text-slate-500">-</span>
                                 <?php endif; ?>
                             </td>
                         </tr>

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @var list<array<string, mixed>> $orders
  * @var string                     $title
@@ -20,6 +21,17 @@ $kategoriBadges = [
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
+<style>
+    .badge-tipe-standar {
+        background: #DBEAFE;
+        color: #1E40AF;
+    }
+
+    .badge-tipe-custom {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+</style>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -45,6 +57,12 @@ $kategoriBadges = [
             <option value="selesai">Selesai</option>
             <option value="dibatalkan">Dibatalkan</option>
         </select>
+
+        <select id="orderFilterTipe" class="filter-select w-full sm:w-auto" aria-label="Filter jenis pesanan">
+            <option value="">Semua Tipe Pesanan</option>
+            <option value="standar">Standar</option>
+            <option value="custom">Custom</option>
+        </select>
     </div>
 
     <a
@@ -62,6 +80,7 @@ $kategoriBadges = [
                     <th class="px-4 py-3 text-left font-semibold">No</th>
                     <th class="px-4 py-3 text-left font-semibold">Kode Pesanan</th>
                     <th class="px-4 py-3 text-left font-semibold">Produk</th>
+                    <th class="px-4 py-3 text-left font-semibold">Tipe</th>
                     <th class="px-4 py-3 text-left font-semibold">Tgl Pesan</th>
                     <th class="px-4 py-3 text-left font-semibold">Total</th>
                     <th class="px-4 py-3 text-left font-semibold">Status</th>
@@ -71,7 +90,7 @@ $kategoriBadges = [
             <tbody id="orderListBody">
                 <?php if ($orders === []): ?>
                     <tr id="emptyDataRow">
-                        <td colspan="7" class="py-16 text-center">
+                        <td colspan="8" class="py-16 text-center">
                             <div class="text-4xl mb-3">📦</div>
                             <p class="text-sm font-medium text-slate-500">Belum ada pesanan</p>
                             <p class="text-xs text-slate-400 mt-1">Mulai pesan dari katalog kami</p>
@@ -89,6 +108,7 @@ $kategoriBadges = [
                         $namaProduk  = (string) ($o['nama_produk'] ?? '-');
                         $kategoriKey = (string) ($o['kategori'] ?? '');
                         $status      = (string) ($o['status'] ?? '');
+                        $tipePesanan = (int) ($o['is_custom'] ?? 0) === 1 ? 'custom' : 'standar';
                         $searchText  = mb_strtolower(trim($kodeOrder . ' ' . $namaProduk));
                         $totalHarga  = (float) ($o['total_harga'] ?? 0);
                         $createdAt   = (string) ($o['created_at'] ?? '');
@@ -103,7 +123,8 @@ $kategoriBadges = [
                         <tr
                             class="data-table-row border-b border-slate-100 hover:bg-[#F8FAFF] transition-colors"
                             data-search="<?= esc($searchText) ?>"
-                            data-status="<?= esc($status) ?>">
+                            data-status="<?= esc($status) ?>"
+                            data-tipe="<?= esc($tipePesanan) ?>">
                             <td class="row-num px-4 py-3.5 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3.5 font-mono text-sm font-semibold text-[#051747]">
                                 <?= esc($kodeOrder) ?>
@@ -114,6 +135,13 @@ $kategoriBadges = [
                                     <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold <?= esc($badge['class']) ?>">
                                         <?= esc($badge['label']) ?>
                                     </span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="px-4 py-3.5">
+                                <?php if ($tipePesanan === 'custom'): ?>
+                                    <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold badge-tipe-custom">Custom</span>
+                                <?php else: ?>
+                                    <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold badge-tipe-standar">Standar</span>
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3.5 text-slate-600 whitespace-nowrap">
@@ -161,7 +189,7 @@ $kategoriBadges = [
                         </tr>
                     <?php endforeach; ?>
                     <tr id="emptyFilterRow" class="hidden">
-                        <td colspan="7" class="py-12 text-center">
+                        <td colspan="8" class="py-12 text-center">
                             <p class="text-sm font-medium text-slate-500">Tidak ada pesanan yang cocok dengan filter.</p>
                             <p class="text-xs text-slate-400 mt-1">Coba ubah kata kunci atau status.</p>
                         </td>
@@ -200,6 +228,17 @@ $kategoriBadges = [
             if (filterVal === 'selesai') return status === 'selesai';
             if (filterVal === 'dibatalkan') return status === 'dibatalkan';
             return true;
+        },
+        getTabFilter: function(row) {
+            const tipeVal = document.getElementById('orderFilterTipe')?.value || '';
+            if (tipeVal === '') return true;
+            return (row.dataset.tipe || '') === tipeVal;
+        },
+        onReady: function(api) {
+            document.getElementById('orderFilterTipe')?.addEventListener('change', () => {
+                api.setPage(1);
+                api.applyTableState();
+            });
         },
     };
 </script>

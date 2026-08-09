@@ -10,6 +10,14 @@ $idOrder         = (int) ($order['id_order'] ?? 0);
 $status          = (string) ($order['status'] ?? '');
 $isCustom        = (int) ($order['is_custom'] ?? 0) === 1;
 $namaProduk      = $isCustom ? 'Pesanan Custom' : (string) ($order['nama_produk'] ?? '-');
+$tipePesananLabel = $isCustom ? 'Custom' : 'Standar';
+$namaProdukKatalog = trim((string) ($order['nama_produk'] ?? ''));
+$namaProdukLabel  = $namaProdukKatalog !== ''
+    ? $namaProdukKatalog . ' ' . $tipePesananLabel
+    : $namaProduk;
+$jenisPelangganLabel = (string) ($order['jenis_pelanggan'] ?? 'perseorangan') === 'perusahaan'
+    ? 'Kerjasama'
+    : 'Perseorangan';
 $sisaKuota       = (int) ($order['sisa_kuota'] ?? 0);
 $kuotaRevisi     = (int) ($order['kuota_revisi'] ?? 0);
 $usedKuota       = max(0, $kuotaRevisi - $sisaKuota);
@@ -57,7 +65,7 @@ if ($gambarKatalog !== '' && is_file(FCPATH . 'uploads/katalog/' . $gambarKatalo
 
         <div>
             <p class="text-xs font-bold uppercase text-slate-400 mb-1">Produk</p>
-            <p class="font-semibold text-[#051747]"><?= esc($namaProduk) ?></p>
+            <p class="font-semibold text-[#051747]"><?= esc($namaProdukLabel) ?></p>
             <?php if ($isCustom): ?>
                 <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800">Custom</span>
             <?php endif; ?>
@@ -90,7 +98,10 @@ if ($gambarKatalog !== '' && is_file(FCPATH . 'uploads/katalog/' . $gambarKatalo
             </div>
             <div class="col-span-2">
                 <p class="text-xs font-bold uppercase text-slate-400 mb-1">Pelanggan</p>
-                <p class="font-semibold text-slate-700"><?= esc((string) ($order['nama_pelanggan'] ?? '-')) ?></p>
+                <p class="font-semibold text-slate-700">
+                    <?= esc((string) ($order['nama_pelanggan'] ?? '-')) ?>
+                    (<?= esc($jenisPelangganLabel) ?>)
+                </p>
                 <?php if ($noTelp !== ''): ?>
                     <p class="text-xs text-slate-500 mt-0.5"><?= esc($noTelp) ?></p>
                 <?php endif; ?>
@@ -140,7 +151,7 @@ if ($gambarKatalog !== '' && is_file(FCPATH . 'uploads/katalog/' . $gambarKatalo
                             <?php elseif ($isTurutMengundang): ?>
                                 <?php $turutList = parseTurutMengundangList($attrVal); ?>
                                 <?php if ($turutList === []): ?>
-                                    <p class="text-sm text-slate-400">—</p>
+                                    <p class="text-sm text-slate-400">-</p>
                                 <?php else: ?>
                                     <ol class="list-decimal list-inside space-y-1 text-sm text-slate-700 pl-0.5">
                                         <?php foreach ($turutList as $namaTurut): ?>
@@ -149,7 +160,7 @@ if ($gambarKatalog !== '' && is_file(FCPATH . 'uploads/katalog/' . $gambarKatalo
                                     </ol>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <p class="text-sm text-slate-700 whitespace-pre-line"><?= esc($attrVal !== '' ? $attrVal : '—') ?></p>
+                                <p class="text-sm text-slate-700 whitespace-pre-line"><?= esc($attrVal !== '' ? $attrVal : '-') ?></p>
                             <?php endif; ?>
                         </div>
                     <?php endforeach; ?>

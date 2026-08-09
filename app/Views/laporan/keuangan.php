@@ -331,7 +331,7 @@ $cards = [
                             data-status="<?= esc(mb_strtolower($status)) ?>"
                             data-upload="<?= esc((string) $tsUpload) ?>"
                             data-verifikasi="<?= esc((string) $tsVerif) ?>"
-                            data-verifikator="<?= esc(mb_strtolower($emailVerifikator !== '' ? $emailVerifikator : '—')) ?>">
+                            data-verifikator="<?= esc(mb_strtolower($emailVerifikator !== '' ? $emailVerifikator : '-')) ?>">
                             <td class="row-num px-4 py-3 text-slate-400"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3 font-mono text-xs text-slate-600"><?= esc((string) ($row['kode_payment'] ?? '-')) ?></td>
                             <td class="px-4 py-3 font-semibold text-[#051747]">
@@ -356,13 +356,13 @@ $cards = [
                                 </span>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-slate-600">
-                                <?= $tglUpload !== '' ? esc(date('d M Y H:i', $tsUpload)) : '—' ?>
+                                <?= $tglUpload !== '' ? esc(date('d M Y H:i', $tsUpload)) : '-' ?>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-slate-600">
-                                <?= $tglVerif !== '' ? esc(date('d M Y H:i', $tsVerif)) : '—' ?>
+                                <?= $tglVerif !== '' ? esc(date('d M Y H:i', $tsVerif)) : '-' ?>
                             </td>
                             <td class="px-4 py-3 text-slate-600">
-                                <?= $emailVerifikator !== '' ? esc($emailVerifikator) : '—' ?>
+                                <?= $emailVerifikator !== '' ? esc($emailVerifikator) : '-' ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

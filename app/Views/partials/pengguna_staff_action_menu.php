@@ -17,7 +17,7 @@ $canEdit   = (bool) ($canEdit ?? false);
 $canToggle = (bool) ($canToggle ?? false);
 
 if (!$canEdit && !$canToggle) {
-    echo '<span class="text-xs text-slate-300">—</span>';
+    echo '<span class="text-xs text-slate-300">-</span>';
     return;
 }
 ?>

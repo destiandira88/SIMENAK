@@ -478,7 +478,7 @@ class AuthController extends BaseController
 
         if ($success) {
             if (ENVIRONMENT === 'development' && $emailSent === false) {
-                $message .= ' Catatan dev: email belum terkirim — jalankan scripts\\setup-gmail-smtp.bat dan isi Gmail App Password.';
+                $message .= ' Catatan dev: email belum terkirim, jalankan scripts\\setup-gmail-smtp.bat dan isi Gmail App Password.';
             }
 
             return $redirect->with('forgot_password_notice', $message);

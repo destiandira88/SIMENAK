@@ -58,7 +58,7 @@ $cards = [
     ],
     [
         'label'          => 'Pertumbuhan Pesanan',
-        'value'          => $growthOrdersPct ?? '—',
+        'value'          => $growthOrdersPct ?? '-',
         'valueHighlight' => $growthOrdersPct,
         'valueSuffix'    => $growthOrdersSuffix,
         'icon'           => 'chart',
@@ -69,7 +69,7 @@ $cards = [
     ],
     [
         'label'   => 'Rata-rata Selesai',
-        'value'   => $avgSelesaiHari !== null ? number_format((float) $avgSelesaiHari, 1, ',', '.') . ' hari' : '—',
+        'value'   => $avgSelesaiHari !== null ? number_format((float) $avgSelesaiHari, 1, ',', '.') . ' hari' : '-',
         'icon'    => 'clock',
         'color'   => '#8B5CF6',
         'isText'  => true,

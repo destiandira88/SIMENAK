@@ -429,7 +429,7 @@ $navMenus = [
                             <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                         </svg>
                     </div>
-                    <h4 class="text-2xl md:text-[28px] font-extrabold text-[#051747] leading-tight">Buat Akun Baru📝</h4>
+                    <h4 class="text-2xl md:text-[28px] font-extrabold text-[#051747] leading-tight">Buat Akun Baru</h4>
                     <p class="mt-2 text-sm text-slate-500 leading-relaxed px-2">
                         Daftar untuk mulai pemesan di SIMENAK.
                     </p>
@@ -506,7 +506,7 @@ $navMenus = [
                             <div id="regPasswordStrength" class="mt-2.5">
                                 <p class="text-xs text-slate-500">
                                     Keamanan Sandi:
-                                    <span id="regPasswordStrengthLabel" class="password-strength-label font-semibold text-slate-400">—</span>
+                                    <span id="regPasswordStrengthLabel" class="password-strength-label font-semibold text-slate-400">-</span>
                                 </p>
                                 <div class="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
                                     <div id="regPasswordStrengthBar" class="password-strength-bar h-full rounded-full bg-slate-200" style="width:0%"></div>
@@ -626,7 +626,7 @@ $navMenus = [
                             <div id="resetPasswordStrength" class="mt-2.5">
                                 <p class="text-xs text-slate-500">
                                     Keamanan Sandi:
-                                    <span id="resetPasswordStrengthLabel" class="password-strength-label font-semibold text-slate-400">—</span>
+                                    <span id="resetPasswordStrengthLabel" class="password-strength-label font-semibold text-slate-400">-</span>
                                 </p>
                                 <div class="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
                                     <div id="resetPasswordStrengthBar" class="password-strength-bar h-full rounded-full bg-slate-200" style="width:0%"></div>
@@ -888,7 +888,7 @@ $navMenus = [
                 };
             };
 
-            const csrfExpiredMessage = 'Token keamanan formulir kedaluwarsa. Silakan coba lagi — halaman akan memperbarui token otomatis.';
+            const csrfExpiredMessage = 'Token keamanan formulir kedaluwarsa. Silakan coba lagi, halaman akan memperbarui token otomatis.';
 
             const extractAjaxErrorMessage = (result, fallback) => {
                 const data = result?.data;
@@ -1148,7 +1148,7 @@ $navMenus = [
             const bindPasswordStrengthMeter = (inputEl, labelEl, barEl) => {
                 const reset = () => {
                     if (!labelEl || !barEl) return;
-                    labelEl.textContent = '—';
+                    labelEl.textContent = '-';
                     labelEl.className = 'password-strength-label font-semibold text-slate-400';
                     barEl.style.width = '0%';
                     passwordStrengthBarColors.forEach((color) => barEl.classList.remove(color));

@@ -113,7 +113,7 @@
                                         Lihat Bukti
                                     </a>
                                 <?php else: ?>
-                                    <span class="text-slate-400 text-xs">—</span>
+                                    <span class="text-slate-400 text-xs">-</span>
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3">

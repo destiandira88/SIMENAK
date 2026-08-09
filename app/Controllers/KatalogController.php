@@ -134,7 +134,7 @@ class KatalogController extends BaseController
             'tambah',
             'katalog',
             'Menambahkan katalog ' . (string) ($data['nama_produk'] ?? 'baru')
-            . ' — harga ' . formatLogRupiah((int) ($data['harga_dasar'] ?? 0))
+            . ', harga ' . formatLogRupiah((int) ($data['harga_dasar'] ?? 0))
         );
 
         return redirect()->to(site_url('katalog/kelola'))
@@ -254,18 +254,18 @@ class KatalogController extends BaseController
         $changes    = [];
         if ((int) ($existing['harga_dasar'] ?? 0) !== (int) ($payload['harga_dasar'] ?? 0)) {
             $changes[] = 'harga ' . formatLogRupiah((int) $existing['harga_dasar'])
-                . ' → ' . formatLogRupiah((int) $payload['harga_dasar']);
+                . ' menjadi ' . formatLogRupiah((int) $payload['harga_dasar']);
         }
         if ((int) ($existing['min_order'] ?? 0) !== (int) ($payload['min_order'] ?? 0)) {
             $changes[] = 'min order ' . (int) $existing['min_order']
-                . ' → ' . (int) $payload['min_order'] . ' ' . (string) ($payload['satuan'] ?? '');
+                . ' menjadi ' . (int) $payload['min_order'] . ' ' . (string) ($payload['satuan'] ?? '');
         }
         if ((int) ($existing['is_active'] ?? 1) !== $isActive) {
             $changes[] = $isActive === 1 ? 'status diaktifkan' : 'status dinonaktifkan';
         }
         $keterangan = $changes === []
             ? "Mengubah data katalog {$namaProduk}"
-            : "Mengubah katalog {$namaProduk} — " . implode(', ', $changes);
+            : "Mengubah katalog {$namaProduk}: " . implode(', ', $changes);
         logActivity('ubah', 'katalog', $keterangan);
 
         return redirect()->to(site_url('katalog/kelola'))

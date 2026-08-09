@@ -908,19 +908,19 @@
             will-change: auto;
         }
 
-        .hero-enter--stagger > *:nth-child(1) {
+        .hero-enter--stagger>*:nth-child(1) {
             --hero-enter-delay: 80ms;
         }
 
-        .hero-enter--stagger > *:nth-child(2) {
+        .hero-enter--stagger>*:nth-child(2) {
             --hero-enter-delay: 180ms;
         }
 
-        .hero-enter--stagger > *:nth-child(3) {
+        .hero-enter--stagger>*:nth-child(3) {
             --hero-enter-delay: 280ms;
         }
 
-        .hero-enter--stagger > * {
+        .hero-enter--stagger>* {
             opacity: 0;
             animation: hero-reveal-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
             animation-delay: var(--hero-enter-delay, 0ms);
@@ -946,8 +946,9 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+
         .hero-enter,
-        .hero-enter--stagger > * {
+        .hero-enter--stagger>* {
             opacity: 1;
             animation: none;
         }
@@ -1009,6 +1010,14 @@
 <?php
 $isLoggedIn = (bool) session()->get('isLoggedIn');
 $katalogAktif = isset($katalogAktif) && is_array($katalogAktif) ? $katalogAktif : [];
+$katalogPerKategori = [];
+foreach ($katalogAktif as $itemKatalog) {
+    $kategoriItem = (string) ($itemKatalog['kategori'] ?? '');
+    if (!isset($katalogPerKategori[$kategoriItem])) {
+        $katalogPerKategori[$kategoriItem] = $itemKatalog;
+    }
+}
+$katalogAktif = array_values($katalogPerKategori);
 $tabLabels = [
     'all' => 'Semua',
     'desain_grafis' => 'Desain',
@@ -1097,10 +1106,10 @@ $pesanSekarangHref = $isLoggedIn ? site_url('katalog') : '#';
                 <span class="about-badge">SIAPA KAMI</span>
                 <h2 class="about-heading mt-5">Mitra Cetak Terpercaya Sejak 2010.</h2>
                 <p class="mt-5 text-[14px] text-[#64748b] leading-relaxed">
-                    Z'Plack melayani percetakan digital, offset, desain grafis, dan
-                    media promosi dalam satu platform pesanan yang terstruktur.
-                    Setiap pesanan dikelola dari awal hingga selesai—terpusat,
-                    terdokumentasi, dan dapat dipantau secara langsung oleh pelanggan.
+                    Z’Plack melayani kebutuhan percetakan digital, offset, desain grafis,
+                    dan media promosi dalam satu platform pemesanan.
+                    Setiap pesanan dikelola dan terdokumentasi dari awal hingga selesai,
+                    serta dapat dipantau pada setiap tahap proses.
                 </p>
                 <a href="#services" class="inline-flex items-center justify-center mt-8 px-7 py-3 rounded-lg bg-[#2E5CE6] text-white text-sm font-semibold hover:bg-[#051747] transition-colors">
                     Jelajahi Lebih Lanjut
@@ -1358,11 +1367,7 @@ $pesanSekarangHref = $isLoggedIn ? site_url('katalog') : '#';
                 </div>
                 <div class="process-step-icon-wrap process-step-icon-wrap--teal" aria-hidden="true">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 17h11" />
-                        <path d="M14 17h7l-2-5H9l-1 3" />
-                        <circle cx="7" cy="17" r="2" />
-                        <circle cx="17" cy="17" r="2" />
-                        <path d="M5 11h9l2-6h4" />
+                        <path d="M3 6.5h9.5V16H3V6.5zm9.5 3H16l3.5 3.5V16h-7V9.5zm0-3h2.5l2 3H12.5V6.5zM6.5 17.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm11 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
                     </svg>
                 </div>
                 <p class="process-step-desc">Pesanan dikirim melalui kurir pilihan atau dapat diambil langsung di Z'Plack. Status pengiriman dan nomor resi tercatat di sistem.</p>
@@ -1439,15 +1444,15 @@ $faqItems = [
     </div>
 </section>
 
-<section id="portfolio" class="py-16 md:py-20 bg-white overflow-hidden">
+<section id="portfolio" class="py-16 md:py-30 bg-white overflow-hidden">
     <?php
     $portfolioProjects = [
-        ['title' => 'Undangan Pernikahan', 'image' => base_url('assets/1.png')],
-        ['title' => 'Brosur Perusahaan', 'image' => base_url('assets/3.png')],
-        ['title' => 'Kartu Nama Premium', 'image' => base_url('assets/illustration2.png')],
-        ['title' => 'Banner Promosi', 'image' => base_url('assets/ilustrastion.png')],
-        ['title' => 'Kalender Meja', 'image' => base_url('assets/ilustrastion2.png')],
-        ['title' => 'Packaging Produk', 'image' => base_url('assets/1.png')],
+        ['title' => 'Undangan Pernikahan', 'image' => base_url('assets/project_undangan.jpg')],
+        ['title' => 'Brosur Perusahaan', 'image' => base_url('assets/brosur perusahaan.jpg')],
+        ['title' => 'Kartu Nama Premium', 'image' => base_url('assets/kartu_nama_premium.jpg')],
+        ['title' => 'Banner Promosi', 'image' => base_url('assets/banner.jpg')],
+        ['title' => 'Kalender Meja', 'image' => base_url('assets/kalender_meja.jpg')],
+        ['title' => 'Packaging Produk', 'image' => base_url('assets/packaging.jpg')],
     ];
     ?>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

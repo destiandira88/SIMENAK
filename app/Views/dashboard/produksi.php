@@ -104,7 +104,7 @@
                             </td>
                             <td class="px-4 py-3.5"><?= esc($namaProduk) ?></td>
                             <td class="px-4 py-3.5 text-slate-600 whitespace-nowrap">
-                                <?= $deadlineRaw !== '' ? esc(formatTanggalId($deadlineRaw)) : '—' ?>
+                                <?= $deadlineRaw !== '' ? esc(formatTanggalId($deadlineRaw)) : '-' ?>
                             </td>
                             <td class="px-4 py-3.5">
                                 <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc($kuotaBadge) ?>">

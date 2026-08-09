@@ -264,7 +264,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                     <p class="font-semibold text-[#051747]"><?= esc((string) ($order['nama_produk'] ?? '-')) ?></p>
                     <?php if ($kategoriKey !== ''): ?>
                         <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold <?= esc($kategoriBadgeClass) ?>">
-                            <?= esc($kategoriLabel) ?>
+                            <?= esc($kategoriLabel . ' ' . ($isCustom ? 'Custom' : 'Standar')) ?>
                         </span>
                     <?php endif; ?>
                 </div>
@@ -384,7 +384,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                             <?php elseif ($isTurutMengundang): ?>
                                 <?php $turutList = parseTurutMengundangList($attrVal); ?>
                                 <?php if ($turutList === []): ?>
-                                    <p class="text-sm text-slate-400">—</p>
+                                    <p class="text-sm text-slate-400">-</p>
                                 <?php else: ?>
                                     <ol class="list-decimal list-inside space-y-1.5 text-sm text-slate-700 pl-0.5">
                                         <?php foreach ($turutList as $namaTurut): ?>
@@ -617,7 +617,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                                 <?= esc($noTelp) ?>
                             </a>
                         <?php else: ?>
-                            <p class="text-slate-400">—</p>
+                            <p class="text-slate-400">-</p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -682,7 +682,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                             data-deadline-produksi
                             class="w-full max-w-xs border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10">
                         <p class="text-xs text-slate-400 mt-1.5">
-                            Barang selesai dikerjakan — belum termasuk pengiriman kurir.
+                            Barang selesai dikerjakan, belum termasuk pengiriman kurir.
                         </p>
                     </div>
                     <div>
@@ -802,7 +802,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
         <?php elseif ($isCustom && $status === 'menunggu_konfirmasi_pelanggan' && $role === 'admin'): ?>
             <?php helper('deadline'); ?>
             <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-5">
-                <p class="font-bold text-[#051747]">Konfirmasi harga terkirim — menunggu persetujuan pelanggan</p>
+                <p class="font-bold text-[#051747]">Konfirmasi harga terkirim, menunggu persetujuan pelanggan</p>
                 <p class="text-sm text-slate-600 mt-2">
                     Harga: <strong>Rp <?= esc(number_format((float) ($order['harga_custom'] ?? 0), 0, ',', '.')) ?></strong>
                     · Estimasi: <strong><?= esc((string) ($order['estimasi_custom'] ?? '-')) ?></strong> (setelah ACC desain)

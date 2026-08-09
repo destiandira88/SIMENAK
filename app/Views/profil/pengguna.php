@@ -259,10 +259,10 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
                                         <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-600">Nonaktif</span>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <span class="text-xs text-slate-300">—</span>
+                                    <span class="text-xs text-slate-300">-</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="px-4 py-3 text-slate-600"><?= esc((string) ($u['no_telp'] ?? '—')) ?></td>
+                            <td class="px-4 py-3 text-slate-600"><?= esc((string) ($u['no_telp'] ?? '-')) ?></td>
                             <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
                                 <?= !empty($u['created_at']) ? esc(date('d M Y', strtotime((string) $u['created_at']))) : '-' ?>
                             </td>
@@ -276,7 +276,7 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
                                         <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Perseorangan</span>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <span class="text-xs text-slate-300">—</span>
+                                    <span class="text-xs text-slate-300">-</span>
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3">
@@ -304,7 +304,7 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
                                         'canToggle'  => $canToggleStaff,
                                     ]) ?>
                                 <?php else: ?>
-                                    <span class="text-xs text-slate-300">—</span>
+                                    <span class="text-xs text-slate-300">-</span>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -332,7 +332,7 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
     <div class="relative w-full max-w-lg bg-white rounded-[20px] shadow-lg border border-slate-100 p-6 max-h-[90vh] overflow-y-auto">
         <button type="button" id="kerjasamaModalClose" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-2xl leading-none" aria-label="Tutup">&times;</button>
         <h3 class="text-lg font-bold text-[#051747] pr-8">Tetapkan Kerja Sama Perusahaan</h3>
-        <p class="text-sm text-slate-500 mt-1 mb-4">Pelanggan: <strong id="kerjasamaModalNama">—</strong></p>
+        <p class="text-sm text-slate-500 mt-1 mb-4">Pelanggan: <strong id="kerjasamaModalNama">-</strong></p>
         <div id="kerjasamaModalFormWrap"></div>
     </div>
 </div>
@@ -348,7 +348,7 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
     <div class="relative w-full max-w-lg bg-white rounded-[20px] shadow-lg border border-slate-100 p-6 max-h-[90vh] overflow-y-auto">
         <button type="button" id="editPelangganModalClose" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-2xl leading-none" aria-label="Tutup">&times;</button>
         <h3 class="text-lg font-bold text-[#051747] pr-8">Edit Data Pelanggan</h3>
-        <p class="text-sm text-slate-500 mt-1 mb-4">Pelanggan: <strong id="editPelangganModalNama">—</strong></p>
+        <p class="text-sm text-slate-500 mt-1 mb-4">Pelanggan: <strong id="editPelangganModalNama">-</strong></p>
         <div id="editPelangganFormWrap"></div>
     </div>
 </div>
@@ -363,7 +363,7 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
     <div class="relative w-full max-w-lg bg-white rounded-[20px] shadow-lg border border-slate-100 p-6 max-h-[90vh] overflow-y-auto">
         <button type="button" id="editStaffModalClose" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-2xl leading-none" aria-label="Tutup">&times;</button>
         <h3 class="text-lg font-bold text-[#051747] pr-8">Edit Data Staff</h3>
-        <p class="text-sm text-slate-500 mt-1 mb-4">Staff: <strong id="editStaffModalNama">—</strong></p>
+        <p class="text-sm text-slate-500 mt-1 mb-4">Staff: <strong id="editStaffModalNama">-</strong></p>
         <div id="editStaffFormWrap"></div>
     </div>
 </div>
@@ -480,7 +480,7 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
         document.querySelectorAll('.js-open-kerjasama-modal').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 const id = btn.getAttribute('data-pelanggan-id');
-                const nama = btn.getAttribute('data-pelanggan-nama') || '—';
+                const nama = btn.getAttribute('data-pelanggan-nama') || '-';
                 if (!id) return;
                 wrap.innerHTML = tpl.innerHTML;
                 const form = wrap.querySelector('form');
@@ -680,7 +680,7 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
             setVal('no_telp', btn.getAttribute('data-pelanggan-telp'));
             setVal('alamat', btn.getAttribute('data-pelanggan-alamat'));
 
-            if (namaEl) namaEl.textContent = btn.getAttribute('data-pelanggan-nama') || '—';
+            if (namaEl) namaEl.textContent = btn.getAttribute('data-pelanggan-nama') || '-';
 
             wrap.querySelector('#editPelangganModalCancel')?.addEventListener('click', closeModal);
             window.bindPelangganPhoneInputs(wrap);
@@ -749,7 +749,7 @@ $penggunaSegmentQuery = static function (string $segmentKey) use ($filterJenis):
             setVal('email', btn.getAttribute('data-staff-email'));
             setVal('staff_role', btn.getAttribute('data-staff-role'));
 
-            if (namaEl) namaEl.textContent = btn.getAttribute('data-staff-nama') || '—';
+            if (namaEl) namaEl.textContent = btn.getAttribute('data-staff-nama') || '-';
 
             wrap.querySelector('#editStaffModalCancel')?.addEventListener('click', closeModal);
             modal.classList.add('is-open');

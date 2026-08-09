@@ -64,62 +64,62 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
         <?php endif; ?>
 
         <?php if (!$readOnly): ?>
-        <div id="upload" class="bg-white rounded-xl border border-slate-100 shadow-sm p-6 scroll-mt-4">
-            <h3 class="font-bold text-[#051747] mb-1">Unggah Draf Baru</h3>
-            <p class="text-xs text-slate-500 mb-4">Unggah versi draft terbaru untuk direview pelanggan.</p>
+            <div id="upload" class="bg-white rounded-xl border border-slate-100 shadow-sm p-6 scroll-mt-4">
+                <h3 class="font-bold text-[#051747] mb-1">Unggah Draf Baru</h3>
+                <p class="text-xs text-slate-500 mb-4">Unggah versi draft terbaru untuk direview pelanggan.</p>
 
-            <?php if ($canUpload): ?>
-                <form method="post"
-                    action="<?= esc(site_url('manajemen-desain/' . $idOrder . '/upload')) ?>"
-                    enctype="multipart/form-data"
-                    class="space-y-4">
-                    <?= csrf_field() ?>
+                <?php if ($canUpload): ?>
+                    <form method="post"
+                        action="<?= esc(site_url('manajemen-desain/' . $idOrder . '/upload')) ?>"
+                        enctype="multipart/form-data"
+                        class="space-y-4">
+                        <?= csrf_field() ?>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Berkas Draf <span class="text-red-500">*</span></label>
-                        <div id="dropZone"
-                            class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#2E5CE6] hover:bg-blue-50/30 transition-colors">
-                            <input type="file" name="file_draft" id="fileDraft" accept=".jpg,.jpeg,.png" class="sr-only" required>
-                            <div id="dropPlaceholder">
-                                <p class="text-3xl mb-2">📁</p>
-                                <p class="text-sm font-semibold text-[#051747]">Klik atau seret file ke sini</p>
-                                <p class="text-xs text-slate-500 mt-1">JPG / PNG, maks. 1MB</p>
-                            </div>
-                            <div id="dropPreview" class="hidden">
-                                <img id="previewImg" src="" alt="Preview" class="max-h-48 mx-auto rounded-lg object-contain mb-2">
-                                <p id="previewName" class="text-xs text-slate-600"></p>
-                                <button type="button" id="clearPreview" class="mt-2 text-xs text-red-600 font-semibold hover:underline">
-                                    Hapus file
-                                </button>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Berkas Draf <span class="text-red-500">*</span></label>
+                            <div id="dropZone"
+                                class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#2E5CE6] hover:bg-blue-50/30 transition-colors">
+                                <input type="file" name="file_draft" id="fileDraft" accept=".jpg,.jpeg,.png" class="sr-only" required>
+                                <div id="dropPlaceholder">
+                                    <p class="text-3xl mb-2">📁</p>
+                                    <p class="text-sm font-semibold text-[#051747]">Klik atau seret file ke sini</p>
+                                    <p class="text-xs text-slate-500 mt-1">JPG / PNG, maks. 1MB</p>
+                                </div>
+                                <div id="dropPreview" class="hidden">
+                                    <img id="previewImg" src="" alt="Preview" class="max-h-48 mx-auto rounded-lg object-contain mb-2">
+                                    <p id="previewName" class="text-xs text-slate-600"></p>
+                                    <button type="button" id="clearPreview" class="mt-2 text-xs text-red-600 font-semibold hover:underline">
+                                        Hapus file
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div>
-                        <label for="catatan_prod" class="block text-sm font-semibold text-slate-700 mb-1.5">Catatan Produksi (opsional)</label>
-                        <textarea name="catatan_prod" id="catatan_prod" rows="3"
-                            placeholder="Catatan untuk pelanggan tentang perubahan pada draft ini..."
-                            class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"></textarea>
-                    </div>
+                        <div>
+                            <label for="catatan_prod" class="block text-sm font-semibold text-slate-700 mb-1.5">Catatan Produksi (opsional)</label>
+                            <textarea name="catatan_prod" id="catatan_prod" rows="3"
+                                placeholder="Catatan untuk pelanggan tentang perubahan pada draft ini..."
+                                class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[#2E5CE6]/10"></textarea>
+                        </div>
 
-                    <button type="submit"
-                        class="inline-flex w-full items-center justify-center gap-2 bg-[#051747] text-white py-3 rounded-full font-bold text-sm uppercase hover:bg-[#2E5CE6] transition-colors">
-                        Unggah Draf
-                        <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-4 w-4 shrink-0']) ?>
-                    </button>
-                </form>
-            <?php else: ?>
-                <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-6 text-center text-sm text-slate-500">
-                    <?php if (in_array($status, ['proses_cetak', 'finishing'], true)): ?>
-                        Pesanan sudah melewati tahap upload draft.
-                    <?php elseif ($status === 'terverifikasi'): ?>
-                        Siap upload draft pertama setelah pesanan masuk antrian desain.
-                    <?php else: ?>
-                        Unggah draf tidak tersedia—menunggu review atau persetujuan pelanggan pada draf sebelumnya.
-                    <?php endif; ?>
-                </div>
-            <?php endif; ?>
-        </div>
+                        <button type="submit"
+                            class="inline-flex w-full items-center justify-center gap-2 bg-[#051747] text-white py-3 rounded-full font-bold text-sm uppercase hover:bg-[#2E5CE6] transition-colors">
+                            Unggah Draf
+                            <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-4 w-4 shrink-0']) ?>
+                        </button>
+                    </form>
+                <?php else: ?>
+                    <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-6 text-center text-sm text-slate-500">
+                        <?php if (in_array($status, ['proses_cetak', 'finishing'], true)): ?>
+                            Pesanan sudah melewati tahap upload draft.
+                        <?php elseif ($status === 'terverifikasi'): ?>
+                            Siap upload draft pertama setelah pesanan masuk antrian desain.
+                        <?php else: ?>
+                            Unggah draf belum tersedia. Menunggu review dan persetujuan Pelanggan pada draf sebelumnya.
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
         <?php endif; ?>
 
         <div id="history" class="scroll-mt-4">

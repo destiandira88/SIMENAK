@@ -110,7 +110,7 @@ $aktivitasCards = [
         'label'    => 'Rata-rata Penolakan/Pesanan',
         'value'    => ($aktivitas['rataRevisi'] ?? null) !== null
             ? number_format((float) $aktivitas['rataRevisi'], 1, ',', '.')
-            : '—',
+            : '-',
         'subLabel' => $periodSubLabel,
         'icon'     => 'chart',
         'color'    => '#2E5CE6',
@@ -339,7 +339,7 @@ $aktivitasCards = [
                         $kategoriLabel = $laporanModel->kategoriLabel($kategoriKey);
                         $namaProduk    = trim((string) ($row['nama_produk'] ?? ''));
                         if ($namaProduk === '') {
-                            $namaProduk = '—';
+                            $namaProduk = '-';
                         }
                         $sisaKuota     = (int) ($row['sisa_kuota'] ?? 0);
                         $kuotaRevisi   = (int) ($row['kuota_revisi'] ?? 0);
@@ -383,18 +383,18 @@ $aktivitasCards = [
                                         <span class="ml-1 text-[10px] uppercase font-bold text-red-500">Telat</span>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    —
+                                    -
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3">
-                                <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
+                                <span class="inline-flex whitespace-nowrap px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
                                     <?= esc(getOrderStatusLabel($row, 'owner')) ?>
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-slate-600"><?= esc($sisaKuota . '/' . $kuotaRevisi) ?></td>
                             <td class="px-4 py-3 font-semibold text-[#051747]"><?= esc((string) $jumlahTolak) ?></td>
                             <td class="px-4 py-3 text-slate-600">
-                                <?= $versiTerakhir > 0 ? 'v' . esc((string) $versiTerakhir) : '—' ?>
+                                <?= $versiTerakhir > 0 ? 'v' . esc((string) $versiTerakhir) : '-' ?>
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap">
                                 <?php if ($versiDipilih > 0): ?>
@@ -402,7 +402,7 @@ $aktivitasCards = [
                                         v<?= esc((string) $versiDipilih) ?>
                                     </span>
                                 <?php else: ?>
-                                    <span class="text-slate-400">—</span>
+                                    <span class="text-slate-400">-</span>
                                 <?php endif; ?>
                             </td>
                         </tr>

@@ -172,7 +172,7 @@ class RevisiController extends BaseController
         logActivity(
             'ubah',
             'produksi',
-            "Mengunggah draft desain v{$versi} pesanan {$kodeOrder} — status menjadi proses_desain"
+            "Mengunggah draft desain v{$versi} pesanan {$kodeOrder}, status menjadi proses_desain"
         );
 
         $idUserPelanggan = (int) ($order['id_user_pelanggan'] ?? 0);

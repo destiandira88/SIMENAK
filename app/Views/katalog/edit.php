@@ -97,8 +97,8 @@ if ($estimasiFormValue === null || $estimasiFormValue === '') {
                 <?php endif; ?>
             </div>
             <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">ID Katalog</p>
-                <p class="text-sm font-mono text-slate-600">#<?= esc((string) $idKatalog) ?></p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Kode Produk</p>
+                <p class="text-sm font-mono text-slate-600"><?= esc((string) ($katalog['kode_katalog'] ?? '-')) ?></p>
             </div>
         </div>
     </div>

@@ -388,7 +388,7 @@ $tabDefs  = $showAll
                                         <span class="ml-1" title="Deadline dekat">⚠️</span>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    —
+                                    -
                                 <?php endif; ?>
                             </td>
                             <?= view('partials/produksi_status_badge_cell', [
@@ -408,7 +408,7 @@ $tabDefs  = $showAll
                                         <?= esc($catatanRevisi) ?>
                                     </span>
                                 <?php else: ?>
-                                    <span class="text-slate-400">—</span>
+                                    <span class="text-slate-400">-</span>
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3.5">

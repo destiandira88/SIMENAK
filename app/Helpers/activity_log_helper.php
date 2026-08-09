@@ -2,7 +2,7 @@
 
 /**
  * Batas bawah retensi riwayat aktivitas (Y-m-d).
- * Aturan dosbing: selama bulan berjalan tampil dari tgl 1;
+ * Aturan: selama bulan berjalan tampil dari tgl 1;
  * saat ganti bulan, sisa bulan lalu maksimal 7 hari ke belakang.
  * cutoff = min(awal_bulan_ini, hari_ini - 7 hari)
  */
@@ -88,7 +88,7 @@ function activityLogAksiLabels(): array
         'tambah'    => 'Tambah',
         'ubah'      => 'Ubah',
         'hapus'     => 'Hapus',
-        'verifikasi'=> 'Verifikasi',
+        'verifikasi' => 'Verifikasi',
         'tolak'     => 'Tolak',
     ];
 }

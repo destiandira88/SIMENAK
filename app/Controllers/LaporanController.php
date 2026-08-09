@@ -334,7 +334,16 @@ class LaporanController extends BaseController
 
         $lines[] = $this->csvRow(['Daftar Pesanan (aktivitas revisi dalam periode)']);
         $lines[] = $this->csvRow([
-            'Kode Order', 'Pelanggan', 'Produk', 'Deadline', 'Status', 'Kuota', 'Penolakan', 'Versi Terakhir', 'Versi Dipilih', 'Telat',
+            'Kode Order',
+            'Pelanggan',
+            'Produk',
+            'Deadline',
+            'Status',
+            'Kuota',
+            'Penolakan',
+            'Versi Terakhir',
+            'Versi Dipilih',
+            'Telat',
         ]);
         foreach ($report['daftarPesanan'] ?? [] as $row) {
             $deadline = trim((string) ($row['deadline'] ?? ''));
@@ -409,8 +418,8 @@ class LaporanController extends BaseController
         $lines[] = $this->csvRow(['Pemasukan DP', (string) ($summary['pemasukanDp'] ?? 0)]);
         $lines[] = $this->csvRow(['Pemasukan Pelunasan', (string) ($summary['pemasukanPelunasan'] ?? 0)]);
         $lines[] = $this->csvRow(['Menunggu Verifikasi (saat ini)', (string) ($summary['menungguVerifikasi'] ?? 0)]);
-        $lines[] = $this->csvRow(['  — DP menunggu', (string) ($summary['menungguDp'] ?? 0)]);
-        $lines[] = $this->csvRow(['  — Pelunasan menunggu', (string) ($summary['menungguPelunasan'] ?? 0)]);
+        $lines[] = $this->csvRow(['  - DP menunggu', (string) ($summary['menungguDp'] ?? 0)]);
+        $lines[] = $this->csvRow(['  - Pelunasan menunggu', (string) ($summary['menungguPelunasan'] ?? 0)]);
         $lines[] = $this->csvRow([]);
 
         $lines[] = $this->csvRow(['Rekap Per Jenis Pembayaran (terverifikasi dalam periode)']);
@@ -434,8 +443,15 @@ class LaporanController extends BaseController
 
         $lines[] = $this->csvRow(['Daftar Transaksi']);
         $lines[] = $this->csvRow([
-            'Kode Bayar', 'Kode Order', 'Pelanggan', 'Jenis', 'Nominal', 'Status',
-            'Tgl Upload', 'Tgl Verifikasi', 'Diverifikasi Oleh',
+            'Kode Bayar',
+            'Kode Order',
+            'Pelanggan',
+            'Jenis',
+            'Nominal',
+            'Status',
+            'Tgl Upload',
+            'Tgl Verifikasi',
+            'Diverifikasi Oleh',
         ]);
         foreach ($report['daftarTransaksi'] ?? [] as $row) {
             $tglUpload = trim((string) ($row['tgl_upload'] ?? ''));
@@ -552,8 +568,18 @@ class LaporanController extends BaseController
 
         $lines[] = $this->csvRow(['Daftar Pesanan']);
         $lines[] = $this->csvRow([
-            'Kode Order', 'Pelanggan', 'Jenis', 'Tipe', 'Produk', 'Kategori',
-            'Tgl Pesan', 'Deadline', 'Total', 'Status', 'Metode', 'Tgl Selesai',
+            'Kode Order',
+            'Pelanggan',
+            'Jenis',
+            'Tipe',
+            'Produk',
+            'Kategori',
+            'Tgl Pesan',
+            'Deadline',
+            'Total',
+            'Status',
+            'Metode',
+            'Tgl Selesai',
         ]);
         $laporanModel = model(LaporanModel::class);
         foreach ($report['daftarPesanan'] ?? [] as $row) {

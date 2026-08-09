@@ -168,7 +168,7 @@ $readOnly = (bool) ($readOnly ?? false);
                                         <?php elseif ($status === 'pelunasan_terverifikasi'): ?>
                                             <p class="text-slate-400 italic"><?= $ambilSendiri ? 'Siap dikonfirmasi diambil' : 'Siap dikirim (input resi)' ?></p>
                                         <?php elseif ($status === 'dikirim'): ?>
-                                            <p>Sedang dikirim — menunggu konfirmasi pelanggan.</p>
+                                            <p>Sedang dikirim, menunggu konfirmasi pelanggan.</p>
                                         <?php else: ?>
                                             <span class="text-slate-400">-</span>
                                         <?php endif; ?>

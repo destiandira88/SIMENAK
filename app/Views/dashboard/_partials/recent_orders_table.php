@@ -177,7 +177,7 @@ $colspan           = $isAdmin ? 9 : ($isOwner ? 6 : 7);
                                             <?= esc($kodeOrder) ?>
                                         </a>
                                     <?php else: ?>
-                                        —
+                                        -
                                     <?php endif; ?>
                                 </td>
                                 <td class="px-4 py-3.5">

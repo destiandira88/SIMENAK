@@ -91,11 +91,11 @@ $fieldTypeLabels = [
 </div>
 
 <?php if (!$readOnly): ?>
-<p class="text-sm text-slate-500 mb-6">
-    ID Katalog <span class="font-mono font-semibold text-[#051747]">#<?= esc((string) ($katalog['id_katalog'] ?? 0)) ?></span>
-</p>
+    <p class="text-sm text-slate-500 mb-6">
+        Kode Produk <span class="font-mono font-semibold text-[#051747]"><?= esc((string) ($katalog['kode_katalog'] ?? '-')) ?></span>
+    </p>
 <?php else: ?>
-<div class="mb-6"></div>
+    <div class="mb-6"></div>
 <?php endif; ?>
 
 <?php if ($fields !== []): ?>

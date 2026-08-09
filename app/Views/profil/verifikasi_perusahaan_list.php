@@ -115,7 +115,7 @@ $colspan = 8;
                                 <?= esc((string) ($row['nama_perusahaan'] ?? '-')) ?>
                             </td>
                             <td class="px-4 py-3 text-slate-600">
-                                <?= esc((string) ($row['no_npwp'] ?? '—')) ?>
+                                <?= esc((string) ($row['no_npwp'] ?? '-')) ?>
                                 <?php if (!empty($row['jabatan_pic'])): ?>
                                     <p class="text-xs text-slate-400 mt-1">PIC: <?= esc((string) $row['jabatan_pic']) ?></p>
                                 <?php endif; ?>
@@ -153,7 +153,7 @@ $colspan = 8;
                                     <p><?= esc(date('d M Y H:i', strtotime((string) $row['tgl_verifikasi']))) ?></p>
                                     <p class="text-xs text-slate-400">oleh <?= esc((string) ($row['nama_admin'] ?? 'Admin')) ?></p>
                                 <?php else: ?>
-                                    —
+                                    -
                                 <?php endif; ?>
                                 <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold <?= $statusRow === 'verified'
                                     ? 'bg-emerald-100 text-emerald-800'
@@ -162,7 +162,7 @@ $colspan = 8;
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-slate-600 text-xs">
-                                <?= esc((string) ($row['catatan_admin'] ?? '—')) ?>
+                                <?= esc((string) ($row['catatan_admin'] ?? '-')) ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

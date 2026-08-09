@@ -101,7 +101,7 @@ $canActivate        = $canTogglePelanggan && !$isActive;
             </form>
         <?php elseif ($canTogglePelanggan && $isActive && $hasActiveOrders): ?>
             <span role="menuitem" class="block px-3 py-2 text-[12px] text-slate-400 leading-snug cursor-not-allowed">
-                Nonaktifkan tidak tersedia — masih ada pesanan aktif.
+                Nonaktifkan tidak tersedia, masih ada pesanan aktif.
             </span>
         <?php endif; ?>
         <?php if ($canActivate): ?>
