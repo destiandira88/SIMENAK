@@ -10,6 +10,11 @@ class App extends BaseConfig
     {
         parent::__construct();
 
+        // baseURL eksplisit dari .env (produksi) tidak boleh ditimpa deteksi otomatis.
+        if ((string) env('app.baseURL', '') !== '') {
+            return;
+        }
+
         if (PHP_SAPI === 'cli' || ! isset($_SERVER['HTTP_HOST'], $_SERVER['SCRIPT_NAME'])) {
             return;
         }
@@ -56,7 +61,7 @@ class App extends BaseConfig
      * something else. If you have configured your web server to remove this file
      * from your site URIs, set this variable to an empty string.
      */
-    public string $indexPage = 'index.php';
+    public string $indexPage = '';
 
     /**
      * --------------------------------------------------------------------------
