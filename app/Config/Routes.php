@@ -130,6 +130,7 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->post('list-pemesanan/set-harga', 'CustomOrderController::setHarga');
         $routes->post('custom-order/set-harga', 'CustomOrderController::setHarga');
         $routes->post('pengiriman/(:num)', 'PengirimanController::proses/$1');
+        $routes->post('pesanan/konfirmasi-diterima-manual', 'PengirimanController::konfirmasiDiterimaManualAdmin');
     });
 
     // ─── Keuangan + Owner (baca riwayat pembayaran) ───────────────────────────

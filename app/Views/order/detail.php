@@ -187,16 +187,27 @@ foreach ($revisList as $r) {
     }
 }
 
+$latestStatus = $latestRevis !== null ? (string) ($latestRevis['status'] ?? '') : '';
+
 $canAccDraftTerbaru = $role === 'pelanggan'
     && $sisaKuota > 0
     && $latestRevis !== null
-    && ($latestRevis['status'] ?? '') === 'uploaded'
+    && $latestStatus === 'uploaded'
     && in_array($status, ['proses_desain', 'proses_revisi'], true);
 
+// Kuota habis + Produksi sudah upload draft final baru (terbaru = uploaded)
 $pilihDraftUntukCetak = $role === 'pelanggan'
     && $sisaKuota <= 0
     && !$adaDraftAcc
+    && $latestStatus === 'uploaded'
     && $draftUntukPilih !== []
+    && in_array($status, ['proses_desain', 'proses_revisi'], true);
+
+// Kuota habis, masih menunggu respons Produksi atas revisi terakhir
+$menungguDraftFinal = $role === 'pelanggan'
+    && $sisaKuota <= 0
+    && !$adaDraftAcc
+    && $latestStatus === 'diajukan_revisi'
     && in_array($status, ['proses_desain', 'proses_revisi'], true);
 ?>
 <?= $this->extend('layouts/main') ?>
@@ -421,10 +432,27 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                     <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-3.5 w-3.5']) ?>
                 </a>
             <?php endif; ?>
-            <?php if ($role === 'pelanggan' && $sisaKuota > 0 && $sisaKuota <= 1): ?>
-                <p class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">
-                    ⚠ Sisa kuota revisi: <?= esc((string) $sisaKuota) ?>. Gunakan dengan bijak.
-                </p>
+            <?php if ($role === 'pelanggan' && $sisaKuota === 1): ?>
+                <div class="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
+                    <p class="font-bold mb-1">⚠ Ini kesempatan revisi terakhir Anda</p>
+                    <p class="text-xs text-amber-800 leading-relaxed">
+                        Setelah revisi ini dikirim, kuota revisi akan habis. Draft berikutnya dari Bagian Produksi hanya dapat disetujui (ACC) dan tidak dapat diajukan revisi kembali.
+                    </p>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($menungguDraftFinal): ?>
+                <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-4">
+                    <p class="font-bold text-sm text-[#051747] mb-1 inline-flex items-center gap-2">
+                        <?= view('partials/order_detail_svg_icon', ['icon' => 'waiting', 'class' => 'h-5 w-5 shrink-0']) ?>
+                        Menunggu Produksi mengunggah draft final
+                    </p>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Kuota revisi Anda sudah habis. Tim produksi sedang menyiapkan draft final
+                        berdasarkan catatan revisi terakhir Anda. Setelah diunggah, Anda dapat
+                        menyetujui (ACC) desain untuk lanjut ke proses cetak.
+                    </p>
+                </div>
             <?php endif; ?>
 
             <?php if ($pilihDraftUntukCetak): ?>
@@ -556,13 +584,29 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                                         id="btnShowRevisiInline"
                                         onclick="document.getElementById('revisiInlineForm').classList.remove('hidden'); document.getElementById('revisiActionBtns').classList.add('hidden');"
                                         class="bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-amber-600 transition-colors">
-                                        ↺ Ajukan Revisi
+                                        <?= $sisaKuota === 1 ? '↺ Ajukan Revisi Terakhir' : '↺ Ajukan Revisi' ?>
                                     </button>
                                 </div>
                                 <div id="revisiInlineForm" class="hidden">
                                     <p class="text-sm font-semibold text-[#051747] mb-1">Catatan Revisi <span class="text-red-500">*</span></p>
-                                    <p class="text-xs text-amber-600 mb-3">Sisa kuota: <?= esc((string) $sisaKuota) ?> revisi</p>
-                                    <form method="post" action="<?= esc(site_url('revisi/ajukan')) ?>">
+                                    <?php if ($sisaKuota === 1): ?>
+                                        <div class="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                                            <p class="font-bold mb-0.5 inline-flex items-center gap-1.5">
+                                                <svg class="h-3.5 w-3.5 shrink-0 text-amber-700" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                    <path d="M12 3.5 2.8 19.5h18.4L12 3.5Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" />
+                                                    <path d="M12 9v5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                                                    <circle cx="12" cy="17.25" r="1" fill="currentColor" />
+                                                </svg>
+                                                Revisi terakhir pastikan catatan sudah lengkap
+                                            </p>
+                                            <p class="text-amber-800 leading-relaxed">
+                                                Setelah pengajuan revisi ini dikirim, kuota revisi akan habis. Draft berikutnya dari Produksi hanya dapat di-ACC dan tidak dapat diajukan revisi kembali.
+                                            </p>
+                                        </div>
+                                    <?php else: ?>
+                                        <p class="text-xs text-amber-600 mb-3">Sisa kuota: <?= esc((string) $sisaKuota) ?> revisi</p>
+                                    <?php endif; ?>
+                                    <form id="formAjukanRevisiDetail" method="post" action="<?= esc(site_url('revisi/ajukan')) ?>">
                                         <?= csrf_field() ?>
                                         <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
                                         <input type="hidden" name="id_revisi" value="<?= esc((string) $idRevisiTerbaru) ?>">
@@ -582,7 +626,7 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                                             <button
                                                 type="submit"
                                                 class="bg-amber-500 text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-amber-600 transition-colors">
-                                                Kirim Revisi
+                                                <?= $sisaKuota === 1 ? 'Kirim Revisi Terakhir' : 'Kirim Revisi' ?>
                                             </button>
                                         </div>
                                     </form>
@@ -1175,6 +1219,25 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
                             </button>
                         </form>
                     <?php endif; ?>
+
+                    <?php if ($status === 'dikirim' && $role === 'admin' && $metodePengiriman !== 'ambil_sendiri'): ?>
+                        <form
+                            method="post"
+                            action="<?= esc(site_url('pesanan/konfirmasi-diterima-manual')) ?>"
+                            class="mt-3 js-action-confirm-form"
+                            data-confirm-variant="status-pengiriman"
+                            data-confirm-title="Konfirmasi diterima?"
+                            data-confirm-kode="<?= esc($kodeOrder) ?>"
+                            data-confirm-message="<?= esc('Pesanan ' . $kodeOrder . ' akan dikonfirmasi oleh Admin. Status pesanan akan diperbarui seperti pada konfirmasi oleh Pelanggan') ?>">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
+                            <button
+                                type="submit"
+                                class="bg-emerald-600 text-white rounded-full px-5 py-2 text-sm font-bold uppercase hover:bg-emerald-700 transition-colors">
+                                Konfirmasi Diterima
+                            </button>
+                        </form>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endif; ?>
@@ -1235,6 +1298,24 @@ $pilihDraftUntukCetak = $role === 'pelanggan'
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
+<?php if ($role === 'pelanggan' && $sisaKuota === 1 && $canAccDraftTerbaru): ?>
+    <script>
+        (function() {
+            var form = document.getElementById('formAjukanRevisiDetail');
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                var ok = window.confirm(
+                    'Ini adalah REVISI TERAKHIR Anda.\n\n' +
+                    'Setelah dikirim, draft berikutnya dari produksi hanya bisa di-ACC — tombol Ajukan Revisi tidak tersedia lagi.\n\n' +
+                    'Lanjutkan kirim revisi terakhir?'
+                );
+                if (!ok) {
+                    e.preventDefault();
+                }
+            });
+        })();
+    </script>
+<?php endif; ?>
 <?php if ($tampilCountdown): ?>
     <script>
         (function() {

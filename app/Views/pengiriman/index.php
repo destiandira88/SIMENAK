@@ -13,8 +13,8 @@ $readOnly = (bool) ($readOnly ?? false);
 
 <?= $this->section('banner_title') ?><?= $readOnly ? 'Pengiriman' : 'Manajemen Pengiriman' ?><?= $this->endSection() ?>
 <?= $this->section('banner_subtitle') ?><?= $readOnly
-    ? 'Pantau antrian pengiriman dan pengambilan (hanya lihat).'
-    : 'Pantau pesanan yang siap dikirim atau menunggu konfirmasi pengambilan.' ?><?= $this->endSection() ?>
+                                            ? 'Pantau antrian pengiriman dan pengambilan (hanya lihat).'
+                                            : 'Pantau pesanan yang siap dikirim atau menunggu konfirmasi pengambilan.' ?><?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
@@ -86,8 +86,8 @@ $readOnly = (bool) ($readOnly ?? false);
                         $kodeKirim    = trim((string) ($pg['kode_kirim'] ?? ''));
                         $searchText   = mb_strtolower(trim(
                             $kodeOrder . ' ' . $namaPelanggan . ' ' . $jenisLabel . ' ' . $jenis
-                            . ' ' . $status . ' ' . $statusLabel . ' ' . $metodeLabel . ' ' . $metode . ' ' . $alamatKirim
-                            . ' ' . $kodeKirim
+                                . ' ' . $status . ' ' . $statusLabel . ' ' . $metodeLabel . ' ' . $metode . ' ' . $alamatKirim
+                                . ' ' . $kodeKirim
                         ));
                         $alamatSingkat = '';
                         if (!$ambilSendiri && $alamatKirim !== '') {
@@ -246,7 +246,7 @@ $readOnly = (bool) ($readOnly ?? false);
                                     </p>
 
                                 <?php elseif ($status === 'dikirim'): ?>
-                                    <div class="text-xs text-slate-500 space-y-0.5">
+                                    <div class="text-xs text-slate-500 space-y-1.5">
                                         <?php if ($pg && !empty($pg['no_resi'])): ?>
                                             <p>Resi: <strong class="text-slate-700"><?= esc($pg['no_resi']) ?></strong>
                                                 <?php if (!empty($pg['nama_ekspedisi'])): ?>
@@ -259,6 +259,20 @@ $readOnly = (bool) ($readOnly ?? false);
                                         <?php else: ?>
                                             <p>Sedang dikirim-menunggu konfirmasi pelanggan.</p>
                                         <?php endif; ?>
+                                        <form
+                                            method="post"
+                                            action="<?= esc(site_url('pesanan/konfirmasi-diterima-manual')) ?>"
+                                            class="js-action-confirm-form"
+                                            data-confirm-variant="status-pengiriman"
+                                            data-confirm-title="Konfirmasi diterima?"
+                                            data-confirm-kode="<?= esc($kodeOrder) ?>"
+                                            data-confirm-message="<?= esc('Pesanan ' . $kodeOrder . ' akan dikonfirmasi oleh Admin. Status pesanan akan diperbarui seperti pada konfirmasi oleh Pelanggan') ?>">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
+                                            <button type="submit" class="bg-[#FEF3C7] text-[#92400E] text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-amber-200 transition-colors">
+                                                Konfirmasi Diterima
+                                            </button>
+                                        </form>
                                     </div>
 
                                 <?php else: ?>
@@ -293,21 +307,21 @@ $readOnly = (bool) ($readOnly ?? false);
 
 <?= $this->section('scripts') ?>
 <?php if (!empty($orders)): ?>
-<script>
-    window.adminDataTableConfig = {
-        searchId: 'pengirimanSearch',
-        tbodyId: 'pengirimanBody',
-        emptyFilterRowId: 'emptyFilterRow',
-        entriesId: 'pengirimanEntries',
-        entriesInfoId: 'pengirimanEntriesInfo',
-        paginationId: 'pengirimanPagination',
-        prevPageId: 'pengirimanPrevPage',
-        nextPageId: 'pengirimanNextPage',
-        pageInfoId: 'pengirimanPageInfo',
-        rowSelector: 'tr.data-table-row',
-        enableSort: true,
-    };
-</script>
-<?= view('partials/admin_data_table_scripts') ?>
+    <script>
+        window.adminDataTableConfig = {
+            searchId: 'pengirimanSearch',
+            tbodyId: 'pengirimanBody',
+            emptyFilterRowId: 'emptyFilterRow',
+            entriesId: 'pengirimanEntries',
+            entriesInfoId: 'pengirimanEntriesInfo',
+            paginationId: 'pengirimanPagination',
+            prevPageId: 'pengirimanPrevPage',
+            nextPageId: 'pengirimanNextPage',
+            pageInfoId: 'pengirimanPageInfo',
+            rowSelector: 'tr.data-table-row',
+            enableSort: true,
+        };
+    </script>
+    <?= view('partials/admin_data_table_scripts') ?>
 <?php endif; ?>
 <?= $this->endSection() ?>

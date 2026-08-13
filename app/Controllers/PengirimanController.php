@@ -349,15 +349,87 @@ class PengirimanController extends BaseController
             return redirect()->back()->with('error', 'Pesanan ambil sendiri dikonfirmasi oleh admin saat pengambilan.');
         }
 
+        $kodeOrder = (string) $order['kode_order'];
+
+        try {
+            $this->applyKonfirmasiDiterima($db, $order);
+        } catch (\Throwable $e) {
+            log_message('error', '[PengirimanController::konfirmasiDiterimaPelanggan] {msg}', ['msg' => $e->getMessage()]);
+
+            return redirect()->back()->with('error', 'Gagal mengkonfirmasi penerimaan pesanan.');
+        }
+
+        return redirect()->to(site_url('order/detail/' . $kodeOrder))
+            ->with('success', 'Terima kasih! Pesanan dikonfirmasi diterima.');
+    }
+
+    /**
+     * Admin konfirmasi diterima manual (failsafe) — efek status sama dengan pelanggan.
+     * Hanya jalur ini yang menulis activity_logs.
+     */
+    public function konfirmasiDiterimaManualAdmin(): RedirectResponse
+    {
+        if ((string) session()->get('role') !== 'admin') {
+            return redirect()->to(site_url('dashboard'));
+        }
+
+        $idOrder = (int) $this->request->getPost('id_order');
+        $db      = \Config\Database::connect();
+
+        $order = $db->table('orders o')
+            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
+            ->join('pelanggan pl', 'pl.id_pelanggan = o.id_pelanggan')
+            ->join('users u', 'u.id_user = pl.id_user')
+            ->where('o.id_order', $idOrder)
+            ->where('o.status', 'dikirim')
+            ->get()->getRowArray();
+
+        if ($order === null) {
+            return redirect()->back()->with('error', 'Pesanan tidak ditemukan atau tidak dapat dikonfirmasi.');
+        }
+
+        if (isMetodeAmbilSendiri($order)) {
+            return redirect()->back()->with('error', 'Pesanan ambil sendiri dikonfirmasi melalui aksi pengambilan.');
+        }
+
+        $kodeOrder = (string) $order['kode_order'];
+
+        try {
+            $this->applyKonfirmasiDiterima($db, $order);
+
+            helper('activity_log');
+            logActivity(
+                'ubah',
+                'pengiriman',
+                "Mengonfirmasi diterima secara manual untuk pesanan {$kodeOrder} (kurir)"
+            );
+        } catch (\Throwable $e) {
+            log_message('error', '[PengirimanController::konfirmasiDiterimaManualAdmin] {msg}', ['msg' => $e->getMessage()]);
+
+            return redirect()->back()->with('error', 'Gagal mengonfirmasi penerimaan pesanan.');
+        }
+
+        return redirect()->back()
+            ->with('success', "Pesanan {$kodeOrder} dikonfirmasi diterima (manual admin).");
+    }
+
+    /**
+     * Logic bersama: update status order + pengiriman + notifikasi pelanggan.
+     * Perseorangan → selesai; kerja sama → menunggu_verifikasi_lunas.
+     *
+     * @param array<string, mixed> $order Harus berisi id_order, kode_order, id_user_pelanggan, nama, email, jenis_pelanggan
+     */
+    private function applyKonfirmasiDiterima(\CodeIgniter\Database\BaseConnection $db, array $order): void
+    {
+        $idOrder         = (int) $order['id_order'];
         $kodeOrder       = (string) $order['kode_order'];
         $idUserPelanggan = (int) $order['id_user_pelanggan'];
         $beforeShip      = isPelunasanSebelumKirim($order);
+        $now             = date('Y-m-d H:i:s');
+
+        $db->transStart();
 
         try {
-            $db->transStart();
-
-            $now = date('Y-m-d H:i:s');
-
             if ($beforeShip) {
                 $db->table('orders')->where('id_order', $idOrder)->update(['status' => 'selesai']);
                 $db->table('pengiriman')->where('id_order', $idOrder)->update([
@@ -417,12 +489,8 @@ class PengirimanController extends BaseController
             }
         } catch (\Throwable $e) {
             $db->transRollback();
-            log_message('error', '[PengirimanController::konfirmasiDiterimaPelanggan] {msg}', ['msg' => $e->getMessage()]);
 
-            return redirect()->back()->with('error', 'Gagal mengkonfirmasi penerimaan pesanan.');
+            throw $e;
         }
-
-        return redirect()->to(site_url('order/detail/' . $kodeOrder))
-            ->with('success', 'Terima kasih! Pesanan dikonfirmasi diterima.');
     }
 }

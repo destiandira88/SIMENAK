@@ -314,6 +314,15 @@ class RevisiController extends BaseController
                 return redirect()->back()->with('error', 'Hanya draft terbaru yang menunggu review yang dapat di-ACC.');
             }
         } else {
+            // Kuota habis: panel pilih-draft baru boleh dipakai setelah Produksi upload draft final
+            // (terbaru = uploaded). Versi lama (diajukan_revisi) tetap boleh dipilih.
+            $latest = model(RevisiDesainModel::class)->getLatestByOrder($idOrder);
+            if ($latest === null || ($latest['status'] ?? '') !== 'uploaded') {
+                return redirect()->back()->with(
+                    'error',
+                    'Menunggu Produksi mengunggah draft final sebelum dapat memilih draft untuk cetak.'
+                );
+            }
             if (!in_array($revisStatus, ['uploaded', 'diajukan_revisi'], true)) {
                 return redirect()->back()->with('error', 'Draft ini tidak dapat dipilih untuk cetak.');
             }
@@ -413,8 +422,19 @@ class RevisiController extends BaseController
             "Pelanggan ajukan revisi v{$versi} {$kodeOrder}. Sisa kuota: {$sisaBaru}."
         );
 
+        if ($sisaBaru <= 0) {
+            return redirect()->to(site_url('order/detail/' . $kodeOrder))
+                ->with(
+                    'warning',
+                    'Revisi terakhir berhasil diajukan. Setelah draft baru diunggah produksi, Anda hanya dapat ACC desain (tidak bisa mengajukan revisi lagi).'
+                );
+        }
+
         return redirect()->to(site_url('order/detail/' . $kodeOrder))
-            ->with('warning', 'Revisi berhasil diajukan. Tim produksi akan menyiapkan draft baru.');
+            ->with(
+                'success',
+                'Revisi berhasil diajukan. Tim produksi akan menyiapkan draft baru. Sisa kuota revisi: ' . $sisaBaru . '.'
+            );
     }
 
     public function approvalHistory(string $kodeOrder): RedirectResponse|string
