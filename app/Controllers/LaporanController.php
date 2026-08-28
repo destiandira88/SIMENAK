@@ -5,6 +5,9 @@ namespace App\Controllers;
 use App\Models\LaporanModel;
 use CodeIgniter\HTTP\DownloadResponse;
 use CodeIgniter\HTTP\RedirectResponse;
+use CodeIgniter\HTTP\ResponseInterface;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 class LaporanController extends BaseController
 {
@@ -64,6 +67,37 @@ class LaporanController extends BaseController
         $csv      = $this->buildOwnerCsv($report);
 
         return $this->response->download($filename, $csv);
+    }
+
+    public function exportPdf(): RedirectResponse|ResponseInterface
+    {
+        $role = (string) session()->get('role');
+        if ($role !== 'owner') {
+            return redirect()->to(site_url('dashboard'))
+                ->with('error', 'Akses laporan owner hanya untuk role Owner.');
+        }
+
+        $filters = $this->resolveOwnerDateFilters();
+
+        try {
+            $report = model(LaporanModel::class)->buildOwnerReport($filters['dari'], $filters['sampai']);
+        } catch (\Throwable $e) {
+            log_message('error', 'Laporan owner export PDF: {message}', ['message' => $e->getMessage()]);
+
+            return redirect()->to(site_url('laporan'))
+                ->with('error', 'Gagal mengekspor laporan PDF.');
+        }
+
+        $filename = sprintf(
+            'laporan_owner_%s_%s.pdf',
+            str_replace('-', '', $filters['dari']),
+            str_replace('-', '', $filters['sampai'])
+        );
+
+        return $this->renderLaporanPdf('laporan/owner_pdf', [
+            'report'  => $report,
+            'filters' => $filters,
+        ], $filename, false);
     }
 
     public function adminIndex(): RedirectResponse|string
@@ -137,6 +171,45 @@ class LaporanController extends BaseController
         return $this->response->download($filename, $csv);
     }
 
+    public function adminExportPdf(): RedirectResponse|ResponseInterface
+    {
+        $role = (string) session()->get('role');
+        if (!in_array($role, ['admin', 'owner'], true)) {
+            return redirect()->to(site_url('dashboard'))
+                ->with('error', 'Akses laporan admin tidak diizinkan.');
+        }
+
+        $filters = $this->resolveAdminFilters();
+
+        try {
+            $report = model(LaporanModel::class)->buildAdminReport(
+                $filters['dari'],
+                $filters['sampai'],
+                $filters['status'],
+                $filters['kategori'],
+                $filters['jenis_pelanggan'],
+                $filters['tipe_pesanan']
+            );
+        } catch (\Throwable $e) {
+            log_message('error', 'Laporan admin export PDF: {message}', ['message' => $e->getMessage()]);
+
+            return redirect()->to(site_url('laporan-admin'))
+                ->with('error', 'Gagal mengekspor laporan admin PDF.');
+        }
+
+        $filename = sprintf(
+            'laporan_admin_%s_%s.pdf',
+            $filters['dari'],
+            $filters['sampai']
+        );
+        $landscape = count($report['daftarPesanan'] ?? []) > 8;
+
+        return $this->renderLaporanPdf('laporan/admin_pdf', [
+            'report'  => $report,
+            'filters' => $filters,
+        ], $filename, $landscape);
+    }
+
     public function keuanganIndex(): RedirectResponse|string
     {
         $role = (string) session()->get('role');
@@ -204,6 +277,43 @@ class LaporanController extends BaseController
         return $this->response->download($filename, $csv);
     }
 
+    public function keuanganExportPdf(): RedirectResponse|ResponseInterface
+    {
+        $role = (string) session()->get('role');
+        if (!in_array($role, ['keuangan', 'owner'], true)) {
+            return redirect()->to(site_url('dashboard'))
+                ->with('error', 'Akses laporan transaksi tidak diizinkan.');
+        }
+
+        $filters = $this->resolveKeuanganFilters();
+
+        try {
+            $report = model(LaporanModel::class)->buildKeuanganReport(
+                $filters['dari'],
+                $filters['sampai'],
+                $filters['jenis'],
+                $filters['status']
+            );
+        } catch (\Throwable $e) {
+            log_message('error', 'Laporan keuangan export PDF: {message}', ['message' => $e->getMessage()]);
+
+            return redirect()->to(site_url('laporan-keuangan'))
+                ->with('error', 'Gagal mengekspor laporan transaksi PDF.');
+        }
+
+        $daftarTransaksi = $report['daftarTransaksi'] ?? [];
+        $landscape       = count($daftarTransaksi) > 8;
+
+        return $this->renderLaporanPdf('laporan/keuangan_pdf', [
+            'report'  => $report,
+            'filters' => $filters,
+        ], sprintf(
+            'laporan_transaksi_%s_%s.pdf',
+            $filters['dari'],
+            $filters['sampai']
+        ), $landscape);
+    }
+
     public function produksiIndex(): RedirectResponse|string
     {
         $role = (string) session()->get('role');
@@ -267,6 +377,42 @@ class LaporanController extends BaseController
         $csv = $this->buildProduksiCsv($report, $filters);
 
         return $this->response->download($filename, $csv);
+    }
+
+    public function produksiExportPdf(): RedirectResponse|ResponseInterface
+    {
+        $role = (string) session()->get('role');
+        if ($role !== 'owner') {
+            return redirect()->to(site_url('dashboard'))
+                ->with('error', 'Akses laporan desain hanya untuk role Owner.');
+        }
+
+        $filters = $this->resolveProduksiFilters();
+
+        try {
+            $report = model(LaporanModel::class)->buildProduksiReport(
+                $filters['dari'],
+                $filters['sampai'],
+                $filters['kategori']
+            );
+        } catch (\Throwable $e) {
+            log_message('error', 'Laporan produksi export PDF: {message}', ['message' => $e->getMessage()]);
+
+            return redirect()->to(site_url('laporan-produksi'))
+                ->with('error', 'Gagal mengekspor laporan desain PDF.');
+        }
+
+        $filename = sprintf(
+            'laporan_produksi_%s_%s.pdf',
+            $filters['dari'],
+            $filters['sampai']
+        );
+        $landscape = count($report['daftarPesanan'] ?? []) > 8;
+
+        return $this->renderLaporanPdf('laporan/produksi_pdf', [
+            'report'  => $report,
+            'filters' => $filters,
+        ], $filename, $landscape);
     }
 
     /**
@@ -719,6 +865,48 @@ class LaporanController extends BaseController
         }
 
         return "\xEF\xBB\xBF" . implode("\r\n", $lines);
+    }
+
+    /**
+     * @param array<string, mixed> $viewData
+     */
+    private function renderLaporanPdf(string $viewName, array $viewData, string $filename, bool $landscape = false): ResponseInterface
+    {
+        $html = view($viewName, array_merge($viewData, $this->resolvePdfExportMeta()));
+
+        $options = new Options();
+        $options->set('isRemoteEnabled', false);
+        $options->set('defaultFont', 'DejaVu Sans');
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', $landscape ? 'landscape' : 'portrait');
+        $dompdf->render();
+
+        return $this->response->download($filename, $dompdf->output(), true)
+            ->setHeader('Content-Type', 'application/pdf');
+    }
+
+    /**
+     * @return array{exportedByName: string, exportedByRole: string, exportedAt: string}
+     */
+    private function resolvePdfExportMeta(): array
+    {
+        $role = (string) session()->get('role');
+        $roleLabels = [
+            'admin'    => 'Admin',
+            'owner'    => 'Owner',
+            'keuangan' => 'Keuangan',
+            'produksi' => 'Produksi',
+        ];
+
+        $nama = trim((string) session()->get('nama'));
+
+        return [
+            'exportedByName' => $nama !== '' ? $nama : '-',
+            'exportedByRole' => $roleLabels[$role] ?? ucfirst($role),
+            'exportedAt'     => date('d/m/Y H:i'),
+        ];
     }
 
     /**

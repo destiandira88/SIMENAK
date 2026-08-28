@@ -138,6 +138,7 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->get('riwayat-pembayaran', 'PaymentController::riwayat');
         $routes->get('laporan-keuangan', 'LaporanController::keuanganIndex');
         $routes->get('laporan-keuangan/export', 'LaporanController::keuanganExport');
+        $routes->get('laporan-keuangan/export-pdf', 'LaporanController::keuanganExportPdf');
     });
 
     // ─── Keuangan ──────────────────────────────────────────────────────────────
@@ -168,13 +169,16 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->get('riwayat-aktivitas', 'ActivityLogController::index');
         $routes->get('laporan', 'LaporanController::index');
         $routes->get('laporan/export', 'LaporanController::export');
+        $routes->get('laporan/export-pdf', 'LaporanController::exportPdf');
         $routes->get('laporan-produksi', 'LaporanController::produksiIndex');
         $routes->get('laporan-produksi/export', 'LaporanController::produksiExport');
+        $routes->get('laporan-produksi/export-pdf', 'LaporanController::produksiExportPdf');
     });
 
     // ─── Laporan Admin (admin + owner baca) ────────────────────────────────────
     $routes->group('', ['filter' => 'role:admin,owner'], static function ($routes) {
         $routes->get('laporan-admin', 'LaporanController::adminIndex');
         $routes->get('laporan-admin/export', 'LaporanController::adminExport');
+        $routes->get('laporan-admin/export-pdf', 'LaporanController::adminExportPdf');
     });
 });

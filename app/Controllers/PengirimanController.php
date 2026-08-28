@@ -110,13 +110,20 @@ class PengirimanController extends BaseController
                 ]);
                 $activityKeterangan = "Mengubah status pesanan {$kodeOrder} dari {$currentStatus} menjadi {$newStatus}";
 
-                $emailSubject = "[No-Reply] Pesanan " . ($newStatus === 'siap_diambil' ? 'Siap Diambil' : 'Siap Dikirim') . "-{$kodeOrder}";
-                $emailBody    = '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
+                $detailUrl    = site_url('order/detail/' . $kodeOrder);
+                $emailTitle   = $newStatus === 'siap_diambil' ? 'Pesanan Siap Diambil' : 'Pesanan Siap Dikirim';
+                $emailSubject = "[No-Reply] {$emailTitle}-{$kodeOrder}";
+                $emailBody    = buildNotifEmailHtml(
+                    $emailTitle,
+                    '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
                     . "<p>Pesanan <strong>{$kodeOrder}</strong> "
                     . ($newStatus === 'siap_diambil'
                         ? 'sudah siap untuk diambil di toko kami.'
                         : 'sedang dalam persiapan pengiriman.')
-                    . '</p>';
+                    . '</p>',
+                    $detailUrl,
+                    'Lihat Detail Pesanan'
+                );
 
                 sendNotifEmail((string) $order['email'], $emailSubject, $emailBody);
                 sendNotifWaForEmail(
@@ -127,7 +134,7 @@ class PengirimanController extends BaseController
                         $newStatus === 'siap_diambil'
                             ? "Pesanan {$kodeOrder} siap diambil di toko kami."
                             : "Pesanan {$kodeOrder} sedang dalam persiapan pengiriman.",
-                        site_url('order/detail/' . $kodeOrder)
+                        $detailUrl
                     )
                 );
                 sendNotifInApp($idUserPelanggan, $idOrder, 'Pesanan ' . ($newStatus === 'siap_diambil' ? 'Siap Diambil' : 'Siap Dikirim'), "Pesanan {$kodeOrder} siap.");
@@ -180,14 +187,20 @@ class PengirimanController extends BaseController
                     ]);
                 }
 
+                $detailUrl = site_url('order/detail/' . $kodeOrder);
                 sendNotifEmail(
                     (string) $order['email'],
                     "[No-Reply] Pesanan Dikirim-{$kodeOrder}",
-                    '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
-                    . "<p>Pesanan <strong>{$kodeOrder}</strong> telah dikirim.</p>"
-                    . "<p>No. Resi: <strong>{$noResi}</strong>"
-                    . ($namaEkspedisi ? " via <strong>{$namaEkspedisi}</strong>" : '')
-                    . '</p>'
+                    buildNotifEmailHtml(
+                        'Pesanan Dikirim',
+                        '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
+                        . "<p>Pesanan <strong>{$kodeOrder}</strong> telah dikirim.</p>"
+                        . '<p>No. Resi: <strong>' . esc($noResi) . '</strong>'
+                        . ($namaEkspedisi !== '' ? ' via <strong>' . esc($namaEkspedisi) . '</strong>' : '')
+                        . '</p>',
+                        $detailUrl,
+                        'Lihat Detail Pesanan'
+                    )
                 );
                 sendNotifWaForEmail(
                     $db,
@@ -195,7 +208,7 @@ class PengirimanController extends BaseController
                     buildNotifWaText(
                         "Pesanan Dikirim-{$kodeOrder}",
                         "Pesanan {$kodeOrder} dikirim. Resi: {$noResi}" . ($namaEkspedisi ? " ({$namaEkspedisi})" : ''),
-                        site_url('order/detail/' . $kodeOrder)
+                        $detailUrl
                     )
                 );
                 sendNotifInApp($idUserPelanggan, $idOrder, 'Pesanan Dikirim', "Pesanan {$kodeOrder} dikirim. Resi: {$noResi}" . ($namaEkspedisi ? " ({$namaEkspedisi})" : ''));

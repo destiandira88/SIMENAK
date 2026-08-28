@@ -172,15 +172,11 @@ $cards = [
             </button>
         </div>
     </div>
-    <a href="<?= esc(site_url('laporan-keuangan/export?' . $exportQuery)) ?>"
-        class="btn-laporan-export inline-flex items-center gap-2 rounded-[14px] border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50"
-        title="Ekspor Excel"
-        aria-label="Ekspor Excel">
-        Ekspor
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="w-4 h-4 shrink-0" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V4" />
-        </svg>
-    </a>
+    <?= view('laporan/_partials/export_dropdown', [
+        'dropdownId' => 'laporanKeuanganExport',
+        'csvUrl'     => site_url('laporan-keuangan/export?' . $exportQuery),
+        'pdfUrl'     => site_url('laporan-keuangan/export-pdf?' . $exportQuery),
+    ]) ?>
 </form>
 
 <?= view('dashboard/_partials/summary_cards', ['cards' => $cards]) ?>
