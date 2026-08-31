@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use Config\GoogleOAuth;
 use League\OAuth2\Client\Provider\Google;
+use League\OAuth2\Client\Provider\GoogleUser;
 
 class AuthController extends BaseController
 {
@@ -183,6 +184,7 @@ class AuthController extends BaseController
         try {
             $provider   = $this->googleProvider($googleConfig);
             $accessToken = $provider->getAccessToken('authorization_code', ['code' => $code]);
+            /** @var GoogleUser $googleUser */
             $googleUser = $provider->getResourceOwner($accessToken);
         } catch (\Throwable $e) {
             log_message('error', 'Google OAuth callback failed: {message}', ['message' => $e->getMessage()]);
@@ -222,7 +224,7 @@ class AuthController extends BaseController
 
             if (array_key_exists('is_active', $user) && (int) $user['is_active'] !== 1) {
                 return redirect()->to(site_url('/'))
-                    ->with('error', 'Akun nonaktif. Hubungi administrator.')
+                    ->with('error', 'Akun Anda dinonaktifkan. Hubungi Administrator untuk aktivasi akun.')
                     ->with('open_modal', 'loginModal');
             }
 
@@ -653,7 +655,7 @@ class AuthController extends BaseController
             if (array_key_exists('is_active', $user) && (int) $user['is_active'] !== 1) {
                 return [
                     'success' => false,
-                    'message' => 'Akun nonaktif. Hubungi administrator.',
+                    'message' => 'Akun Anda dinonaktifkan. Hubungi Owner untuk aktivasi akun',
                 ];
             }
 
