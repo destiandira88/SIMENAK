@@ -153,9 +153,8 @@ if ($estimasiFormValue === null || $estimasiFormValue === '') {
 <?php else: ?>
 
 <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-    <form action="<?= site_url('katalog/update/' . $idKatalog) ?>" method="post" enctype="multipart/form-data">
+    <form action="<?= site_url('katalog/simpan-ubah/' . $idKatalog) ?>" method="post" enctype="multipart/form-data">
         <?= csrf_field() ?>
-        <input type="hidden" name="_method" value="POST">
         <p class="form-note mb-4">
             <span class="text-red-500 font-bold">*</span> yang diberi bintang merah wajib diisi.
         </p>

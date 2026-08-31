@@ -73,7 +73,7 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('katalog/tambah', 'KatalogController::create');
     $routes->post('katalog/simpan', 'KatalogController::store');
     $routes->get('katalog/edit/(:num)', 'KatalogController::edit/$1');
-    $routes->post('katalog/update/(:num)', 'KatalogController::update/$1');
+    $routes->post('katalog/simpan-ubah/(:num)', 'KatalogController::update/$1');
     $routes->post('katalog/toggle/(:num)', 'KatalogController::toggleStatus/$1');
     $routes->post('katalog/hapus/(:num)', 'KatalogController::delete/$1');
 
