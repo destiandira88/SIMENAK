@@ -716,7 +716,7 @@ class QaBlackbox extends BaseCommand
         );
 
         if ($kat) {
-            $this->http->post('/katalog/update/' . $kat['id_katalog'], [
+            $this->http->post('/katalog/simpan-ubah/' . $kat['id_katalog'], [
                 'nama_produk'          => $namaProduk . ' Edited',
                 'kategori'             => 'cetak_digital',
                 'harga_dasar'          => '26000',

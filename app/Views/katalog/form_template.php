@@ -102,7 +102,7 @@ $fieldTypeLabels = [
     <div class="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-6 text-sm text-emerald-800">
         <?= esc((string) count($fields)) ?> field terdaftar untuk produk ini.
         Pelanggan melihatnya di halaman pesanan sebagai bagian <strong>Spesifikasi Khusus</strong>
-        (URL: <span class="font-mono text-xs">order/create/<?= esc((string) ($katalog['id_katalog'] ?? 0)) ?></span>).
+        <!-- (URL: <span class="font-mono text-xs">order/create/<?= esc((string) ($katalog['id_katalog'] ?? 0)) ?></span>). -->
     </div>
 <?php endif; ?>
 
