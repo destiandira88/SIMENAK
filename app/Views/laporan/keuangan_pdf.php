@@ -68,8 +68,6 @@ $formatTanggal = static function (?string $value): string {
             text-transform: uppercase;
         }
         .summary-table td:first-child { width: 55%; font-weight: 600; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
         .font-bold { font-weight: 700; color: #051747; }
         .footer {
             margin-top: 20px;
@@ -78,6 +76,12 @@ $formatTanggal = static function (?string $value): string {
             text-align: center;
         }
         .mono { font-family: DejaVu Sans Mono, monospace; font-size: 8px; }
+        table.data-table { table-layout: fixed; }
+        table.data-table th,
+        table.data-table td {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
     </style>
 </head>
 <body>
@@ -154,7 +158,19 @@ $formatTanggal = static function (?string $value): string {
     </table>
 
     <h2>Daftar Transaksi</h2>
-    <table>
+    <table class="data-table">
+        <colgroup>
+            <col style="width: 4%;">
+            <col style="width: 10%;">
+            <col style="width: 10%;">
+            <col style="width: 12%;">
+            <col style="width: 8%;">
+            <col style="width: 10%;">
+            <col style="width: 14%;">
+            <col style="width: 11%;">
+            <col style="width: 11%;">
+            <col style="width: 10%;">
+        </colgroup>
         <thead>
             <tr>
                 <th>No</th>

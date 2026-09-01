@@ -202,12 +202,10 @@ class LaporanController extends BaseController
             $filters['dari'],
             $filters['sampai']
         );
-        $landscape = count($report['daftarPesanan'] ?? []) > 8;
-
         return $this->renderLaporanPdf('laporan/admin_pdf', [
             'report'  => $report,
             'filters' => $filters,
-        ], $filename, $landscape);
+        ], $filename, true);
     }
 
     public function keuanganIndex(): RedirectResponse|string
@@ -301,9 +299,6 @@ class LaporanController extends BaseController
                 ->with('error', 'Gagal mengekspor laporan transaksi PDF.');
         }
 
-        $daftarTransaksi = $report['daftarTransaksi'] ?? [];
-        $landscape       = count($daftarTransaksi) > 8;
-
         return $this->renderLaporanPdf('laporan/keuangan_pdf', [
             'report'  => $report,
             'filters' => $filters,
@@ -311,7 +306,7 @@ class LaporanController extends BaseController
             'laporan_transaksi_%s_%s.pdf',
             $filters['dari'],
             $filters['sampai']
-        ), $landscape);
+        ), true);
     }
 
     public function produksiIndex(): RedirectResponse|string
@@ -407,12 +402,10 @@ class LaporanController extends BaseController
             $filters['dari'],
             $filters['sampai']
         );
-        $landscape = count($report['daftarPesanan'] ?? []) > 8;
-
         return $this->renderLaporanPdf('laporan/produksi_pdf', [
             'report'  => $report,
             'filters' => $filters,
-        ], $filename, $landscape);
+        ], $filename, true);
     }
 
     /**
@@ -808,6 +801,7 @@ class LaporanController extends BaseController
 
         $lines[] = $this->csvRow(['Ringkasan']);
         $lines[] = $this->csvRow(['Total Pesanan', (string) ($report['totalPesanan'] ?? 0)]);
+        $lines[] = $this->csvRow(['Pesanan Selesai', (string) ($report['pesananSelesai'] ?? 0)]);
         $lines[] = $this->csvRow(['Total Pendapatan', (string) ($report['totalPendapatan'] ?? 0)]);
         $lines[] = $this->csvRow(['Pertumbuhan Pesanan (%)', $this->formatGrowthCsv($report['growthOrders'] ?? null)]);
         $lines[] = $this->csvRow(['Rata-rata Selesai (hari)', $report['avgSelesaiHari'] !== null ? (string) $report['avgSelesaiHari'] : '-']);
@@ -842,7 +836,7 @@ class LaporanController extends BaseController
         }
         $lines[] = $this->csvRow([]);
 
-        $lines[] = $this->csvRow(['Rekap Per Kategori']);
+        $lines[] = $this->csvRow(['Rekap Per Kategori (dihitung dari pesanan selesai)']);
         $lines[] = $this->csvRow(['Kategori', 'Jumlah Pesanan', 'Total Pendapatan', 'Rata-rata/Pesanan']);
         foreach ($report['rekapKategori'] ?? [] as $row) {
             $lines[] = $this->csvRow([

@@ -25,10 +25,14 @@ $daftarPesanan = $report['daftarPesanan'] ?? [];
         th, td { border: 1px solid #e2e8f0; padding: 4px 5px; text-align: left; vertical-align: top; }
         th { background: #051747; color: #fff; font-size: 7px; text-transform: uppercase; }
         .summary-table td:first-child { width: 60%; font-weight: 600; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
         .mono { font-family: DejaVu Sans Mono, monospace; font-size: 7px; }
         .footer { margin-top: 16px; font-size: 8px; color: #94a3b8; text-align: center; }
+        table.data-table { table-layout: fixed; }
+        table.data-table th,
+        table.data-table td {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
     </style>
 </head>
 <body>
@@ -65,7 +69,20 @@ $daftarPesanan = $report['daftarPesanan'] ?? [];
     </table>
 
     <h2>Daftar Pesanan (aktivitas revisi dalam periode)</h2>
-    <table>
+    <table class="data-table">
+        <colgroup>
+            <col style="width: 4%;">
+            <col style="width: 9%;">
+            <col style="width: 10%;">
+            <col style="width: 16%;">
+            <col style="width: 8%;">
+            <col style="width: 14%;">
+            <col style="width: 6%;">
+            <col style="width: 7%;">
+            <col style="width: 8%;">
+            <col style="width: 8%;">
+            <col style="width: 6%;">
+        </colgroup>
         <thead>
             <tr>
                 <th>No</th>

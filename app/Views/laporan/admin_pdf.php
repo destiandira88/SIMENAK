@@ -85,14 +85,6 @@ $formatRupiah = static function (float|int $amount): string {
             font-weight: 600;
         }
 
-        .text-right {
-            text-align: right;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
         .font-bold {
             font-weight: 700;
             color: #051747;
@@ -101,6 +93,16 @@ $formatRupiah = static function (float|int $amount): string {
         .mono {
             font-family: DejaVu Sans Mono, monospace;
             font-size: 7px;
+        }
+
+        table.data-table {
+            table-layout: fixed;
+        }
+
+        table.data-table th,
+        table.data-table td {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .footer {
@@ -144,7 +146,7 @@ $formatRupiah = static function (float|int $amount): string {
             </tr>
             <tr>
                 <td>Potensi Pesanan Aktif</td>
-                <td class="text-right"><?= esc((string) ($report['potensiAktif'] ?? 0)) ?></td>
+                <td class="text-right"><?= esc($formatRupiah((float) ($report['potensiAktif'] ?? 0))) ?></td>
             </tr>
         </tbody>
     </table>
@@ -178,7 +180,22 @@ $formatRupiah = static function (float|int $amount): string {
     </table>
 
     <h2>Daftar Pesanan</h2>
-    <table>
+    <table class="data-table">
+        <colgroup>
+            <col style="width: 3%;">
+            <col style="width: 8%;">
+            <col style="width: 9%;">
+            <col style="width: 7%;">
+            <col style="width: 5%;">
+            <col style="width: 14%;">
+            <col style="width: 8%;">
+            <col style="width: 7%;">
+            <col style="width: 7%;">
+            <col style="width: 8%;">
+            <col style="width: 12%;">
+            <col style="width: 7%;">
+            <col style="width: 5%;">
+        </colgroup>
         <thead>
             <tr>
                 <th>No</th>
