@@ -298,7 +298,7 @@ class OrderController extends BaseController
 
             $namaPelanggan = (string) ($userRow['nama'] ?? 'Pelanggan');
             $namaProduk    = (string) ($katalog['nama_produk'] ?? 'Produk Custom');
-            $detailUrl     = site_url('order/detail/' . $kodeOrder);
+            $detailUrl     = pelangganOrderDetailUrl($kodeOrder, 'Pengajuan Pesanan Custom');
             $adminListUrl  = site_url('list-pemesanan?tab=menunggu-harga');
 
             if ($userRow !== null) {
@@ -310,14 +310,14 @@ class OrderController extends BaseController
                     . '<strong>' . esc($namaProduk) . '</strong> telah kami terima.</p>'
                     . '<p>Admin akan meninjau spesifikasi dan mengonfirmasi harga '
                     . '(estimasi maks. 2 hari kerja). Anda akan mendapat notifikasi setelah harga ditetapkan.</p>'
-                    . '<p><a href="' . esc($detailUrl) . '">Lihat detail pesanan</a></p>'
+                    . '<p><a href="' . esc($detailUrl) . '">Lihat status pesanan</a></p>'
                 );
                 sendNotifWaForUserId(
                     $db,
                     (int) $userRow['id_user'],
                     buildNotifWaText(
                         "Pengajuan Custom-{$kodeOrder}",
-                        "Pesanan custom {$namaProduk} diterima. Admin akan konfirmasi harga. Pantau status di SIMENAK.",
+                        "Pesanan custom {$kodeOrder} ({$namaProduk}) diterima. Menunggu konfirmasi harga admin.",
                         $detailUrl
                     )
                 );
@@ -366,15 +366,15 @@ class OrderController extends BaseController
                     '<p>Halo <strong>' . esc((string) $userRow['nama']) . '</strong>,</p>'
                     . '<p>Pesanan <strong>' . esc($kodeOrder) . '</strong> telah berhasil dibuat '
                     . 'dan langsung masuk ke antrian produksi tanpa DP.</p>'
-                    . '<p>Pantau status di dashboard SIMENAK.</p>'
+                    . '<p><a href="' . esc(pelangganOrderDetailUrl($kodeOrder, 'Pesanan Berhasil Dibuat')) . '">Lihat status pesanan</a></p>'
                 );
                 sendNotifWaForUserId(
                     $db,
                     (int) $userRow['id_user'],
                     buildNotifWaText(
                         "Pesanan {$kodeOrder} Berhasil Dibuat",
-                        'Pesanan berhasil dibuat dan langsung masuk antrian produksi tanpa DP.',
-                        site_url('order/detail/' . $kodeOrder)
+                        "Pesanan {$kodeOrder} berhasil dibuat dan langsung masuk antrian produksi.",
+                        pelangganOrderDetailUrl($kodeOrder, 'Pesanan Berhasil Dibuat')
                     )
                 );
             }
@@ -479,14 +479,17 @@ class OrderController extends BaseController
             ->get()
             ->getRowArray();
 
+        $mockupAngles = getMockupAnglesForProduk((int) ($order['id_katalog'] ?? 0));
+
         return view('order/detail', [
-            'title'      => 'Detail Pesanan-' . $kodeOrder,
-            'page_title' => 'Detail Pesanan',
-            'order'      => $order,
-            'attrs'      => $attrs,
-            'revisList'  => $revisList,
-            'payments'   => $payments,
-            'pengiriman' => $pengiriman,
+            'title'         => 'Detail Pesanan-' . $kodeOrder,
+            'page_title'    => 'Detail Pesanan',
+            'order'         => $order,
+            'attrs'         => $attrs,
+            'revisList'     => $revisList,
+            'payments'      => $payments,
+            'pengiriman'    => $pengiriman,
+            'mockupAngles'  => $mockupAngles,
         ]);
     }
 
@@ -556,9 +559,13 @@ class OrderController extends BaseController
 
         $db    = \Config\Database::connect();
         $order = $db->table('orders o')
-            ->select('o.*, u.email, u.nama, u.id_user AS id_user_pelanggan')
+            ->select(
+                'o.*, u.email, u.nama, u.id_user AS id_user_pelanggan, '
+                . 'k.nama_produk, k.kategori, k.satuan, k.gambar AS gambar_katalog'
+            )
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
+            ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
             ->where('o.id_order', $idOrder)
             ->get()
             ->getRowArray();
@@ -590,23 +597,39 @@ class OrderController extends BaseController
         $db->table('orders')->update(['status' => 'dibatalkan'], ['id_order' => $idOrder]);
 
         if ($role === 'admin') {
+            $kodeBatal = (string) $order['kode_order'];
+            $detailUrlBatal = pelangganOrderDetailUrl($kodeBatal, 'Pesanan Dibatalkan');
             sendNotifEmail(
                 $order['email'],
-                "Pesanan {$order['kode_order']} Dibatalkan-SIMENAK Z'Plack",
-                '<p>Halo <strong>' . esc($order['nama']) . '</strong>,</p>'
-                . '<p>Pesanan <strong>' . esc($order['kode_order']) . '</strong> dibatalkan. '
-                . 'Alasan: <strong>' . esc($alasan) . '</strong>.</p>'
-                . '<p>Hubungi admin Z\'Plack jika ada pertanyaan.</p>'
+                "Pesanan {$kodeBatal} Dibatalkan-SIMENAK Z'Plack",
+                renderNotifEmail('pesanan_dibatalkan', array_merge(buildEmailOrderViewData($order), [
+                    'pesanHtml' => '<p style="margin:0 0 12px;">Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
+                        . '<p style="margin:0;">Pesanan '
+                        . emailHighlightKodeOrder($kodeBatal)
+                        . ' <strong>dibatalkan</strong>.</p>',
+                    'ctaUrl'      => $detailUrlBatal,
+                    'ctaLabel'    => 'Lihat Detail Pesanan',
+                    'alasanBatal' => $alasan,
+                ]))
             );
             sendNotifWaForEmail(
                 $db,
                 (string) $order['email'],
                 buildNotifWaText(
-                    "Pesanan {$order['kode_order']} Dibatalkan",
-                    'Pesanan dibatalkan. Alasan: ' . $alasan,
-                    site_url('order')
+                    "Pesanan {$kodeBatal} Dibatalkan",
+                    "Pesanan {$kodeBatal} dibatalkan. Alasan: {$alasan}",
+                    $detailUrlBatal
                 )
             );
+            $idUserPelangganBatal = (int) ($order['id_user_pelanggan'] ?? 0);
+            if ($idUserPelangganBatal > 0) {
+                sendNotifInApp(
+                    $idUserPelangganBatal,
+                    $idOrder,
+                    'Pesanan Dibatalkan',
+                    "Pesanan {$kodeBatal} dibatalkan. Alasan: {$alasan}"
+                );
+            }
         }
 
         $redirectUrl = $role === 'admin'

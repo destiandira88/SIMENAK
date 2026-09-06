@@ -165,10 +165,10 @@ if (
 $currentIdx = array_search($timelineStatus, $statusKeys, true);
 
 $revisiStatusBadges = [
-    'uploaded'         => ['label' => 'Diunggah', 'class' => 'bg-blue-100 text-blue-800'],
-    'diajukan_revisi'  => ['label' => 'Revisi Diajukan', 'class' => 'bg-amber-100 text-amber-800'],
-    'acc'              => ['label' => '✓ ACC', 'class' => 'bg-green-100 text-green-800'],
-    'ditolak'          => ['label' => 'Ditolak', 'class' => 'bg-red-100 text-red-800'],
+    'uploaded'         => ['label' => 'Diunggah', 'dot' => 'bg-blue-500', 'class' => 'bg-blue-100 text-blue-800'],
+    'diajukan_revisi'  => ['label' => 'Revisi Diajukan', 'dot' => 'bg-amber-500', 'class' => 'bg-amber-100 text-amber-800'],
+    'acc'              => ['label' => '✓ ACC', 'dot' => 'bg-emerald-500', 'class' => 'bg-green-100 text-green-800'],
+    'ditolak'          => ['label' => 'Ditolak', 'dot' => 'bg-red-500', 'class' => 'bg-red-100 text-red-800'],
 ];
 
 $latestRevis    = $revisList !== [] ? $revisList[array_key_last($revisList)] : null;
@@ -189,26 +189,40 @@ foreach ($revisList as $r) {
 
 $latestStatus = $latestRevis !== null ? (string) ($latestRevis['status'] ?? '') : '';
 
-$canAccDraftTerbaru = $role === 'pelanggan'
-    && $sisaKuota > 0
-    && $latestRevis !== null
-    && $latestStatus === 'uploaded'
-    && in_array($status, ['proses_desain', 'proses_revisi'], true);
-
-// Kuota habis + Produksi sudah upload draft final baru (terbaru = uploaded)
-$pilihDraftUntukCetak = $role === 'pelanggan'
-    && $sisaKuota <= 0
+// Dasar: pelanggan, order masih dalam fase desain/revisi, belum ada draft yang di-ACC.
+$_baseAcc = $role === 'pelanggan'
     && !$adaDraftAcc
-    && $latestStatus === 'uploaded'
-    && $draftUntukPilih !== []
     && in_array($status, ['proses_desain', 'proses_revisi'], true);
 
-// Kuota habis, masih menunggu respons Produksi atas revisi terakhir
+// Draft terbaru harus sudah uploaded (Produksi selesai iterasi) agar ACC bisa dilakukan.
+$_latestUploaded = $latestRevis !== null && $latestStatus === 'uploaded';
+
+// v1-only: satu draft, tampilkan tombol ACC + Ajukan Revisi langsung (tanpa radio).
+$canAccDraftTerbaru = $_baseAcc
+    && $revisCount === 1
+    && $_latestUploaded;
+
+// v2+: ada lebih dari satu draft → tampilkan panel radio pilih versi + tombol ACC.
+$bolehPilihAcc = $_baseAcc
+    && $revisCount >= 2
+    && $_latestUploaded
+    && $draftUntukPilih !== [];
+
+// Ajukan Revisi: hanya saat kuota masih ada, meski di mode radio (v2+) maupun mode langsung (v1).
+$bolehAjukanRevisi = $role === 'pelanggan'
+    && $sisaKuota > 0
+    && $_latestUploaded
+    && !$adaDraftAcc
+    && in_array($status, ['proses_desain', 'proses_revisi'], true);
+
+// Menunggu Produksi selesai (draft terbaru masih diajukan_revisi, belum di-upload ulang).
 $menungguDraftFinal = $role === 'pelanggan'
-    && $sisaKuota <= 0
     && !$adaDraftAcc
     && $latestStatus === 'diajukan_revisi'
     && in_array($status, ['proses_desain', 'proses_revisi'], true);
+
+// Tidak lagi dipakai tapi tetap didefinisikan agar tidak error bila ada referensi lain.
+$pilihDraftUntukCetak = false;
 ?>
 <?= $this->extend('layouts/main') ?>
 
@@ -250,10 +264,10 @@ $menungguDraftFinal = $role === 'pelanggan'
             Verifikasi Pembayaran
         </a>
     <?php elseif ($role === 'produksi'): ?>
-        <a href="<?= site_url('antrian-desain') ?>"
+        <a href="<?= site_url('dashboard') ?>"
             class="inline-flex items-center gap-2 justify-center border-2 border-[#051747] text-[#051747] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors shrink-0">
             <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4']) ?>
-            Antrian Desain
+            Beranda
         </a>
     <?php else: ?>
         <a href="<?= site_url('dashboard') ?>"
@@ -412,7 +426,7 @@ $menungguDraftFinal = $role === 'pelanggan'
             </div>
         <?php endif; ?>
 
-        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+        <div id="revisi-desain" class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
             <div class="flex flex-wrap justify-between items-center gap-2 mb-2 pb-3 border-b border-slate-100">
                 <h2 class="font-bold text-[#051747] flex items-center gap-2">
                     <?= view('partials/order_detail_svg_icon', ['icon' => 'palette', 'class' => 'h-5 w-5']) ?>
@@ -432,7 +446,7 @@ $menungguDraftFinal = $role === 'pelanggan'
                     <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-3.5 w-3.5']) ?>
                 </a>
             <?php endif; ?>
-            <?php if ($role === 'pelanggan' && $sisaKuota === 1): ?>
+            <?php if ($role === 'pelanggan' && $sisaKuota === 1 && $bolehAjukanRevisi): ?>
                 <div class="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
                     <p class="font-bold mb-1">⚠ Ini kesempatan revisi terakhir Anda</p>
                     <p class="text-xs text-amber-800 leading-relaxed">
@@ -445,61 +459,12 @@ $menungguDraftFinal = $role === 'pelanggan'
                 <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-4">
                     <p class="font-bold text-sm text-[#051747] mb-1 inline-flex items-center gap-2">
                         <?= view('partials/order_detail_svg_icon', ['icon' => 'waiting', 'class' => 'h-5 w-5 shrink-0']) ?>
-                        Menunggu Produksi mengunggah draft final
+                        Menunggu Produksi mengunggah draft terbaru
                     </p>
                     <p class="text-xs text-slate-600 leading-relaxed">
-                        Kuota revisi Anda sudah habis. Tim produksi sedang menyiapkan draft final
-                        berdasarkan catatan revisi terakhir Anda. Setelah diunggah, Anda dapat
-                        menyetujui (ACC) desain untuk lanjut ke proses cetak.
+                        Tim produksi sedang menyiapkan draft berdasarkan catatan revisi Anda.
+                        Setelah diunggah, Anda dapat memilih versi yang diinginkan untuk dicetak.
                     </p>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($pilihDraftUntukCetak): ?>
-                <div class="notice-danger rounded-xl p-4 mb-4">
-                    <p class="font-bold text-sm mb-1">Kuota revisi habis</p>
-                    <p class="text-xs mb-4">
-                        Pilih salah satu versi draft di bawah yang akan diproses cetak oleh produksi.
-                    </p>
-                    <form method="post" action="<?= esc(site_url('revisi/acc')) ?>" class="space-y-3">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
-                        <?php foreach ($draftUntukPilih as $i => $d): ?>
-                            <?php
-                            $idRevPick = (int) ($d['id_revisi'] ?? 0);
-                            $versiPick = (int) ($d['versi'] ?? 0);
-                            $filePick  = (string) ($d['file_draft'] ?? '');
-                            $stPick    = (string) ($d['status'] ?? '');
-                            ?>
-                            <label class="flex gap-3 items-start p-3 rounded-xl border-2 border-slate-200 bg-white cursor-pointer hover:border-[#2E5CE6] has-[:checked]:border-[#051747] has-[:checked]:bg-blue-50/40 transition-colors">
-                                <input type="radio" name="id_revisi" value="<?= esc((string) $idRevPick) ?>"
-                                    class="mt-1 shrink-0 accent-[#051747]"
-                                    <?= $i === count($draftUntukPilih) - 1 ? 'checked' : '' ?> required>
-                                <div class="w-16 h-14 bg-slate-100 rounded-lg overflow-hidden shrink-0">
-                                    <?php if ($filePick !== ''): ?>
-                                        <img src="<?= esc(base_url('uploads/draft_desain/' . $filePick)) ?>"
-                                            alt="v<?= esc((string) $versiPick) ?>"
-                                            class="w-full h-full object-cover">
-                                    <?php else: ?>
-                                        <span class="flex items-center justify-center h-full text-lg">🖼</span>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="flex-1 min-w-0 text-sm">
-                                    <p class="font-bold text-[#051747]">Draft v<?= esc((string) $versiPick) ?></p>
-                                    <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold <?= esc($revisiStatusBadges[$stPick]['class'] ?? 'bg-slate-100') ?>">
-                                        <?= esc($revisiStatusBadges[$stPick]['label'] ?? $stPick) ?>
-                                    </span>
-                                    <?php if (!empty($d['catatan_prod'])): ?>
-                                        <p class="text-xs text-slate-500 mt-1 line-clamp-2"><?= esc((string) $d['catatan_prod']) ?></p>
-                                    <?php endif; ?>
-                                </div>
-                            </label>
-                        <?php endforeach; ?>
-                        <button type="submit"
-                            class="w-full bg-emerald-500 text-white py-2.5 rounded-full text-sm font-bold hover:bg-emerald-600 transition-colors">
-                            ✓ ACC Draft Terpilih untuk Cetak
-                        </button>
-                    </form>
                 </div>
             <?php endif; ?>
 
@@ -508,133 +473,237 @@ $menungguDraftFinal = $role === 'pelanggan'
                     Belum ada draft desain. Menunggu bagian produksi.
                 </div>
             <?php else: ?>
-                <?php foreach ($revisList as $idx => $r): ?>
-                    <?php
-                    $revisStatus = (string) ($r['status'] ?? 'uploaded');
-                    $revBadge    = $revisiStatusBadges[$revisStatus] ?? ['label' => $revisStatus, 'class' => 'bg-slate-100 text-slate-600'];
-                    $isLatest    = $idx === $revisCount - 1;
-                    $revCode     = (string) ($r['kode_revisi'] ?? '');
-                    if ($revCode === '') {
-                        $revCode = 'REV-' . str_pad((string) $idOrder, 4, '0', STR_PAD_LEFT)
-                            . '-' . str_pad((string) ($r['versi'] ?? 0), 2, '0', STR_PAD_LEFT);
-                    }
-                    $fileDraft   = (string) ($r['file_draft'] ?? '');
-                    $isAccDraft  = $revisStatus === 'acc';
-                    $cardClass   = $isAccDraft
-                        ? 'revisi-card revisi-card-acc border-2 border-emerald-500 bg-white shadow-sm'
-                        : 'revisi-card border border-slate-200 bg-white';
-                    ?>
-                    <div class="<?= esc($cardClass) ?> rounded-xl p-4 mb-3 last:mb-0">
-                        <?php if ($isAccDraft): ?>
-                            <p class="text-[10px] font-bold uppercase tracking-wide text-emerald-700 mb-2 flex items-center gap-1">
-                                <span aria-hidden="true">✓</span> Draft dipilih untuk cetak
-                            </p>
-                        <?php endif; ?>
-                        <div class="flex gap-4 items-start">
-                            <div class="w-20 h-16 bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
-                                <?php if ($fileDraft !== ''): ?>
-                                    <a href="<?= esc(base_url('uploads/draft_desain/' . $fileDraft)) ?>" target="_blank" rel="noopener noreferrer" class="w-full h-full">
-                                        <img
-                                            src="<?= esc(base_url('uploads/draft_desain/' . $fileDraft)) ?>"
-                                            alt="Draft v<?= esc((string) ($r['versi'] ?? '')) ?>"
-                                            class="w-full h-full object-cover rounded-lg"
-                                            onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                        <span class="text-2xl hidden">🖼</span>
-                                    </a>
-                                <?php else: ?>
-                                    <span class="text-2xl">🖼</span>
-                                <?php endif; ?>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex flex-wrap justify-between gap-2 items-start">
-                                    <p class="text-sm font-bold text-[#051747]">
-                                        Draft v<?= esc((string) ($r['versi'] ?? '')) ?>-<?= esc($revCode) ?>
+                <?php $mockupAnglesDetail = $mockupAngles ?? []; ?>
+
+                <?php if ($bolehPilihAcc): ?>
+                    <p class="font-bold text-sm text-[#051747] mb-1">Pilih Versi Desain</p>
+                    <p class="text-xs text-slate-500 mb-4">Pilih versi di riwayat di bawah, lalu klik ACC untuk proses cetak.</p>
+                    <form method="post" action="<?= esc(site_url('revisi/acc')) ?>" class="space-y-0" id="formPilihVersiDesain">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
+                <?php endif; ?>
+
+                <h3 class="text-sm font-bold text-[#051747] uppercase tracking-wide mb-4">Riwayat Revisi Desain</h3>
+                <div class="relative pl-6 space-y-6 mb-4">
+                    <div class="absolute left-2 top-2 bottom-2 w-px bg-slate-200"></div>
+                    <?php foreach ($revisList as $idx => $r): ?>
+                        <?php
+                        $revisStatus = (string) ($r['status'] ?? 'uploaded');
+                        $revBadge    = $revisiStatusBadges[$revisStatus] ?? ['label' => $revisStatus, 'dot' => 'bg-slate-400', 'class' => 'bg-slate-100 text-slate-600'];
+                        $isLatest    = $idx === $revisCount - 1;
+                        $revCode     = (string) ($r['kode_revisi'] ?? '');
+                        if ($revCode === '') {
+                            $revCode = 'REV-' . str_pad((string) $idOrder, 4, '0', STR_PAD_LEFT)
+                                . '-' . str_pad((string) ($r['versi'] ?? 0), 2, '0', STR_PAD_LEFT);
+                        }
+                        $fileDraft    = (string) ($r['file_draft'] ?? '');
+                        $isAccDraft   = $revisStatus === 'acc';
+                        $cardClass    = $isAccDraft
+                            ? 'revisi-card revisi-card-acc border-2 border-emerald-500 bg-white shadow-sm'
+                            : 'revisi-card border border-slate-100 bg-white shadow-sm';
+                        $histDraftUrl = resolveDraftDesainUrl($fileDraft);
+                        $histAdjust   = normalizeMockupAdjust($r['mockup_adjust'] ?? null);
+                        $histVersi    = (int) ($r['versi'] ?? 0);
+                        $idRevCard    = (int) ($r['id_revisi'] ?? 0);
+                        $canPickCard  = $bolehPilihAcc && in_array($revisStatus, ['uploaded', 'diajukan_revisi'], true);
+                        $isLatestPick = $idRevCard === $idRevisiTerbaru;
+                        ?>
+                        <div class="relative">
+                            <span class="absolute -left-6 top-4 w-3.5 h-3.5 rounded-full ring-4 ring-white <?= esc($revBadge['dot'] ?? 'bg-slate-400') ?>"></span>
+                            <div class="<?= esc($cardClass) ?> rounded-xl p-4<?= $canPickCard ? ' has-[:checked]:border-[#051747] has-[:checked]:ring-2 has-[:checked]:ring-[#051747]/20' : '' ?>">
+                                <?php if ($isAccDraft): ?>
+                                    <p class="text-[10px] font-bold uppercase tracking-wide text-emerald-700 mb-2 flex items-center gap-1">
+                                        <span aria-hidden="true">✓</span> Draft dipilih untuk cetak
                                     </p>
-                                    <span class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-semibold <?= esc($revBadge['class']) ?>">
-                                        <?= esc($revBadge['label']) ?>
-                                    </span>
+                                <?php endif; ?>
+                                <div class="flex flex-wrap justify-between gap-2 items-start mb-3">
+                                    <div class="flex gap-2 items-start min-w-0">
+                                        <?php if ($canPickCard): ?>
+                                            <input type="radio" name="id_revisi" value="<?= esc((string) $idRevCard) ?>"
+                                                class="mt-1 shrink-0 accent-[#051747]"
+                                                <?= $isLatestPick ? 'checked' : '' ?> required>
+                                        <?php endif; ?>
+                                        <p class="font-bold text-[#051747] text-sm">
+                                            Draft v<?= esc((string) $histVersi) ?>-<?= esc($revCode) ?>
+                                            <?php if ($canPickCard && $isLatestPick): ?>
+                                                <span class="ml-1 text-[10px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Terbaru</span>
+                                            <?php endif; ?>
+                                        </p>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-semibold <?= esc($revBadge['class']) ?>">
+                                            <?= esc($revBadge['label']) ?>
+                                        </span>
+                                        <?php if (!empty($r['created_at'])): ?>
+                                            <p class="text-[10px] text-slate-400 mt-1">
+                                                <?= esc(date('d M Y H:i', strtotime((string) $r['created_at']))) ?>
+                                            </p>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
-                                <?php if (!empty($r['catatan_prod'])): ?>
-                                    <p class="text-xs text-slate-500 mt-1">Produksi: <?= esc((string) $r['catatan_prod']) ?></p>
+                                <div class="flex gap-4 flex-col sm:flex-row">
+                                    <div class="w-full sm:w-28 h-24 bg-slate-100 rounded-lg overflow-hidden shrink-0">
+                                        <?php if ($fileDraft !== ''): ?>
+                                            <a href="<?= esc(base_url('uploads/draft_desain/' . $fileDraft)) ?>" target="_blank" rel="noopener noreferrer">
+                                                <img
+                                                    src="<?= esc(base_url('uploads/draft_desain/' . $fileDraft)) ?>"
+                                                    alt="Draft v<?= esc((string) $histVersi) ?>"
+                                                    class="w-full h-full object-cover"
+                                                    onerror="this.style.display='none'">
+                                            </a>
+                                        <?php else: ?>
+                                            <span class="flex items-center justify-center h-full text-2xl">🖼</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="flex-1 text-sm space-y-2">
+                                        <?php if (!empty($r['catatan_prod'])): ?>
+                                            <p><span class="font-semibold text-slate-600">Catatan Produksi:</span>
+                                                <?= esc((string) $r['catatan_prod']) ?></p>
+                                        <?php endif; ?>
+                                        <?php if (!empty($r['catatan_revisi'])): ?>
+                                            <p class="text-amber-800 bg-amber-50 rounded-lg px-3 py-2">
+                                                <span class="font-semibold">Catatan Revisi Anda:</span>
+                                                <?= esc((string) $r['catatan_revisi']) ?>
+                                            </p>
+                                        <?php endif; ?>
+                                        <?php if ($isAccDraft): ?>
+                                            <p class="text-xs text-emerald-700 font-semibold">✓ Desain disetujui-pesanan lanjut ke proses cetak</p>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+                                <?php if ($histDraftUrl !== null && $mockupAnglesDetail !== []): ?>
+                                    <div class="mt-4">
+                                        <?= view('partials/draft_mockup_preview', [
+                                            'draftUrl'     => $histDraftUrl,
+                                            'mockupAngles' => $mockupAnglesDetail,
+                                            'previewTitle' => 'Preview Draft v' . $histVersi,
+                                            'mockupAdjust' => $histAdjust,
+                                            'editable'     => false,
+                                            'layerUrls'    => resolveMockupLayerUrls($histDraftUrl, $histAdjust),
+                                        ]) ?>
+                                    </div>
                                 <?php endif; ?>
-                                <?php if (!empty($r['catatan_revisi'])): ?>
-                                    <p class="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 mt-1">
-                                        Catatan Anda: <?= esc((string) $r['catatan_revisi']) ?>
-                                    </p>
-                                <?php endif; ?>
-                                <?php if (!empty($r['created_at'])): ?>
-                                    <p class="text-xs text-slate-400 mt-1">
-                                        <?= esc(date('d M Y H:i', strtotime((string) $r['created_at']))) ?>
-                                    </p>
+
+                                <?php if ($isLatest && $canAccDraftTerbaru): ?>
+                                    <div class="mt-3 pt-3 border-t border-slate-100">
+                                        <div id="revisiActionBtns" class="flex flex-wrap gap-2">
+                                            <button
+                                                type="button"
+                                                onclick="document.getElementById('modalAcc').classList.remove('hidden')"
+                                                class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-600 transition-colors">
+                                                ✓ ACC Desain
+                                            </button>
+                                            <?php if ($bolehAjukanRevisi): ?>
+                                                <button
+                                                    type="button"
+                                                    id="btnShowRevisiInline"
+                                                    onclick="document.getElementById('revisiInlineForm').classList.remove('hidden'); document.getElementById('revisiActionBtns').classList.add('hidden');"
+                                                    class="bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-amber-600 transition-colors">
+                                                    <?= $sisaKuota === 1 ? '↺ Ajukan Revisi Terakhir' : '↺ Ajukan Revisi' ?>
+                                                </button>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if ($bolehAjukanRevisi): ?>
+                                            <div id="revisiInlineForm" class="hidden">
+                                                <p class="text-sm font-semibold text-[#051747] mb-1">Catatan Revisi <span class="text-red-500">*</span></p>
+                                                <?php if ($sisaKuota === 1): ?>
+                                                    <div class="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                                                        <p class="font-bold mb-0.5 inline-flex items-center gap-1.5">
+                                                            <svg class="h-3.5 w-3.5 shrink-0 text-amber-700" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                                <path d="M12 3.5 2.8 19.5h18.4L12 3.5Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" />
+                                                                <path d="M12 9v5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                                                                <circle cx="12" cy="17.25" r="1" fill="currentColor" />
+                                                            </svg>
+                                                            Revisi terakhir pastikan catatan sudah lengkap
+                                                        </p>
+                                                        <p class="text-amber-800 leading-relaxed">
+                                                            Setelah pengajuan revisi ini dikirim, kuota revisi akan habis. Draft berikutnya dari Produksi hanya dapat di-ACC.
+                                                        </p>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <p class="text-xs text-amber-600 mb-3">Sisa kuota: <?= esc((string) $sisaKuota) ?> revisi</p>
+                                                <?php endif; ?>
+                                                <form id="formAjukanRevisiDetail" method="post" action="<?= esc(site_url('revisi/ajukan')) ?>">
+                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
+                                                    <input type="hidden" name="id_revisi" value="<?= esc((string) $idRevisiTerbaru) ?>">
+                                                    <textarea
+                                                        name="catatan_revisi"
+                                                        rows="4"
+                                                        required
+                                                        placeholder="Jelaskan apa yang perlu diubah secara detail..."
+                                                        class="border border-slate-200 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"></textarea>
+                                                    <div class="flex flex-wrap gap-2 justify-end mt-3">
+                                                        <button
+                                                            type="button"
+                                                            onclick="document.getElementById('revisiInlineForm').classList.add('hidden'); document.getElementById('revisiActionBtns').classList.remove('hidden'); this.closest('form').querySelector('[name=catatan_revisi]').value='';"
+                                                            class="px-4 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+                                                            Batal
+                                                        </button>
+                                                        <button
+                                                            type="submit"
+                                                            class="bg-amber-500 text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-amber-600 transition-colors">
+                                                            <?= $sisaKuota === 1 ? 'Kirim Revisi Terakhir' : 'Kirim Revisi' ?>
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                         </div>
+                    <?php endforeach; ?>
+                </div>
 
-                        <?php if ($isLatest && $canAccDraftTerbaru): ?>
-                            <div class="mt-3 pt-3 border-t border-slate-100">
-                                <div id="revisiActionBtns" class="flex flex-wrap gap-2">
-                                    <button
-                                        type="button"
-                                        onclick="document.getElementById('modalAcc').classList.remove('hidden')"
-                                        class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-600 transition-colors">
-                                        ✓ ACC Desain
+                <?php if ($bolehPilihAcc): ?>
+                        <div class="flex flex-wrap gap-3 pt-2">
+                            <button type="submit"
+                                class="flex-1 bg-emerald-500 text-white py-2.5 rounded-full text-sm font-bold hover:bg-emerald-600 transition-colors">
+                                ✓ ACC & Gunakan Versi Terpilih
+                            </button>
+                            <?php if ($bolehAjukanRevisi): ?>
+                                <button type="button"
+                                    onclick="document.getElementById('revisiPanelDetail').classList.toggle('hidden')"
+                                    class="flex-1 bg-amber-500 text-white py-2.5 rounded-full text-sm font-bold hover:bg-amber-600 transition-colors">
+                                    <?= $sisaKuota === 1 ? '↺ Ajukan Revisi Terakhir' : '↺ Ajukan Revisi' ?>
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                    </form>
+                    <?php if ($bolehAjukanRevisi): ?>
+                        <div id="revisiPanelDetail" class="hidden mt-4 pt-4 border-t border-slate-100">
+                            <?php if ($sisaKuota === 1): ?>
+                                <div class="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                                    <p class="font-bold mb-0.5">Revisi terakhir — pastikan catatan sudah lengkap.</p>
+                                    <p class="text-amber-800 leading-relaxed">Setelah dikirim, kuota revisi habis. Draft berikutnya hanya dapat di-ACC.</p>
+                                </div>
+                            <?php else: ?>
+                                <p class="text-xs text-amber-600 mb-3">Sisa kuota: <?= esc((string) $sisaKuota) ?> revisi</p>
+                            <?php endif; ?>
+                            <form method="post" action="<?= esc(site_url('revisi/ajukan')) ?>">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
+                                <input type="hidden" name="id_revisi" value="<?= esc((string) $idRevisiTerbaru) ?>">
+                                <textarea name="catatan_revisi" rows="4" required
+                                    placeholder="Jelaskan apa yang perlu diubah secara detail..."
+                                    class="border border-slate-200 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"></textarea>
+                                <div class="flex gap-2 justify-end mt-3">
+                                    <button type="button"
+                                        onclick="document.getElementById('revisiPanelDetail').classList.add('hidden')"
+                                        class="px-4 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+                                        Batal
                                     </button>
-                                    <button
-                                        type="button"
-                                        id="btnShowRevisiInline"
-                                        onclick="document.getElementById('revisiInlineForm').classList.remove('hidden'); document.getElementById('revisiActionBtns').classList.add('hidden');"
-                                        class="bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-amber-600 transition-colors">
-                                        <?= $sisaKuota === 1 ? '↺ Ajukan Revisi Terakhir' : '↺ Ajukan Revisi' ?>
+                                    <button type="submit"
+                                        class="bg-amber-500 text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-amber-600 transition-colors">
+                                        <?= $sisaKuota === 1 ? 'Kirim Revisi Terakhir' : 'Kirim Revisi' ?>
                                     </button>
                                 </div>
-                                <div id="revisiInlineForm" class="hidden">
-                                    <p class="text-sm font-semibold text-[#051747] mb-1">Catatan Revisi <span class="text-red-500">*</span></p>
-                                    <?php if ($sisaKuota === 1): ?>
-                                        <div class="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
-                                            <p class="font-bold mb-0.5 inline-flex items-center gap-1.5">
-                                                <svg class="h-3.5 w-3.5 shrink-0 text-amber-700" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                                    <path d="M12 3.5 2.8 19.5h18.4L12 3.5Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" />
-                                                    <path d="M12 9v5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-                                                    <circle cx="12" cy="17.25" r="1" fill="currentColor" />
-                                                </svg>
-                                                Revisi terakhir pastikan catatan sudah lengkap
-                                            </p>
-                                            <p class="text-amber-800 leading-relaxed">
-                                                Setelah pengajuan revisi ini dikirim, kuota revisi akan habis. Draft berikutnya dari Produksi hanya dapat di-ACC dan tidak dapat diajukan revisi kembali.
-                                            </p>
-                                        </div>
-                                    <?php else: ?>
-                                        <p class="text-xs text-amber-600 mb-3">Sisa kuota: <?= esc((string) $sisaKuota) ?> revisi</p>
-                                    <?php endif; ?>
-                                    <form id="formAjukanRevisiDetail" method="post" action="<?= esc(site_url('revisi/ajukan')) ?>">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
-                                        <input type="hidden" name="id_revisi" value="<?= esc((string) $idRevisiTerbaru) ?>">
-                                        <textarea
-                                            name="catatan_revisi"
-                                            rows="4"
-                                            required
-                                            placeholder="Jelaskan apa yang perlu diubah secara detail..."
-                                            class="border border-slate-200 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"></textarea>
-                                        <div class="flex flex-wrap gap-2 justify-end mt-3">
-                                            <button
-                                                type="button"
-                                                onclick="document.getElementById('revisiInlineForm').classList.add('hidden'); document.getElementById('revisiActionBtns').classList.remove('hidden'); this.closest('form').querySelector('[name=catatan_revisi]').value='';"
-                                                class="px-4 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">
-                                                Batal
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                class="bg-amber-500 text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-amber-600 transition-colors">
-                                                <?= $sisaKuota === 1 ? 'Kirim Revisi Terakhir' : 'Kirim Revisi' ?>
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
+                            </form>
+                        </div>
+                    <?php endif; ?>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
     </div>
@@ -874,7 +943,7 @@ $menungguDraftFinal = $role === 'pelanggan'
             </div>
         <?php endif; ?>
 
-        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+        <div id="status-pesanan" class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
             <h2 class="font-bold text-[#051747] mb-4 flex items-center gap-2">
                 <?= view('partials/order_detail_svg_icon', ['icon' => 'location', 'class' => 'h-5 w-5']) ?>
                 Status Pesanan
@@ -921,7 +990,7 @@ $menungguDraftFinal = $role === 'pelanggan'
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+        <div id="pembayaran" class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
             <h2 class="font-bold text-[#051747] mb-4 pb-3 border-b border-slate-100 flex items-center gap-2">
                 <?= view('partials/order_detail_svg_icon', ['icon' => 'payment', 'class' => 'h-5 w-5']) ?>
                 Pembayaran
@@ -1161,7 +1230,7 @@ $menungguDraftFinal = $role === 'pelanggan'
         </div>
 
         <?php if ($pengiriman !== null): ?>
-            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+            <div id="info-pengiriman" class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
                 <div class="border border-slate-200 rounded-xl p-4">
                     <p class="font-semibold text-sm text-[#051747] mb-2 flex items-center gap-2">
                         <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75" aria-hidden="true">
@@ -1298,6 +1367,26 @@ $menungguDraftFinal = $role === 'pelanggan'
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
+<script>
+(function () {
+    var hash = (window.location.hash || '').replace(/^#/, '');
+    if (!hash) {
+        return;
+    }
+
+    var target = document.getElementById(hash);
+    if (!target && hash === 'info-pengiriman') {
+        target = document.getElementById('status-pesanan');
+    }
+    if (!target) {
+        return;
+    }
+
+    window.setTimeout(function () {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+})();
+</script>
 <?php if ($role === 'pelanggan' && $sisaKuota === 1 && $canAccDraftTerbaru): ?>
     <script>
         (function() {

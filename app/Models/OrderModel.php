@@ -29,6 +29,8 @@ class OrderModel extends Model
         'total_harga',
         'require_dp',
         'status',
+        'tgl_mulai_cetak',
+        'tgl_finishing',
         'created_at',
         'batas_upload_dp',
         'reminder_dp_sent',

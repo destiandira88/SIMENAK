@@ -138,6 +138,11 @@ if ($estimasiFormValue === null || $estimasiFormValue === '') {
         <?php endif; ?>
     </div>
 
+    <?= $this->include('partials/katalog_mockup_uploads', [
+        'readOnly'        => true,
+        'existingMockups' => $existingMockups ?? [],
+    ]) ?>
+
     <div class="mt-6 pt-6 border-t border-slate-100 flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
         <a href="<?= site_url('katalog/kelola') ?>" class="btn-outline inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm text-center">
             <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-4 w-4 shrink-0']) ?>
@@ -321,6 +326,11 @@ if ($estimasiFormValue === null || $estimasiFormValue === '') {
             <input type="file" id="inputGambar" name="gambar" accept=".jpg,.jpeg,.png,.webp" class="hidden">
         </div>
 
+        <?= $this->include('partials/katalog_mockup_uploads', [
+            'readOnly'        => false,
+            'existingMockups' => $existingMockups ?? [],
+        ]) ?>
+
         <div class="mt-6 pt-6 border-t border-slate-100">
             <input type="hidden" name="is_active" value="0">
             <label class="flex items-center gap-3 cursor-pointer">
@@ -369,6 +379,30 @@ if ($estimasiFormValue === null || $estimasiFormValue === '') {
             document.getElementById('fileName').classList.remove('hidden');
         };
         reader.readAsDataURL(file);
+    });
+
+    document.querySelectorAll('input[type="file"][data-mockup-sudut]').forEach(function(input) {
+        input.addEventListener('change', function() {
+            const sudut = this.getAttribute('data-mockup-sudut');
+            const file = this.files[0];
+            if (!sudut || !file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const prev = document.getElementById('mockupPrev_' + sudut);
+                const ph = document.getElementById('mockupPh_' + sudut);
+                const nameEl = document.getElementById('mockupName_' + sudut);
+                const img = prev?.querySelector('img');
+                if (img) img.src = e.target.result;
+                prev?.classList.remove('hidden');
+                ph?.classList.add('hidden');
+                if (nameEl) {
+                    nameEl.textContent = file.name;
+                    nameEl.classList.remove('hidden');
+                }
+            };
+            reader.readAsDataURL(file);
+        });
     });
 </script>
 <?= view('partials/rupiah_input_format_script') ?>

@@ -38,8 +38,8 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
 <?= $this->section('content') ?>
 
 <div class="text-xs text-slate-400 mb-2">
-    <a href="<?= esc(site_url($readOnly ? 'manajemen-desain' : 'antrian-desain')) ?>" class="hover:text-[#051747]">
-        <?= $readOnly ? 'Manajemen Desain' : 'Antrian Desain' ?>
+    <a href="<?= esc(site_url($readOnly ? 'manajemen-desain' : 'dashboard')) ?>" class="hover:text-[#051747]">
+        <?= $readOnly ? 'Manajemen Desain' : 'Beranda' ?>
     </a>
     <span class="mx-1">›</span>
     <span class="text-slate-500">
@@ -69,10 +69,15 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
                 <p class="text-xs text-slate-500 mb-4">Unggah versi draft terbaru untuk direview pelanggan.</p>
 
                 <?php if ($canUpload): ?>
+                    <?php
+                    $mockupAnglesUpload = getMockupAnglesForProduk((int) ($order['id_katalog'] ?? 0));
+                    $hasMockupUpload    = $mockupAnglesUpload !== [];
+                    ?>
                     <form method="post"
                         action="<?= esc(site_url('manajemen-desain/' . $idOrder . '/upload')) ?>"
                         enctype="multipart/form-data"
-                        class="space-y-4">
+                        class="space-y-4"
+                        id="formUploadDraft">
                         <?= csrf_field() ?>
 
                         <div>
@@ -95,6 +100,20 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
                             </div>
                         </div>
 
+                        <?php if ($hasMockupUpload): ?>
+                            <div id="mockupAdjustWrap" class="hidden">
+                                <?= view('partials/draft_mockup_preview', [
+                                    'draftUrl'         => '',
+                                    'mockupAngles'     => $mockupAnglesUpload,
+                                    'previewTitle'     => 'Sesuaikan Preview',
+                                    'editable'         => true,
+                                    'mockupAdjust'     => [],
+                                    'adjustInputName'  => 'mockup_adjust',
+                                    'layerUrls'        => [],
+                                ]) ?>
+                            </div>
+                        <?php endif; ?>
+
                         <div>
                             <label for="catatan_prod" class="block text-sm font-semibold text-slate-700 mb-1.5">Catatan Produksi (opsional)</label>
                             <textarea name="catatan_prod" id="catatan_prod" rows="3"
@@ -104,7 +123,7 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
 
                         <button type="submit"
                             class="inline-flex w-full items-center justify-center gap-2 bg-[#051747] text-white py-3 rounded-full font-bold text-sm uppercase hover:bg-[#2E5CE6] transition-colors">
-                            Unggah Draf
+                            Unggah Draft
                             <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-right', 'class' => 'h-4 w-4 shrink-0']) ?>
                         </button>
                     </form>
@@ -113,13 +132,61 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
                         <?php if (in_array($status, ['proses_cetak', 'finishing'], true)): ?>
                             Pesanan sudah melewati tahap upload draft.
                         <?php elseif ($status === 'terverifikasi'): ?>
-                            Siap upload draft pertama setelah pesanan masuk antrian desain.
+                            Siap upload draft desain pertama.
                         <?php else: ?>
                             Unggah draf belum tersedia. Menunggu review dan persetujuan Pelanggan pada draf sebelumnya.
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
             </div>
+
+            <?php
+            // Panel simpan penyesuaian HANYA jika upload ditutup (menunggu review pelanggan).
+            // Saat canUpload=true, penyesuaian digabung di form unggah di atas — jangan dobel.
+            $mockupAnglesSave = getMockupAnglesForProduk((int) ($order['id_katalog'] ?? 0));
+            $latestDraftUrl   = null;
+            $latestDraftId    = 0;
+            $latestDraftVersi = 0;
+            $latestDraftAdj   = [];
+            if (is_array($lastRevis)) {
+                $latestDraftUrl   = resolveDraftDesainUrl((string) ($lastRevis['file_draft'] ?? ''));
+                $latestDraftId    = (int) ($lastRevis['id_revisi'] ?? 0);
+                $latestDraftVersi = (int) ($lastRevis['versi'] ?? 0);
+                $latestDraftAdj   = normalizeMockupAdjust($lastRevis['mockup_adjust'] ?? null);
+            }
+            $canSaveMockup = ! $canUpload
+                && $mockupAnglesSave !== []
+                && $latestDraftUrl !== null
+                && $latestDraftId > 0
+                && in_array($status, ['terverifikasi', 'proses_desain', 'proses_revisi'], true);
+            ?>
+            <?php if ($canSaveMockup): ?>
+                <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6" id="mockup-save-panel">
+                    <h3 class="font-bold text-[#051747] mb-1">Penyesuaian Preview Draft</h3>
+                    <p class="text-xs text-slate-500 mb-4">
+                        Atur zoom &amp; posisi draft v<?= esc((string) $latestDraftVersi) ?>, lalu simpan.
+                        Pelanggan melihat preview yang sama setelah Anda menekan tombol simpan.
+                    </p>
+                    <form method="post"
+                        action="<?= esc(site_url('manajemen-desain/' . $idOrder . '/mockup-adjust')) ?>"
+                        enctype="multipart/form-data"
+                        class="space-y-4"
+                        id="formSaveMockupAdjust">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="id_revisi" value="<?= esc((string) $latestDraftId) ?>">
+                        <?= view('partials/draft_mockup_preview', [
+                            'draftUrl'              => $latestDraftUrl,
+                            'mockupAngles'          => $mockupAnglesSave,
+                            'previewTitle'          => 'Preview Draft v' . $latestDraftVersi,
+                            'editable'              => true,
+                            'mockupAdjust'          => $latestDraftAdj,
+                            'adjustInputName'       => 'mockup_adjust',
+                            'layerUrls'             => resolveMockupLayerUrls($latestDraftUrl, $latestDraftAdj),
+                            'showAdjustSaveButton'  => true,
+                        ]) ?>
+                    </form>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
 
         <div id="history" class="scroll-mt-4">
@@ -130,6 +197,7 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
                     Belum ada riwayat revisi desain.
                 </div>
             <?php else: ?>
+                <?php $mockupAnglesHistory = getMockupAnglesForProduk((int) ($order['id_katalog'] ?? 0)); ?>
                 <div class="relative pl-6 space-y-6">
                     <div class="absolute left-2 top-2 bottom-2 w-px bg-slate-200"></div>
                     <?php foreach ($revisList as $r): ?>
@@ -147,6 +215,8 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
                         $cardClass  = $isAccDraft
                             ? 'bg-white border-2 border-emerald-500 shadow-sm'
                             : 'bg-white border border-slate-100 shadow-sm';
+                        $histDraftUrl = resolveDraftDesainUrl($fileDraft);
+                        $histAdjust   = normalizeMockupAdjust($r['mockup_adjust'] ?? null);
                         ?>
                         <div class="relative">
                             <span class="absolute -left-6 top-4 w-3.5 h-3.5 rounded-full ring-4 ring-white <?= esc($badge['dot']) ?>"></span>
@@ -195,6 +265,18 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
                                         <?php endif; ?>
                                     </div>
                                 </div>
+                                <?php if ($histDraftUrl !== null && $mockupAnglesHistory !== []): ?>
+                                    <div class="mt-4">
+                                        <?= view('partials/draft_mockup_preview', [
+                                            'draftUrl'     => $histDraftUrl,
+                                            'mockupAngles' => $mockupAnglesHistory,
+                                            'previewTitle' => 'Preview Draft v' . $versi,
+                                            'mockupAdjust' => $histAdjust,
+                                            'editable'     => false,
+                                            'layerUrls'    => resolveMockupLayerUrls($histDraftUrl, $histAdjust),
+                                        ]) ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -218,15 +300,36 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
         const previewImg = document.getElementById('previewImg');
         const previewName = document.getElementById('previewName');
         const clearBtn = document.getElementById('clearPreview');
+        const mockupWrap = document.getElementById('mockupAdjustWrap');
+
+        function mockupRoot() {
+            return mockupWrap ? mockupWrap.querySelector('[data-mockup-root]') : null;
+        }
+
+        function setMockupDraft(url) {
+            const root = mockupRoot();
+            if (!root) return;
+            if (typeof root.setDraftSrc === 'function') {
+                root.setDraftSrc(url || '');
+            } else {
+                const img = root.querySelector('[data-mockup-draft]');
+                if (img) img.src = url || '';
+            }
+        }
 
         function showPreview(file) {
             if (!file || !file.type.startsWith('image/')) return;
             const reader = new FileReader();
             reader.onload = function(e) {
-                previewImg.src = e.target.result;
+                const url = e.target.result;
+                previewImg.src = url;
                 previewName.textContent = file.name;
                 placeholder.classList.add('hidden');
                 previewWrap.classList.remove('hidden');
+                if (mockupWrap) {
+                    mockupWrap.classList.remove('hidden');
+                    setMockupDraft(url);
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -236,6 +339,10 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
             previewImg.src = '';
             previewWrap.classList.add('hidden');
             placeholder.classList.remove('hidden');
+            if (mockupWrap) {
+                mockupWrap.classList.add('hidden');
+                setMockupDraft('');
+            }
         }
 
         dropZone.addEventListener('click', function(e) {

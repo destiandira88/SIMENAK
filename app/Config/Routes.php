@@ -155,12 +155,16 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->group('', ['filter' => 'role:produksi,owner'], static function ($routes) {
         $routes->get('manajemen-desain', 'RevisiController::manajemenDesain');
         $routes->get('manajemen-desain/(:num)', 'RevisiController::detail/$1');
+        $routes->get('manajemen-produksi', 'RevisiController::manajemenProduksi');
+        $routes->get('monitoring-produksi/(:segment)', 'RevisiController::monitoringCetak/$1');
+        $routes->get('monitoring-cetak/(:segment)', 'RevisiController::monitoringCetak/$1');
     });
 
     // ─── Produksi ──────────────────────────────────────────────────────────────
     $routes->group('', ['filter' => 'role:produksi'], static function ($routes) {
         $routes->get('antrian-desain', 'RevisiController::antrianDesain');
         $routes->post('manajemen-desain/(:num)/upload', 'RevisiController::upload/$1');
+        $routes->post('manajemen-desain/(:num)/mockup-adjust', 'RevisiController::saveMockupAdjust/$1');
         $routes->post('produksi/update-status', 'RevisiController::updateStatusProduksi');
     });
 

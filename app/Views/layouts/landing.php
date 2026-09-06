@@ -777,6 +777,49 @@ $navMenus = [
                 el.classList.add(isSuccess ? 'notice-success' : 'notice-danger');
             };
 
+            /** Toast tetap pojok kanan atas (sama seperti flash "Produk berhasil diperbarui") — error daftar. */
+            const showRegisterErrorToast = (message) => {
+                const text = String(message || '').trim();
+                if (text === '') return;
+
+                let stack = document.getElementById('flash-toast-stack');
+                if (!stack) {
+                    stack = document.createElement('div');
+                    stack.id = 'flash-toast-stack';
+                    stack.setAttribute('aria-live', 'polite');
+                    stack.setAttribute('aria-atomic', 'true');
+                    document.body.appendChild(stack);
+                }
+
+                const el = document.createElement('div');
+                el.className = 'flash-toast border border-[#FECACA] bg-[#FEE2E2]';
+                el.setAttribute('data-flash-toast', '');
+                el.setAttribute('role', 'alert');
+                el.innerHTML = `
+                    <div class="flash-toast-body">
+                        <div class="flash-toast-icon bg-red-500">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </div>
+                        <p class="flash-toast-message text-[#991B1B]"></p>
+                        <button type="button" class="flash-toast-close" data-flash-toast-close aria-label="Tutup notifikasi">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="flash-toast-track">
+                        <span class="flash-toast-progress bg-red-500" data-flash-toast-progress></span>
+                    </div>
+                `;
+                el.querySelector('.flash-toast-message').textContent = text;
+                stack.appendChild(el);
+                if (typeof window.initFlashToast === 'function') {
+                    window.initFlashToast(el);
+                }
+            };
+
             const showForgotPasswordSuccessAlert = (el, message, devNote = '') => {
                 if (!el) return;
                 el.classList.remove('hidden', 'notice-danger', 'notice-success');
@@ -1230,19 +1273,19 @@ $navMenus = [
 
                     const nama = document.getElementById('reg_nama')?.value.trim() || '';
                     if (nama.length < 3 || nama.length > 100 || !namaLengkapPattern.test(nama)) {
-                        showAlert(registerAlert, 'Nama lengkap hanya boleh berisi huruf, spasi, tanda kutip, atau titik (3–100 karakter).', false);
+                        showRegisterErrorToast('Nama lengkap hanya boleh berisi huruf, spasi, tanda kutip, atau titik (3–100 karakter).');
                         return;
                     }
 
                     const phone = regPhoneInput ? regPhoneInput.value.trim() : '';
                     if (!phonePattern.test(phone)) {
-                        showAlert(registerAlert, 'Format no. telepon harus berupa angka dan diawali dengan 08, +62, atau 022 (Contoh: 087778965442) (8–13 digit setelah awalan).', false);
+                        showRegisterErrorToast('Format no. telepon harus berupa angka dan diawali dengan 08, +62, atau 022 (Contoh: 087778965442) (8–13 digit setelah awalan).');
                         return;
                     }
 
                     const alamat = document.getElementById('reg_alamat')?.value.trim() || '';
                     if (alamat.length < 10 || alamat.length > 150) {
-                        showAlert(registerAlert, 'Alamat wajib diisi (minimal 10 karakter, maks. 150 karakter).', false);
+                        showRegisterErrorToast('Alamat wajib diisi (minimal 10 karakter, maks. 150 karakter).');
                         return;
                     }
 
@@ -1264,17 +1307,15 @@ $navMenus = [
                             }, 1200);
                             return;
                         }
-                        showAlert(
-                            registerAlert,
-                            extractAjaxErrorMessage(result, 'Registrasi gagal. Periksa kembali semua field wajib.'),
-                            false
+                        showRegisterErrorToast(
+                            extractAjaxErrorMessage(result, 'Registrasi gagal. Periksa kembali semua field wajib.')
                         );
                     } catch (err) {
-                        showAlert(registerAlert, extractAjaxErrorMessage({
+                        showRegisterErrorToast(extractAjaxErrorMessage({
                             networkError: err?.message,
                             status: 0,
                             requestUrl: registerForm?.getAttribute('data-action-url') || registerForm?.action,
-                        }, 'Terjadi kesalahan jaringan. Silakan coba lagi.'), false);
+                        }, 'Terjadi kesalahan jaringan. Silakan coba lagi.'));
                     } finally {
                         btn.disabled = false;
                         btn.textContent = 'Daftar Sekarang';

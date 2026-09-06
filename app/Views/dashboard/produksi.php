@@ -4,8 +4,20 @@
  * @var string                       $nama
  * @var list<array<string, mixed>>   $cards
  * @var list<array<string, mixed>>   $recentOrders
+ * @var array<string, int>           $statusCounts
  * @var string                       $byDateJson
  */
+$recentOrders = $recentOrders ?? [];
+$statusCounts = $statusCounts ?? [];
+$countAll     = count($recentOrders);
+$tabDefs      = [
+    ''              => 'Semua',
+    'terverifikasi' => 'Terverifikasi',
+    'proses_desain' => 'Proses Desain',
+    'proses_revisi' => 'Proses Revisi',
+    'proses_cetak'  => 'Proses Cetak',
+    'finishing'     => 'Finishing',
+];
 ?>
 <?= $this->extend('layouts/main') ?>
 
@@ -17,6 +29,91 @@
 
 <?= $this->section('styles') ?>
 <?= view('partials/admin_data_table_styles') ?>
+<style>
+    .pemesanan-tab {
+        padding: 10px 4px;
+        margin-right: 24px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748B;
+        border-bottom: 2px solid transparent;
+        transition: color .2s, border-color .2s;
+        white-space: nowrap;
+    }
+
+    .pemesanan-tab:hover {
+        color: #051747;
+    }
+
+    .pemesanan-tab.is-active {
+        color: #2E5CE6;
+        border-bottom-color: #2E5CE6;
+    }
+
+    .btn-laporan-filter {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-radius: 14px;
+        border: 1px solid #E2E8F0;
+        padding: 0.625rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4A5568;
+        background: #fff;
+        transition: border-color .2s, background-color .2s, color .2s;
+    }
+
+    .btn-laporan-filter:hover,
+    .btn-laporan-filter.is-open,
+    .btn-laporan-filter.is-active {
+        border-color: #CBD5E1;
+        background: #F8FAFC;
+        color: #051747;
+    }
+
+    .laporan-admin-filter-panel {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 0.5rem);
+        z-index: 40;
+        width: 18rem;
+        padding: 1rem;
+        border-radius: 16px;
+        border: 1px solid #E2E8F0;
+        background: #fff;
+        box-shadow: 0 12px 40px rgba(15, 23, 43, 0.12);
+    }
+
+    .laporan-admin-filter-panel .filter-field + .filter-field {
+        margin-top: 1rem;
+    }
+
+    .laporan-admin-filter-panel .filter-field label {
+        display: block;
+        margin-bottom: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748B;
+    }
+
+    .laporan-admin-filter-panel .filter-field input {
+        width: 100%;
+        border: 1px solid #E2E8F0;
+        border-radius: 14px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        color: #334155;
+        background: #fff;
+    }
+
+    .laporan-admin-filter-panel .filter-field input:focus {
+        border-color: #2E5CE6;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(46, 92, 230, 0.1);
+    }
+</style>
+<?= view('partials/produksi_status_quick_styles') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -25,18 +122,80 @@
 
 <?= view('dashboard/_partials/produksi_kalender', ['byDateJson' => $byDateJson ?? '{}']) ?>
 
-<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-    <h3 class="text-base font-bold text-[#051747]">Antrian Pengerjaan</h3>
-    <label for="produksiDashboardSearch" class="sr-only">Cari pesanan</label>
-    <div class="search-control w-full sm:w-auto">
-        <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-        </svg>
-        <input
-            id="produksiDashboardSearch"
-            type="search"
-            placeholder="Cari kode, pelanggan, produk..."
-            autocomplete="off">
+<h3 class="text-base font-bold text-[#051747] mb-3">Antrian Pengerjaan</h3>
+
+<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4 border-b border-slate-200">
+    <div class="flex flex-wrap items-end gap-0 overflow-x-auto" role="tablist" aria-label="Filter status produksi">
+        <?php foreach ($tabDefs as $key => $label): ?>
+            <?php $count = $key === '' ? $countAll : ($statusCounts[$key] ?? 0); ?>
+            <button
+                type="button"
+                class="pemesanan-tab <?= $key === '' ? 'is-active' : '' ?>"
+                data-status-filter="<?= esc($key) ?>"
+                role="tab"
+                aria-selected="<?= $key === '' ? 'true' : 'false' ?>">
+                <?= esc($label) ?> (<?= esc((string) $count) ?>)
+            </button>
+        <?php endforeach; ?>
+    </div>
+
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap sm:justify-end mb-3 sm:mb-4">
+        <div class="relative w-full sm:w-auto">
+            <button
+                type="button"
+                id="produksiFilterToggle"
+                class="btn-laporan-filter w-full sm:w-auto"
+                aria-expanded="false"
+                aria-controls="produksiFilterPanel"
+                aria-haspopup="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="w-4 h-4 shrink-0" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/>
+                </svg>
+                Filter
+            </button>
+            <div id="produksiFilterPanel" class="laporan-admin-filter-panel hidden">
+                <div class="filter-field">
+                    <label for="produksiFilterKodeDraft">Kode Pesanan</label>
+                    <input
+                        type="search"
+                        id="produksiFilterKodeDraft"
+                        placeholder="Contoh: ORD-2026-001"
+                        autocomplete="off"
+                        class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
+                </div>
+                <div class="filter-field">
+                    <label for="produksiFilterDeadlineFromDraft">Deadline Dari</label>
+                    <input
+                        type="date"
+                        id="produksiFilterDeadlineFromDraft"
+                        class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
+                </div>
+                <div class="filter-field">
+                    <label for="produksiFilterDeadlineToDraft">Deadline Sampai</label>
+                    <input
+                        type="date"
+                        id="produksiFilterDeadlineToDraft"
+                        class="border border-slate-200 rounded-[14px] px-3 py-2 text-sm focus:border-[#2E5CE6] focus:outline-none focus:ring-2 focus:ring-[rgba(46,92,230,0.1)]">
+                </div>
+                <button
+                    type="button"
+                    id="produksiFilterApply"
+                    class="mt-4 w-full bg-[#051747] text-white rounded-[14px] text-sm font-bold px-4 py-2.5 hover:bg-[#2E5CE6] transition-colors">
+                    Terapkan Filter
+                </button>
+            </div>
+        </div>
+        <label for="produksiDashboardSearch" class="sr-only">Cari pesanan</label>
+        <div class="search-control w-full sm:w-auto">
+            <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+            </svg>
+            <input
+                id="produksiDashboardSearch"
+                type="search"
+                placeholder="Cari kode, pelanggan, produk..."
+                autocomplete="off">
+        </div>
     </div>
 </div>
 
@@ -52,18 +211,18 @@
                     <th class="px-4 py-3 text-left font-semibold">Deadline</th>
                     <th class="px-4 py-3 text-left font-semibold">Sisa Kuota</th>
                     <th class="px-4 py-3 text-left font-semibold">Status</th>
+                    <th class="px-4 py-3 text-left font-semibold">Catatan Revisi</th>
                     <th class="px-4 py-3 text-left font-semibold w-12"></th>
                 </tr>
             </thead>
             <tbody id="produksiDashboardBody">
                 <?php if ($recentOrders === []): ?>
                     <tr id="emptyDataRow">
-                        <td colspan="8" class="py-16 text-center">
+                        <td colspan="9" class="py-16 text-center">
                             <p class="text-sm font-medium text-slate-500">Tidak ada pesanan dalam antrian 🎉</p>
                         </td>
                     </tr>
                 <?php else: ?>
-                    <?php helper('deadline'); ?>
                     <?php foreach ($recentOrders as $index => $order): ?>
                         <?php
                         $kodeOrder     = (string) ($order['kode_order'] ?? '');
@@ -78,20 +237,21 @@
                         $idOrder       = (int) ($order['id_order'] ?? 0);
                         $deadlineRaw   = trim((string) ($order['deadline_produksi'] ?? ''));
                         $tsDeadline    = $deadlineRaw !== '' ? strtotime($deadlineRaw) : 0;
+                        $daysLeft      = $tsDeadline > 0 ? (int) floor(($tsDeadline - time()) / 86400) : 999;
+                        $deadlineUrgent = $daysLeft <= 3 && $tsDeadline > 0;
+                        $kuotaClass    = $sisaKuota <= 1 ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold';
                         $searchText    = mb_strtolower(trim($kodeOrder . ' ' . $namaPelanggan . ' ' . $noTelp . ' ' . $namaProduk . ' ' . $status));
-                        $kuotaBadge    = $sisaKuota > 0
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800';
-                        $kuotaLabel    = $sisaKuota > 0
-                            ? 'Sisa ' . $sisaKuota . ' Revisi'
-                            : 'Kuota Habis';
                         $lastRevisi    = $order['last_revisi'] ?? null;
+                        $catatanRevisi = is_array($lastRevisi) ? (string) ($lastRevisi['catatan_revisi'] ?? '') : '';
                         $bisaUpload    = canProduksiUploadDraft($order, is_array($lastRevisi) ? $lastRevisi : null);
                         ?>
                         <tr
                             class="data-table-row border-b border-slate-100 hover:bg-[#F8FAFF] transition-colors"
                             data-search="<?= esc($searchText) ?>"
-                            data-status="<?= esc($status) ?>">
+                            data-status="<?= esc($status) ?>"
+                            data-kode="<?= esc(mb_strtolower($kodeOrder)) ?>"
+                            data-deadline="<?= esc((string) $tsDeadline) ?>"
+                            data-tanggal="<?= esc((string) $tsDeadline) ?>">
                             <td class="row-num px-4 py-3.5 text-slate-600"><?= esc((string) ($index + 1)) ?></td>
                             <td class="px-4 py-3.5 font-mono text-sm font-semibold text-[#051747]">
                                 <?= esc($kodeOrder ?: '-') ?>
@@ -103,32 +263,50 @@
                                 ]) ?>
                             </td>
                             <td class="px-4 py-3.5"><?= esc($namaProduk) ?></td>
-                            <td class="px-4 py-3.5 text-slate-600 whitespace-nowrap">
-                                <?= $deadlineRaw !== '' ? esc(formatTanggalId($deadlineRaw)) : '-' ?>
+                            <td class="px-4 py-3.5 whitespace-nowrap <?= $deadlineUrgent ? 'text-red-600 font-semibold' : 'text-slate-600' ?>">
+                                <?php if ($tsDeadline > 0): ?>
+                                    <?= esc(date('d M Y', $tsDeadline)) ?>
+                                    <?php if ($deadlineUrgent): ?>
+                                        <span class="ml-1" title="Deadline dekat">⚠️</span>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    -
+                                <?php endif; ?>
                             </td>
-                            <td class="px-4 py-3.5">
-                                <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc($kuotaBadge) ?>">
-                                    <?= esc($sisaKuota . '/' . $kuotaRevisi) ?> · <?= esc($kuotaLabel) ?>
-                                </span>
+                            <td class="px-4 py-3.5 <?= esc($kuotaClass) ?>">
+                                <?= esc((string) $sisaKuota) ?>/<?= esc((string) $kuotaRevisi) ?>
                             </td>
-                            <td class="px-4 py-3.5">
-                                <span class="inline-flex px-3 py-1 rounded-full text-[11px] font-semibold <?= esc(getStatusBadgeClass($status)) ?>">
-                                    <?= esc(getOrderStatusLabel($order)) ?>
-                                </span>
+                            <?= view('partials/produksi_status_badge_cell', [
+                                'status'    => $status,
+                                'order'     => $order,
+                                'idOrder'   => $idOrder,
+                                'kodeOrder' => $kodeOrder,
+                                'showAll'   => true,
+                                'readOnly'  => false,
+                            ]) ?>
+                            <td class="px-4 py-3.5 max-w-[12rem]">
+                                <?php if ($catatanRevisi !== ''): ?>
+                                    <span class="text-xs text-amber-700 truncate block" title="<?= esc($catatanRevisi) ?>">
+                                        <?= esc($catatanRevisi) ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="text-slate-400">-</span>
+                                <?php endif; ?>
                             </td>
                             <td class="px-4 py-3.5">
                                 <?= view('partials/produksi_order_action_menu', [
-                                    'idOrder'    => $idOrder,
-                                    'kodeOrder'  => $kodeOrder,
-                                    'bisaUpload' => $bisaUpload,
-                                    'status'     => $status,
+                                    'idOrder'          => $idOrder,
+                                    'kodeOrder'        => $kodeOrder,
+                                    'bisaUpload'       => $bisaUpload,
+                                    'status'           => $status,
+                                    'hideCetakSelesai' => true,
                                 ]) ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
                     <tr id="produksiEmptyFilter" class="hidden">
-                        <td colspan="8" class="py-12 text-center">
-                            <p class="text-sm font-medium text-slate-500">Tidak ada pesanan yang cocok dengan pencarian.</p>
+                        <td colspan="9" class="py-12 text-center">
+                            <p class="text-sm font-medium text-slate-500">Tidak ada pesanan yang cocok dengan filter atau pencarian.</p>
                         </td>
                     </tr>
                 <?php endif; ?>
@@ -148,12 +326,94 @@
     <?php endif; ?>
 </div>
 
+<input type="hidden" id="produksiKodeFilter" value="">
+<input type="hidden" id="produksiDeadlineFrom" value="">
+<input type="hidden" id="produksiDeadlineTo" value="">
+
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
+<?= view('partials/produksi_status_quick_scripts', [
+    'enableStatusQuick' => true,
+]) ?>
 <script>
+    let produksiStatusFilter = '';
+    let produksiTableApi = null;
+
+    function produksiSyncFilterActiveState() {
+        const toggle = document.getElementById('produksiFilterToggle');
+        if (!toggle) {
+            return;
+        }
+
+        const kodeVal = (document.getElementById('produksiKodeFilter')?.value || '').trim();
+        const fromVal = document.getElementById('produksiDeadlineFrom')?.value || '';
+        const toVal = document.getElementById('produksiDeadlineTo')?.value || '';
+        const hasFilter = kodeVal !== '' || fromVal !== '' || toVal !== '';
+
+        toggle.classList.toggle('is-active', hasFilter);
+    }
+
+    function produksiSyncFilterDraftFromActive() {
+        const kodeDraft = document.getElementById('produksiFilterKodeDraft');
+        const fromDraft = document.getElementById('produksiFilterDeadlineFromDraft');
+        const toDraft = document.getElementById('produksiFilterDeadlineToDraft');
+        const kodeActive = document.getElementById('produksiKodeFilter');
+        const fromActive = document.getElementById('produksiDeadlineFrom');
+        const toActive = document.getElementById('produksiDeadlineTo');
+
+        if (kodeDraft && kodeActive) {
+            kodeDraft.value = kodeActive.value;
+        }
+        if (fromDraft && fromActive) {
+            fromDraft.value = fromActive.value;
+        }
+        if (toDraft && toActive) {
+            toDraft.value = toActive.value;
+        }
+    }
+
+    function produksiApplyPanelFilter() {
+        const kodeDraft = document.getElementById('produksiFilterKodeDraft');
+        const fromDraft = document.getElementById('produksiFilterDeadlineFromDraft');
+        const toDraft = document.getElementById('produksiFilterDeadlineToDraft');
+        const kodeActive = document.getElementById('produksiKodeFilter');
+        const fromActive = document.getElementById('produksiDeadlineFrom');
+        const toActive = document.getElementById('produksiDeadlineTo');
+
+        if (kodeActive && kodeDraft) {
+            kodeActive.value = kodeDraft.value.trim();
+        }
+        if (fromActive && fromDraft) {
+            fromActive.value = fromDraft.value;
+        }
+        if (toActive && toDraft) {
+            toActive.value = toDraft.value;
+        }
+
+        produksiSyncFilterActiveState();
+
+        const panel = document.getElementById('produksiFilterPanel');
+        const toggle = document.getElementById('produksiFilterToggle');
+        if (panel) {
+            panel.classList.add('hidden');
+        }
+        if (toggle) {
+            toggle.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+
+        if (produksiTableApi) {
+            produksiTableApi.setPage(1);
+            produksiTableApi.applyTableState();
+        }
+    }
+
     window.adminDataTableConfig = {
         searchId: 'produksiDashboardSearch',
+        kodeFilterId: 'produksiKodeFilter',
+        dateFromId: 'produksiDeadlineFrom',
+        dateToId: 'produksiDeadlineTo',
         tbodyId: 'produksiDashboardBody',
         emptyFilterRowId: 'produksiEmptyFilter',
         entriesId: 'produksiEntriesSelect',
@@ -163,7 +423,82 @@
         nextPageId: 'produksiNextPageBtn',
         pageInfoId: 'produksiPageInfo',
         rowSelector: 'tr.data-table-row',
+        getTabFilter: function (row) {
+            return produksiStatusFilter === '' || row.dataset.status === produksiStatusFilter;
+        },
+        onReady: function (api) {
+            produksiTableApi = api;
+            produksiSyncFilterActiveState();
+
+            if (window.produksiStatusQuick) {
+                window.produksiStatusQuick.init(api);
+            }
+
+            document.querySelectorAll('.pemesanan-tab').forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    produksiStatusFilter = this.dataset.statusFilter || '';
+
+                    document.querySelectorAll('.pemesanan-tab').forEach(function (t) {
+                        const active = t === tab;
+                        t.classList.toggle('is-active', active);
+                        t.setAttribute('aria-selected', active ? 'true' : 'false');
+                    });
+
+                    api.setPage(1);
+                    api.applyTableState();
+                });
+            });
+        },
     };
+</script>
+<script>
+    (() => {
+        const toggle = document.getElementById('produksiFilterToggle');
+        const panel = document.getElementById('produksiFilterPanel');
+        const applyBtn = document.getElementById('produksiFilterApply');
+        if (!toggle || !panel) {
+            return;
+        }
+
+        const setOpen = (open) => {
+            panel.classList.toggle('hidden', !open);
+            toggle.classList.toggle('is-open', open);
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (open) {
+                produksiSyncFilterDraftFromActive();
+            }
+        };
+
+        toggle.addEventListener('click', (event) => {
+            event.stopPropagation();
+            setOpen(panel.classList.contains('hidden'));
+        });
+
+        panel.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+
+        if (applyBtn) {
+            applyBtn.addEventListener('click', () => {
+                produksiApplyPanelFilter();
+            });
+        }
+
+        document.addEventListener('click', (event) => {
+            if (panel.classList.contains('hidden')) {
+                return;
+            }
+            if (!panel.contains(event.target) && !toggle.contains(event.target)) {
+                setOpen(false);
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !panel.classList.contains('hidden')) {
+                setOpen(false);
+            }
+        });
+    })();
 </script>
 <?= view('partials/admin_data_table_scripts') ?>
 <?= $this->endSection() ?>

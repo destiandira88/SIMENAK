@@ -35,7 +35,7 @@ class CekDpDeadline extends BaseCommand
         $jam12   = date('Y-m-d H:i:s', strtotime('+12 hours'));
 
         $builder = $db->table('orders o')
-            ->select('o.*, u.email, u.nama')
+            ->select('o.*, u.email, u.nama, u.id_user AS id_user_pelanggan')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
             ->where('o.status', 'menunggu_verifikasi_dp')
@@ -57,24 +57,39 @@ class CekDpDeadline extends BaseCommand
                 $email     = (string) $order['email'];
                 $batasFmt  = date('d M Y H:i', strtotime((string) $order['batas_upload_dp'])) . ' WIB';
 
+                $judulReminderDp = 'Pengingat Upload Bukti DP';
+                $pesanReminderDp = "Pesanan {$kodeOrder}: unggah bukti DP sebelum {$batasFmt}.";
+                $detailUrlReminderDp = pelangganOrderDetailUrl($kodeOrder, $judulReminderDp);
+
                 sendNotifEmail(
                     $email,
                     "Pengingat: Upload Bukti DP Pesanan {$kodeOrder}",
                     '<p>Halo <strong>' . esc($nama) . '</strong>,</p>'
                         . "<p>Pesanan <strong>{$kodeOrder}</strong> belum ada bukti DP-nya.</p>"
-                        . '<p>Segera upload bukti transfer sebelum batas waktu: '
+                        . '<p>Segera unggah bukti transfer sebelum batas waktu: '
                         . '<strong>' . esc($batasFmt) . '</strong>.</p>'
-                        . '<p>Jika tidak diupload, pesanan otomatis dibatalkan.</p>'
+                        . '<p>Jika tidak diunggah, pesanan otomatis dibatalkan.</p>'
+                        . '<p><a href="' . esc($detailUrlReminderDp) . '">Unggah bukti DP</a></p>'
                 );
                 sendNotifWaForEmail(
                     $db,
                     $email,
                     buildNotifWaText(
-                        "Pengingat Upload Bukti DP-{$kodeOrder}",
-                        "Segera upload bukti DP sebelum {$batasFmt}. Jika terlewat, pesanan dibatalkan.",
-                        site_url('order/detail/' . $kodeOrder)
+                        "{$judulReminderDp}-{$kodeOrder}",
+                        $pesanReminderDp,
+                        $detailUrlReminderDp
                     )
                 );
+
+                $idUserReminder = (int) ($order['id_user_pelanggan'] ?? 0);
+                if ($idUserReminder > 0) {
+                    sendNotifInApp(
+                        $idUserReminder,
+                        (int) $order['id_order'],
+                        $judulReminderDp,
+                        $pesanReminderDp
+                    );
+                }
 
                 $db->table('orders')
                     ->where('id_order', (int) $order['id_order'])
@@ -127,6 +142,10 @@ class CekDpDeadline extends BaseCommand
                     ->where('id_order', $idOrder)
                     ->update(['status' => 'dibatalkan']);
 
+                $judulTimeoutDp = 'Pesanan Dibatalkan (Timeout DP)';
+                $pesanTimeoutDp = "Pesanan {$kodeOrder} dibatalkan karena batas unggah bukti DP terlewat.";
+                $detailUrlTimeoutDp = pelangganOrderDetailUrl($kodeOrder, $judulTimeoutDp);
+
                 sendNotifEmail(
                     $email,
                     "Pesanan {$kodeOrder} Dibatalkan-Timeout Pembayaran DP",
@@ -134,22 +153,23 @@ class CekDpDeadline extends BaseCommand
                         . "<p>Pesanan <strong>{$kodeOrder}</strong> telah otomatis dibatalkan "
                         . 'karena bukti DP tidak diterima dalam 24 jam.</p>'
                         . '<p>Anda bisa membuat pesanan baru kapan saja.</p>'
+                        . '<p><a href="' . esc($detailUrlTimeoutDp) . '">Lihat detail pesanan</a></p>'
                 );
                 sendNotifWaForEmail(
                     $db,
                     $email,
                     buildNotifWaText(
                         "Pesanan Dibatalkan-{$kodeOrder}",
-                        'Pesanan dibatalkan otomatis karena bukti DP tidak diterima dalam 24 jam.',
-                        site_url('order')
+                        $pesanTimeoutDp,
+                        $detailUrlTimeoutDp
                     )
                 );
 
                 sendNotifInApp(
                     $idUser,
                     $idOrder,
-                    'Pesanan Dibatalkan (Timeout DP)',
-                    "Pesanan {$kodeOrder} dibatalkan otomatis karena batas upload DP terlewat."
+                    $judulTimeoutDp,
+                    $pesanTimeoutDp
                 );
 
                 CLI::write("[BATAL] {$kodeOrder} — dibatalkan, email terkirim", 'red');

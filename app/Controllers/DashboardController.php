@@ -244,7 +244,7 @@ class DashboardController extends BaseController
                 + ($statusCounts['proses_revisi'] ?? 0);
             $prosesCetak  = ($statusCounts['proses_cetak'] ?? 0) + ($statusCounts['finishing'] ?? 0);
 
-            $recentOrders = $this->getRecentOrders($db, [], $productionStatuses);
+            $recentOrders = $this->getRecentOrders($db, [], $productionStatuses, 0);
             $revisiModel  = model(\App\Models\RevisiDesainModel::class);
             foreach ($recentOrders as &$order) {
                 $order['last_revisi'] = $revisiModel->getLatestByOrder((int) ($order['id_order'] ?? 0));
@@ -262,6 +262,7 @@ class DashboardController extends BaseController
                     ['label' => 'Finishing', 'value' => $statusCounts['finishing'] ?? 0, 'icon' => 'sparkles', 'color' => '#10B981'],
                 ],
                 'recentOrders' => $recentOrders,
+                'statusCounts' => $statusCounts,
                 'byDateJson'   => $calendarData['byDateJson'],
             ]);
         } catch (\Throwable $e) {
@@ -271,6 +272,7 @@ class DashboardController extends BaseController
                 'nama'         => $nama,
                 'cards'        => $this->emptyCards(4),
                 'recentOrders' => [],
+                'statusCounts' => [],
                 'byDateJson'   => '{}',
             ]);
         }
@@ -502,10 +504,12 @@ class DashboardController extends BaseController
             $builder->whereIn('o.status', $statusFilter);
         }
 
-        return $builder->orderBy('o.created_at', 'DESC')
-            ->limit($limit)
-            ->get()
-            ->getResultArray();
+        $builder->orderBy('o.created_at', 'DESC');
+        if ($limit > 0) {
+            $builder->limit($limit);
+        }
+
+        return $builder->get()->getResultArray();
     }
 
     /**

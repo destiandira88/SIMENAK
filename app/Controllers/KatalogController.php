@@ -129,6 +129,11 @@ class KatalogController extends BaseController
                 ->with('error', 'Gagal menambahkan produk. Silakan coba lagi.');
         }
 
+        $mockupError = null;
+        if ($idKatalog > 0) {
+            $mockupError = $this->processMockupUploads($idKatalog);
+        }
+
         helper('activity_log');
         logActivity(
             'tambah',
@@ -136,6 +141,11 @@ class KatalogController extends BaseController
             'Menambahkan katalog ' . (string) ($data['nama_produk'] ?? 'baru')
             . ', harga ' . formatLogRupiah((int) ($data['harga_dasar'] ?? 0))
         );
+
+        if ($mockupError !== null) {
+            return redirect()->to(site_url('katalog/edit/' . $idKatalog))
+                ->with('error', 'Produk tersimpan, tetapi mockup gagal: ' . $mockupError);
+        }
 
         return redirect()->to(site_url('katalog/kelola'))
             ->with('success', 'Produk berhasil ditambahkan.');
@@ -183,10 +193,14 @@ class KatalogController extends BaseController
                 ->with('error', 'Produk tidak ditemukan.');
         }
 
+        helper('mockup');
+        $idKatalog = (int) ($katalog['id_katalog'] ?? $id);
+
         return view('katalog/edit', [
-            'katalog'  => $katalog,
-            'title'    => $readOnly ? 'Detail Produk' : 'Edit Produk',
-            'readOnly' => $readOnly,
+            'katalog'          => $katalog,
+            'title'            => $readOnly ? 'Detail Produk' : 'Edit Produk',
+            'readOnly'         => $readOnly,
+            'existingMockups'  => listExistingMockupUrls($idKatalog),
         ]);
     }
 
@@ -249,6 +263,8 @@ class KatalogController extends BaseController
                 ->with('error', 'Gagal memperbarui produk. Silakan coba lagi.');
         }
 
+        $mockupError = $this->processMockupUploads($id);
+
         helper('activity_log');
         $namaProduk = (string) ($existing['nama_produk'] ?? 'Produk');
         $changes    = [];
@@ -267,6 +283,12 @@ class KatalogController extends BaseController
             ? "Mengubah data katalog {$namaProduk}"
             : "Mengubah katalog {$namaProduk}: " . implode(', ', $changes);
         logActivity('ubah', 'katalog', $keterangan);
+
+        if ($mockupError !== null) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Data produk tersimpan, tetapi mockup gagal: ' . $mockupError);
+        }
 
         return redirect()->to(site_url('katalog/kelola'))
             ->with('success', 'Produk berhasil diperbarui.');
@@ -453,6 +475,99 @@ class KatalogController extends BaseController
         $gambar->move($uploadDir, $newName);
 
         return ['path' => $newName];
+    }
+
+    /**
+     * Simpan / ganti / hapus foto mockup di assets/mockup/produk/{id}/.
+     *
+     * @return string|null pesan error, atau null jika sukses / tidak ada aksi
+     */
+    private function processMockupUploads(int $idKatalog): ?string
+    {
+        helper('mockup');
+
+        /** @var \Config\MockupProducts $cfg */
+        $cfg = config('MockupProducts');
+        $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+
+        $hapus = $this->request->getPost('mockup_hapus');
+        if (is_array($hapus)) {
+            foreach ($hapus as $sudut => $flag) {
+                $sudut = (string) $sudut;
+                if ((string) $flag !== '1' || ! isset($cfg->sudutList[$sudut])) {
+                    continue;
+                }
+                deleteProdukMockupSudut($idKatalog, $sudut);
+            }
+        }
+
+        $allFiles = $this->request->getFiles();
+        $mockups  = $allFiles['mockup'] ?? [];
+        if (! is_array($mockups) || $mockups === []) {
+            return null;
+        }
+
+        $needsDir = false;
+        foreach ($mockups as $sudut => $file) {
+            if (! isset($cfg->sudutList[(string) $sudut])) {
+                continue;
+            }
+            if ($file === null || $file->getError() === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+            $needsDir = true;
+            break;
+        }
+
+        if (! $needsDir) {
+            return null;
+        }
+
+        $dirError = ensureProdukMockupDir($idKatalog);
+        if ($dirError !== null) {
+            return $dirError;
+        }
+
+        $uploadDir = FCPATH . 'assets/mockup/produk/' . $idKatalog . '/';
+
+        foreach ($mockups as $sudut => $file) {
+            $sudut = (string) $sudut;
+            if (! isset($cfg->sudutList[$sudut])) {
+                continue;
+            }
+            if ($file === null || $file->getError() === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+
+            if (! $file->isValid() || $file->hasMoved()) {
+                return 'Upload mockup ' . $cfg->sudutList[$sudut] . ' gagal. Silakan coba lagi.';
+            }
+
+            $ext = strtolower($file->getExtension());
+            if (! in_array($ext, $allowed, true)) {
+                return 'Format mockup ' . $cfg->sudutList[$sudut] . ' tidak valid. Gunakan JPG, PNG, atau WEBP.';
+            }
+
+            if ($file->getSize() > 3 * 1024 * 1024) {
+                return 'Ukuran mockup ' . $cfg->sudutList[$sudut] . ' maksimal 3MB.';
+            }
+
+            deleteProdukMockupSudut($idKatalog, $sudut);
+
+            $targetName = $sudut . '.' . $ext;
+            try {
+                $file->move($uploadDir, $targetName);
+            } catch (\Throwable $e) {
+                log_message('error', 'Mockup upload {sudut}: {message}', [
+                    'sudut'   => $sudut,
+                    'message' => $e->getMessage(),
+                ]);
+
+                return 'Gagal menyimpan mockup ' . $cfg->sudutList[$sudut] . '.';
+            }
+        }
+
+        return null;
     }
 
     /**

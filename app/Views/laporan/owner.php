@@ -41,9 +41,16 @@ if ($growthOrders !== null) {
 
 $cards = [
     [
-        'label'   => 'Pesanan Selesai',
+        'label'   => 'Total Pesanan',
         'value'   => (int) ($report['totalPesanan'] ?? 0),
         'icon'    => 'clipboard',
+        'color'   => '#051747',
+        'tooltip' => 'Jumlah pesanan baru yang dibuat berdasarkan tanggal pesan pada periode yang dipilih.',
+    ],
+    [
+        'label'   => 'Pesanan Selesai',
+        'value'   => (int) ($report['pesananSelesai'] ?? 0),
+        'icon'    => 'check',
         'color'   => '#2E5CE6',
         'tooltip' => 'Berdasarkan status pesanan selesai pada periode yang dipilih.',
     ],
@@ -218,7 +225,7 @@ $cards = [
         <div class="px-6 py-4 border-b border-slate-100">
             <h3 class="text-base font-bold text-[#051747]">Rekap Per Kategori <?= esc((string) ($period['label'] ?? '')) ?></h3>
             <p class="text-xs text-slate-500 mt-0.5">
-                Berdasarkan <strong>Pesanan Selesai</strong>
+                (dihitung dari pesanan selesai)
             </p>
         </div>
         <div class="overflow-x-auto">

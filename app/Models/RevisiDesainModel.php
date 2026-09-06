@@ -14,6 +14,7 @@ class RevisiDesainModel extends Model
         'id_produksi',
         'versi',
         'file_draft',
+        'mockup_adjust',
         'catatan_prod',
         'catatan_revisi',
         'status',

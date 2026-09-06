@@ -48,9 +48,13 @@ class CustomOrderController extends BaseController
 
         $db = \Config\Database::connect();
         $order = $db->table('orders o')
-            ->select('o.*, u.email, u.nama, u.id_user as id_user_pelanggan')
+            ->select(
+                'o.*, u.email, u.nama, u.id_user as id_user_pelanggan, '
+                . 'k.nama_produk, k.kategori, k.satuan, k.gambar AS gambar_katalog'
+            )
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
+            ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
             ->where('o.id_order', $idOrder)
             ->where('o.status', 'menunggu_konfirmasi_harga')
             ->get()
@@ -72,38 +76,43 @@ class CustomOrderController extends BaseController
             'status'               => 'menunggu_konfirmasi_pelanggan',
         ], ['id_order' => $idOrder]);
 
+        $kodeOrderCustom = (string) $order['kode_order'];
+        $hargaFmt        = number_format($hargaCustom, 0, ',', '.');
+        $judulHarga      = 'Konfirmasi Harga Custom';
+        $pesanHarga      = "Harga Rp {$hargaFmt} untuk pesanan {$kodeOrderCustom}. Silakan setuju atau tolak.";
+        $detailUrlHarga  = pelangganOrderDetailUrl($kodeOrderCustom, $judulHarga);
+
         sendNotifEmail(
             $order['email'],
-            "Konfirmasi Harga Pesanan Custom-{$order['kode_order']}",
-            "<p>Halo <strong>{$order['nama']}</strong>,</p>
-             <p>Admin Z'Plack telah mengonfirmasi harga untuk pesanan custom Anda
-             <strong>{$order['kode_order']}</strong>:</p>
-             <ul>
-               <li>Harga: <strong>Rp " . number_format($hargaCustom, 0, ',', '.') . "</strong></li>
-               <li>Estimasi pengerjaan: <strong>{$estimasiCustom}</strong> (setelah desain disetujui)</li>
-               <li>Deadline produksi: <strong>{$deadlineLabel}</strong> (barang selesai, belum termasuk pengiriman)</li>
-               <li>Catatan Admin: {$catatanAdmin}</li>
-             </ul>
-             <p>Silakan login ke SIMENAK dan konfirmasi apakah Anda
-             <strong>Setuju</strong> atau <strong>Menolak</strong> harga ini.</p>"
+            "Konfirmasi Harga Pesanan Custom-{$kodeOrderCustom}",
+            renderNotifEmail('konfirmasi_harga_custom', array_merge(buildEmailOrderViewData($order), [
+                'pesanHtml' => '<p style="margin:0 0 12px;">Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
+                    . '<p style="margin:0 0 8px;">Admin Z\'Plack telah mengonfirmasi harga untuk pesanan custom '
+                    . emailHighlightKodeOrder($kodeOrderCustom) . '.</p>'
+                    . '<p style="margin:0;color:#64748B;font-size:13px;">Silakan <strong>Setuju</strong> atau <strong>Tolak</strong> harga ini di detail pesanan.</p>',
+                'ctaUrl'                => $detailUrlHarga,
+                'ctaLabel'              => 'Setujui / Tolak Harga',
+                'hargaLabel'            => 'Rp ' . $hargaFmt,
+                'estimasiLabel'         => $estimasiCustom . ' (setelah desain disetujui)',
+                'deadlineProduksiLabel' => $deadlineLabel . ' (barang selesai, belum termasuk pengiriman)',
+                'catatanAdmin'          => $catatanAdmin,
+            ]))
         );
         sendNotifWaForEmail(
             \Config\Database::connect(),
             (string) $order['email'],
             buildNotifWaText(
-                "Konfirmasi Harga Custom-{$order['kode_order']}",
-                'Harga Rp ' . number_format($hargaCustom, 0, ',', '.') . ", estimasi {$estimasiCustom}. Silakan konfirmasi di SIMENAK.",
-                site_url('order/detail/' . $order['kode_order'])
+                "{$judulHarga}-{$kodeOrderCustom}",
+                $pesanHarga,
+                $detailUrlHarga
             )
         );
 
         sendNotifInApp(
             (int) $order['id_user_pelanggan'],
             $idOrder,
-            'Konfirmasi Harga Custom',
-            "Admin Z'Plack mengonfirmasi harga Rp "
-            . number_format($hargaCustom, 0, ',', '.')
-            . " untuk pesanan {$order['kode_order']}. Silakan konfirmasi."
+            $judulHarga,
+            $pesanHarga
         );
 
         helper('activity_log');

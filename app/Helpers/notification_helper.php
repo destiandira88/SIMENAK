@@ -957,6 +957,73 @@ function formatNotifTimeAgo(string $datetime): string
     return date('d M Y, H:i', $ts);
 }
 
+/**
+ * Anchor section di order/detail berdasarkan judul notifikasi (pelanggan).
+ * Mapping via keyword judul — sama pola dengan getNotifIconMeta / getNotifActionUrl.
+ */
+function resolveNotifDetailAnchor(string $judul): string
+{
+    $j = mb_strtolower($judul);
+
+    if (str_contains($j, 'kerja sama') || (str_contains($j, 'kerjasama') && str_contains($j, 'perusahaan'))) {
+        return '';
+    }
+
+    // Dibatalkan / timeout harus ke timeline status, meski judul menyebut DP.
+    if (str_contains($j, 'dibatalkan') || str_contains($j, 'timeout')) {
+        return 'status-pesanan';
+    }
+
+    if (
+        str_contains($j, 'dp')
+        || str_contains($j, 'pelunasan')
+        || str_contains($j, 'bayar')
+        || str_contains($j, 'bukti')
+    ) {
+        return 'pembayaran';
+    }
+
+    if (
+        str_contains($j, 'draft')
+        || str_contains($j, 'revisi')
+        || (str_contains($j, 'acc') && str_contains($j, 'desain'))
+        || str_contains($j, 'desain di-acc')
+        || str_contains($j, 'desain diacc')
+    ) {
+        return 'revisi-desain';
+    }
+
+    if (
+        str_contains($j, 'siap dikirim')
+        || str_contains($j, 'siap diambil')
+        || str_contains($j, 'dikirim')
+        || str_contains($j, 'resi')
+        || str_contains($j, 'pengiriman')
+        || (str_contains($j, 'diterima') && ! str_contains($j, 'pesanan selesai'))
+        || (str_contains($j, 'diambil') && ! str_contains($j, 'pesanan selesai'))
+    ) {
+        return 'info-pengiriman';
+    }
+
+    return 'status-pesanan';
+}
+
+/** URL detail pesanan pelanggan + hash section sesuai judul notifikasi. */
+function pelangganOrderDetailUrl(string $kodeOrder, string $judul = ''): string
+{
+    $url = site_url('order/detail/' . $kodeOrder);
+    if ($kodeOrder === '' || $judul === '') {
+        return $url;
+    }
+
+    $anchor = resolveNotifDetailAnchor($judul);
+    if ($anchor === '') {
+        return $url;
+    }
+
+    return $url . '#' . $anchor;
+}
+
 function getNotifActionUrl(
     string $role,
     ?string $kodeOrder,
@@ -988,13 +1055,13 @@ function getNotifActionUrl(
     $orderId = (int) ($idOrder ?? 0);
 
     return match ($role) {
-        'pelanggan' => site_url('order/detail/' . $kodeOrder),
+        'pelanggan' => pelangganOrderDetailUrl($kodeOrder, $judul),
         'admin'     => $orderId > 0
             ? site_url('list-pemesanan/' . $orderId)
             : site_url('list-pemesanan'),
         'produksi'  => $orderId > 0
             ? site_url('manajemen-desain/' . $orderId)
-            : site_url('antrian-desain'),
+            : site_url('dashboard'),
         'keuangan'  => site_url('verifikasi-dp'),
         default     => site_url('dashboard'),
     };
@@ -1105,4 +1172,200 @@ function getPesananSelesaiPeriode(string $dariTgl, string $sampaiTgl): int
     $perusahaan = count($rows);
 
     return $perseorangan + $perusahaan;
+}
+
+/**
+ * Format tanggal/waktu untuk email pelanggan (contoh: 02 Sep 2026, 18:30).
+ */
+function formatEmailDatetime(?string $datetime): string
+{
+    if ($datetime === null || trim($datetime) === '') {
+        return '';
+    }
+
+    $ts = strtotime($datetime);
+
+    return $ts === false ? (string) $datetime : date('d M Y, H:i', $ts);
+}
+
+/**
+ * Format tanggal saja untuk email (contoh: 08 Sep 2026).
+ */
+function formatEmailDate(?string $datetime): string
+{
+    if ($datetime === null || trim($datetime) === '') {
+        return '';
+    }
+
+    $ts = strtotime($datetime);
+
+    return $ts === false ? (string) $datetime : date('d M Y', $ts);
+}
+
+/**
+ * Absolute URL gambar katalog untuk email; null jika kosong/file tidak ada.
+ */
+function resolveKatalogGambarEmailUrl(?string $gambar): ?string
+{
+    $gambarRaw = trim((string) $gambar);
+    if ($gambarRaw === '') {
+        return null;
+    }
+
+    $normalized = ltrim(str_replace('\\', '/', $gambarRaw), '/');
+
+    if (str_starts_with($normalized, 'uploads/katalog/')) {
+        $gambarRelPath = substr($normalized, strlen('uploads/katalog/'));
+    } elseif (str_starts_with($normalized, 'katalog/')) {
+        $gambarRelPath = substr($normalized, strlen('katalog/'));
+    } else {
+        $gambarRelPath = $normalized;
+    }
+
+    $gambarRelPath = ltrim($gambarRelPath, '/');
+    if ($gambarRelPath === '' || ! is_file(FCPATH . 'uploads/katalog/' . $gambarRelPath)) {
+        return null;
+    }
+
+    return base_url('uploads/katalog/' . $gambarRelPath);
+}
+
+/**
+ * Absolute URL thumbnail draft desain; null jika kosong/file tidak ada.
+ */
+function resolveDraftGambarEmailUrl(?string $fileDraft): ?string
+{
+    $name = trim((string) $fileDraft);
+    if ($name === '') {
+        return null;
+    }
+
+    $name = ltrim(str_replace('\\', '/', $name), '/');
+    if (str_starts_with($name, 'uploads/draft_desain/')) {
+        $name = substr($name, strlen('uploads/draft_desain/'));
+    }
+
+    $name = ltrim($name, '/');
+    if ($name === '' || ! is_file(FCPATH . 'uploads/draft_desain/' . $name)) {
+        return null;
+    }
+
+    return base_url('uploads/draft_desain/' . $name);
+}
+
+/**
+ * Label kategori katalog (sama mapping dengan order/detail).
+ */
+function emailKategoriLabel(string $kategoriKey): string
+{
+    return match ($kategoriKey) {
+        'desain_grafis' => 'Desain Grafis',
+        'cetak_digital' => 'Cetak Digital',
+        'cetak_offset'  => 'Cetak Offset',
+        'media_promosi' => 'Media Promosi',
+        default         => $kategoriKey !== ''
+            ? ucwords(str_replace('_', ' ', $kategoriKey))
+            : '',
+    };
+}
+
+/**
+ * Subteks kartu produk di email — pola detail pesanan:
+ * "Media Promosi Standar" (± " · 1 pcs").
+ *
+ * @param array<string, mixed> $order
+ */
+function buildEmailProdukSubteks(array $order): string
+{
+    $parts = [];
+    $kategoriKey = trim((string) ($order['kategori'] ?? $order['nama_kategori'] ?? ''));
+    $kategoriLabel = emailKategoriLabel($kategoriKey);
+
+    if ($kategoriLabel !== '') {
+        $jenisPesanan = ((int) ($order['is_custom'] ?? 0) === 1) ? 'Custom' : 'Standar';
+        $parts[]      = $kategoriLabel . ' ' . $jenisPesanan;
+    }
+
+    $jumlah = (int) ($order['jumlah_order'] ?? 0);
+    $satuan = trim((string) ($order['satuan'] ?? ''));
+    if ($jumlah > 0) {
+        $parts[] = $jumlah . ($satuan !== '' ? ' ' . $satuan : ' pcs');
+    }
+
+    return implode(' · ', $parts);
+}
+
+/**
+ * Data bersama Rincian Pesanan untuk email pelanggan.
+ *
+ * @param array<string, mixed> $order
+ * @return array<string, mixed>
+ */
+function buildEmailOrderViewData(array $order): array
+{
+    $deadlineRaw = (string) ($order['deadline_produksi'] ?? $order['deadline_diajukan'] ?? '');
+
+    return [
+        'kodeOrder'     => (string) ($order['kode_order'] ?? ''),
+        'namaProduk'    => (string) ($order['nama_produk'] ?? 'Produk Custom'),
+        'gambarUrl'     => resolveKatalogGambarEmailUrl($order['gambar_katalog'] ?? null),
+        'produkSubteks' => buildEmailProdukSubteks($order),
+        'tglOrderLabel' => formatEmailDatetime($order['created_at'] ?? null),
+        'deadlineLabel' => formatEmailDate($deadlineRaw !== '' ? $deadlineRaw : null),
+    ];
+}
+
+/**
+ * Label metode pengiriman untuk email.
+ */
+function emailMetodePengirimanLabel(array $order): string
+{
+    return isMetodeAmbilSendiri($order) ? 'Ambil Sendiri' : 'Kurir';
+}
+
+/**
+ * Highlight kode pesanan dengan accent brand #2E5CE6.
+ */
+function emailHighlightKodeOrder(string $kodeOrder): string
+{
+    return '<strong style="color:#2E5CE6;">' . esc($kodeOrder) . '</strong>';
+}
+
+/**
+ * Render email HTML terstruktur pelanggan (Shopee-style).
+ *
+ * @param array<string, mixed> $data
+ */
+function renderNotifEmail(string $jenis, array $data): string
+{
+    $map = [
+        'dp_terverifikasi'       => 'emails/dp_terverifikasi',
+        'draft_siap'             => 'emails/draft_siap',
+        'bukti_ditolak'          => 'emails/bukti_ditolak',
+        'pelunasan_terverifikasi'=> 'emails/pelunasan_terverifikasi',
+        'konfirmasi_harga_custom'=> 'emails/konfirmasi_harga_custom',
+        'siap_pengiriman'        => 'emails/siap_pengiriman',
+        'pesanan_selesai'        => 'emails/pesanan_selesai',
+        'pesanan_dibatalkan'     => 'emails/pesanan_dibatalkan',
+        'finishing'              => 'emails/finishing',
+    ];
+
+    if (! isset($map[$jenis])) {
+        log_message('error', '[renderNotifEmail] jenis tidak dikenal: {jenis}', ['jenis' => $jenis]);
+
+        return buildNotifEmailHtml(
+            (string) ($data['title'] ?? 'Notifikasi'),
+            (string) ($data['pesanHtml'] ?? '<p>Ada pembaruan pada pesanan Anda.</p>'),
+            $data['ctaUrl'] ?? null,
+            $data['ctaLabel'] ?? null
+        );
+    }
+
+    $renderer = \Config\Services::renderer();
+    $renderer->resetData();
+
+    $html = view($map[$jenis], $data, ['saveData' => false, 'debug' => false]);
+
+    // Hapus marker Debug Toolbar agar HTML email bersih.
+    return (string) preg_replace('/<!-- DEBUG-VIEW (?:START|ENDED) .*?-->\s*/', '', $html);
 }

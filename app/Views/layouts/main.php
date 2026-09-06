@@ -100,9 +100,8 @@ $menusByRole = [
         ['label' => 'Laporan Transaksi',  'url' => 'laporan-keuangan',     'icon' => 'chart'],
     ],
     'produksi' => [
-        ['label' => 'Beranda',       'url' => 'dashboard',       'icon' => 'home'],
-        ['label' => 'Antrian Desain',  'url' => 'antrian-desain',  'icon' => 'layers'],
-        ['label' => 'Manajemen Desain', 'url' => 'manajemen-desain', 'icon' => 'edit'],
+        ['label' => 'Beranda',              'url' => 'dashboard',            'icon' => 'home'],
+        ['label' => 'Manajemen Produksi',   'url' => 'manajemen-produksi',   'icon' => 'clipboard'],
     ],
     'owner' => [
         ['label' => 'Beranda',          'url' => 'dashboard',          'icon' => 'home'],
@@ -112,7 +111,7 @@ $menusByRole = [
         ['label' => 'Pengiriman',         'url' => 'pengiriman',         'icon' => 'truck'],
         ['label' => 'Riwayat Pembayaran', 'url' => 'riwayat-pembayaran', 'icon' => 'clock'],
         ['label' => 'Riwayat Aktivitas',  'url' => 'riwayat-aktivitas',  'icon' => 'shield'],
-        ['label' => 'Manajemen Desain',   'url' => 'manajemen-desain',   'icon' => 'edit'],
+        ['label' => 'Manajemen Produksi', 'url' => 'manajemen-produksi', 'icon' => 'clipboard'],
         [
             'label'    => 'Laporan',
             'icon'     => 'chart',
@@ -132,6 +131,13 @@ $menuItems = $menusByRole[$role] ?? [];
 $isMenuActive = static function (string $menuUrl) use ($currentPath): bool {
     if ($menuUrl === 'dashboard') {
         return $currentPath === '' || $currentPath === 'dashboard';
+    }
+
+    if ($menuUrl === 'manajemen-produksi') {
+        return $currentPath === 'manajemen-produksi'
+            || str_starts_with($currentPath, 'manajemen-produksi/')
+            || str_starts_with($currentPath, 'monitoring-produksi/')
+            || str_starts_with($currentPath, 'monitoring-cetak/');
     }
 
     return $currentPath === $menuUrl || str_starts_with($currentPath, $menuUrl . '/');

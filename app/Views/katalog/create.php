@@ -178,6 +178,11 @@ if ($hargaDasarOld !== null && $hargaDasarOld !== '') {
             <input type="file" id="inputGambar" name="gambar" accept=".jpg,.jpeg,.png,.webp" class="hidden">
         </div>
 
+        <?= $this->include('partials/katalog_mockup_uploads', [
+            'readOnly'        => false,
+            'existingMockups' => [],
+        ]) ?>
+
         <div class="mt-6 pt-6 border-t border-slate-100">
             <label class="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" name="is_active" value="1" checked class="w-4 h-4 accent-[#051747]">
@@ -213,6 +218,30 @@ if ($hargaDasarOld !== null && $hargaDasarOld !== '') {
             document.getElementById('fileName').classList.remove('hidden');
         };
         reader.readAsDataURL(file);
+    });
+
+    document.querySelectorAll('input[type="file"][data-mockup-sudut]').forEach(function(input) {
+        input.addEventListener('change', function() {
+            const sudut = this.getAttribute('data-mockup-sudut');
+            const file = this.files[0];
+            if (!sudut || !file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const prev = document.getElementById('mockupPrev_' + sudut);
+                const ph = document.getElementById('mockupPh_' + sudut);
+                const nameEl = document.getElementById('mockupName_' + sudut);
+                const img = prev?.querySelector('img');
+                if (img) img.src = e.target.result;
+                prev?.classList.remove('hidden');
+                ph?.classList.add('hidden');
+                if (nameEl) {
+                    nameEl.textContent = file.name;
+                    nameEl.classList.remove('hidden');
+                }
+            };
+            reader.readAsDataURL(file);
+        });
     });
 </script>
 <?= view('partials/rupiah_input_format_script') ?>

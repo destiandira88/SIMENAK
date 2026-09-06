@@ -359,9 +359,13 @@ class PaymentController extends BaseController
         }
 
         $order = $db->table('orders o')
-            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
+            ->select(
+                'o.*, u.id_user AS id_user_pelanggan, u.nama, u.email, '
+                . 'k.nama_produk, k.kategori, k.satuan, k.gambar AS gambar_katalog'
+            )
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
+            ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
             ->where('o.id_order', (int) $payment['id_order'])
             ->get()
             ->getRowArray();
@@ -376,10 +380,11 @@ class PaymentController extends BaseController
         try {
             $db->transStart();
 
+            $tglVerifikasi = date('Y-m-d H:i:s');
             $db->table('payments')->where('id_payment', $idPayment)->update([
                 'status'         => 'terverifikasi',
                 'id_verifikator' => $idVerifikator,
-                'tgl_verifikasi' => date('Y-m-d H:i:s'),
+                'tgl_verifikasi' => $tglVerifikasi,
             ]);
 
             $db->table('orders')->where('id_order', (int) $order['id_order'])->update([
@@ -392,20 +397,41 @@ class PaymentController extends BaseController
                 throw new \RuntimeException('Gagal memverifikasi DP.');
             }
 
+            $nominalDpFmt = number_format((float) ($payment['nominal'] ?? 0), 0, ',', '.');
+            $detailUrlDp  = pelangganOrderDetailUrl($kodeOrder, 'DP Terverifikasi');
+            $deadlineRaw  = (string) ($order['deadline_produksi'] ?? $order['deadline_diajukan'] ?? '');
+
             sendNotifEmail(
                 (string) $order['email'],
                 "DP Terverifikasi-{$kodeOrder}",
-                '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
-                . "<p>DP Anda untuk pesanan <strong>{$kodeOrder}</strong> sudah diverifikasi.</p>"
-                . '<p>Tim produksi akan segera memproses desain Anda.</p>'
+                renderNotifEmail('dp_terverifikasi', [
+                    'pesanHtml' => '<p style="margin:0 0 12px;">Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
+                        . '<p style="margin:0;">Pembayaran uang muka (DP) untuk pesanan '
+                        . emailHighlightKodeOrder($kodeOrder)
+                        . ' telah <strong>diverifikasi</strong>. Tim produksi akan segera menyiapkan draft desain Anda.</p>',
+                    'ctaUrl'             => $detailUrlDp,
+                    'ctaLabel'           => 'Lihat Detail Pesanan',
+                    'kodeOrder'          => $kodeOrder,
+                    'namaProduk'         => (string) ($order['nama_produk'] ?? 'Produk Custom'),
+                    'gambarUrl'          => resolveKatalogGambarEmailUrl($order['gambar_katalog'] ?? null),
+                    'produkSubteks'      => buildEmailProdukSubteks($order),
+                    'tglOrderLabel'      => formatEmailDatetime($order['created_at'] ?? null),
+                    'deadlineLabel'      => formatEmailDate($deadlineRaw !== '' ? $deadlineRaw : null),
+                    'jenisPembayaran'    => 'Uang Muka (DP 50%)',
+                    'nominalLabel'       => 'Rp ' . $nominalDpFmt,
+                    'statusLabel'        => 'Terverifikasi',
+                    'statusTone'         => 'success',
+                    'tglVerifikasiLabel' => formatEmailDatetime($tglVerifikasi),
+                    'catatanTolak'       => '',
+                ])
             );
             sendNotifWaForEmail(
                 $db,
                 (string) $order['email'],
                 buildNotifWaText(
                     "DP Terverifikasi-{$kodeOrder}",
-                    "DP pesanan {$kodeOrder} sudah diverifikasi. Tim produksi akan segera memproses desain Anda.",
-                    site_url('order/detail/' . $kodeOrder)
+                    "DP pesanan {$kodeOrder} (Rp {$nominalDpFmt}) sudah diverifikasi. Desain segera diproses.",
+                    $detailUrlDp
                 )
             );
 
@@ -413,7 +439,7 @@ class PaymentController extends BaseController
                 (int) $order['id_user_pelanggan'],
                 (int) $order['id_order'],
                 'DP Terverifikasi',
-                "Pembayaran DP pesanan {$kodeOrder} telah diverifikasi."
+                "DP pesanan {$kodeOrder} (Rp {$nominalDpFmt}) sudah diverifikasi. Desain segera diproses."
             );
         } catch (\Throwable $e) {
             $db->transRollback();
@@ -452,9 +478,13 @@ class PaymentController extends BaseController
         }
 
         $order = $db->table('orders o')
-            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
+            ->select(
+                'o.*, u.id_user AS id_user_pelanggan, u.nama, u.email, '
+                . 'k.nama_produk, k.kategori, k.satuan, k.gambar AS gambar_katalog'
+            )
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
+            ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
             ->where('o.id_order', (int) $payment['id_order'])
             ->get()
             ->getRowArray();
@@ -478,25 +508,37 @@ class PaymentController extends BaseController
                 'reminder_dp_sent' => 0,
             ]);
 
+            $detailUrlTolakDp = pelangganOrderDetailUrl($kodeOrder, 'Bukti DP Ditolak');
+            $batasLabel       = date('d M Y', strtotime('+24 hours')) . ' pukul ' . date('H:i', strtotime('+24 hours')) . ' WIB';
+            $nominalDpFmt     = number_format((float) ($payment['nominal'] ?? 0), 0, ',', '.');
+
             sendNotifEmail(
                 (string) $order['email'],
                 "Bukti DP Ditolak-{$kodeOrder}",
-                '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
-                . "<p>Bukti DP untuk pesanan <strong>{$kodeOrder}</strong> <strong>ditolak</strong>.</p>"
-                . '<p><strong>Alasan:</strong> ' . esc($catatanTolak) . '</p>'
-                . '<p>Anda punya waktu <strong>24 jam</strong> untuk mengunggah ulang bukti transfer yang benar.</p>'
-                . '<p>Batas waktu baru: <strong>'
-                . date('d M Y', strtotime('+24 hours')) . ' pukul '
-                . date('H:i', strtotime('+24 hours')) . ' WIB</strong></p>'
-                . '<p>Login ke SIMENAK dan buka detail pesanan untuk upload ulang.</p>'
+                renderNotifEmail('bukti_ditolak', array_merge(buildEmailOrderViewData($order), [
+                    'pesanHtml' => '<p style="margin:0 0 12px;">Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
+                        . '<p style="margin:0 0 8px;">Bukti DP untuk pesanan '
+                        . emailHighlightKodeOrder($kodeOrder)
+                        . ' <strong>ditolak</strong>.</p>'
+                        . '<p style="margin:0;color:#64748B;font-size:13px;">Anda punya waktu <strong>24 jam</strong> untuk mengunggah ulang bukti transfer yang benar. Batas waktu baru: <strong>'
+                        . esc($batasLabel) . '</strong>.</p>',
+                    'ctaUrl'             => $detailUrlTolakDp,
+                    'ctaLabel'           => 'Upload Ulang Bukti',
+                    'jenisPembayaran'    => 'Uang Muka (DP 50%)',
+                    'nominalLabel'       => 'Rp ' . $nominalDpFmt,
+                    'statusLabel'        => 'Ditolak',
+                    'statusTone'         => 'danger',
+                    'tglVerifikasiLabel' => formatEmailDatetime(date('Y-m-d H:i:s')),
+                    'catatanTolak'       => $catatanTolak,
+                ]))
             );
             sendNotifWaForEmail(
                 $db,
                 (string) $order['email'],
                 buildNotifWaText(
                     "Bukti DP Ditolak-{$kodeOrder}",
-                    "Bukti DP ditolak. Alasan: {$catatanTolak}. Upload ulang dalam 24 jam.",
-                    site_url('order/detail/' . $kodeOrder)
+                    "Bukti DP {$kodeOrder} ditolak: {$catatanTolak}. Silakan unggah ulang dalam 24 jam.",
+                    $detailUrlTolakDp
                 )
             );
 
@@ -504,7 +546,7 @@ class PaymentController extends BaseController
                 (int) $order['id_user_pelanggan'],
                 (int) $order['id_order'],
                 'Bukti DP Ditolak',
-                "Bukti DP {$kodeOrder} ditolak: {$catatanTolak}. Silakan upload ulang."
+                "Bukti DP {$kodeOrder} ditolak: {$catatanTolak}. Silakan unggah ulang."
             );
         } catch (\Throwable $e) {
             log_message('error', '[PaymentController::tolakDp] {msg}', ['msg' => $e->getMessage()]);
@@ -552,9 +594,13 @@ class PaymentController extends BaseController
         }
 
         $order = $db->table('orders o')
-            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
+            ->select(
+                'o.*, u.id_user AS id_user_pelanggan, u.nama, u.email, '
+                . 'k.nama_produk, k.kategori, k.satuan, k.gambar AS gambar_katalog'
+            )
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
+            ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
             ->where('o.id_order', (int) $payment['id_order'])
             ->get()
             ->getRowArray();
@@ -573,10 +619,11 @@ class PaymentController extends BaseController
         try {
             $db->transStart();
 
+            $tglVerifikasi = date('Y-m-d H:i:s');
             $db->table('payments')->where('id_payment', $idPayment)->update([
                 'status'         => 'terverifikasi',
                 'id_verifikator' => $idVerifikator,
-                'tgl_verifikasi' => date('Y-m-d H:i:s'),
+                'tgl_verifikasi' => $tglVerifikasi,
             ]);
 
             $db->table('orders')->where('id_order', $idOrder)->update([
@@ -589,54 +636,82 @@ class PaymentController extends BaseController
                 throw new \RuntimeException('Gagal memverifikasi pelunasan.');
             }
 
+            $nominalLunasFmt = number_format((float) ($payment['nominal'] ?? 0), 0, ',', '.');
+            $orderEmailBase  = buildEmailOrderViewData($order);
+
             if ($selesaiLangsung) {
+                $detailUrlSelesai = pelangganOrderDetailUrl($kodeOrder, 'Pesanan Selesai');
                 sendNotifEmail(
                     (string) $order['email'],
                     "[No-Reply] Pelunasan Dikonfirmasi-{$kodeOrder}",
-                    '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
-                    . "<p>Pembayaran pelunasan pesanan <strong>{$kodeOrder}</strong> telah dikonfirmasi.</p>"
-                    . '<p>Pesanan telah <strong>selesai</strong>. Terima kasih telah mempercayakan kebutuhan cetak kepada Z\'Plack!</p>'
+                    renderNotifEmail('pesanan_selesai', array_merge($orderEmailBase, [
+                        'pesanHtml' => '<p style="margin:0 0 12px;">Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
+                            . '<p style="margin:0;">Pelunasan pesanan '
+                            . emailHighlightKodeOrder($kodeOrder)
+                            . ' telah dikonfirmasi. Pesanan Anda sudah <strong>selesai</strong>.</p>',
+                        'ctaUrl'             => $detailUrlSelesai,
+                        'ctaLabel'           => 'Lihat Detail Pesanan',
+                        'statusSelesaiLabel' => 'Selesai',
+                        'catatanSelesai'     => 'Pelunasan dikonfirmasi.',
+                    ]))
                 );
                 sendNotifWaForEmail(
                     $db,
                     (string) $order['email'],
                     buildNotifWaText(
                         "Pelunasan Dikonfirmasi-{$kodeOrder}",
-                        "Pelunasan pesanan {$kodeOrder} dikonfirmasi. Pesanan selesai. Terima kasih!",
-                        site_url('order/detail/' . $kodeOrder)
+                        "Pelunasan {$kodeOrder} dikonfirmasi. Pesanan selesai. Terima kasih!",
+                        $detailUrlSelesai
                     )
                 );
-                sendNotifInApp($idUserPelanggan, $idOrder, 'Pesanan Selesai', "Pelunasan {$kodeOrder} dikonfirmasi. Pesanan selesai!");
+                sendNotifInApp(
+                    $idUserPelanggan,
+                    $idOrder,
+                    'Pesanan Selesai',
+                    "Pelunasan {$kodeOrder} dikonfirmasi. Pesanan selesai. Terima kasih!"
+                );
             } else {
+                $judulPelunasanOk = 'Pelunasan Terverifikasi';
+                $detailUrlPelunasan = pelangganOrderDetailUrl($kodeOrder, $judulPelunasanOk);
+                $pesanPelunasan = isMetodeAmbilSendiri($order)
+                    ? "Pelunasan {$kodeOrder} terverifikasi. Pesanan siap diambil di toko."
+                    : "Pelunasan {$kodeOrder} terverifikasi. Pesanan akan segera dikirim.";
                 sendNotifEmail(
                     (string) $order['email'],
                     "[No-Reply] Pelunasan Terverifikasi-{$kodeOrder}",
-                    '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
-                    . "<p>Pembayaran pelunasan pesanan <strong>{$kodeOrder}</strong> telah terverifikasi.</p>"
-                    . '<p>'
-                    . (isMetodeAmbilSendiri($order)
-                        ? 'Pesanan siap diambil di toko kami. Tim kami akan menunggu kedatangan Anda.'
-                        : 'Tim kami akan segera memproses pengiriman pesanan Anda.')
-                    . '</p>'
+                    renderNotifEmail('pelunasan_terverifikasi', array_merge($orderEmailBase, [
+                        'pesanHtml' => '<p style="margin:0 0 12px;">Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
+                            . '<p style="margin:0;">Pelunasan pesanan '
+                            . emailHighlightKodeOrder($kodeOrder)
+                            . ' telah <strong>terverifikasi</strong>. '
+                            . (isMetodeAmbilSendiri($order)
+                                ? 'Pesanan siap diambil di toko kami. Tim kami akan menunggu kedatangan Anda.'
+                                : 'Tim kami akan segera memproses pengiriman pesanan Anda.')
+                            . '</p>',
+                        'ctaUrl'             => $detailUrlPelunasan,
+                        'ctaLabel'           => 'Lihat Detail Pesanan',
+                        'jenisPembayaran'    => 'Pelunasan',
+                        'nominalLabel'       => 'Rp ' . $nominalLunasFmt,
+                        'statusLabel'        => 'Terverifikasi',
+                        'statusTone'         => 'success',
+                        'tglVerifikasiLabel' => formatEmailDatetime($tglVerifikasi),
+                        'catatanTolak'       => '',
+                    ]))
                 );
                 sendNotifWaForEmail(
                     $db,
                     (string) $order['email'],
                     buildNotifWaText(
                         "Pelunasan Terverifikasi-{$kodeOrder}",
-                        isMetodeAmbilSendiri($order)
-                            ? "Pelunasan {$kodeOrder} terverifikasi. Pesanan siap diambil di toko."
-                            : "Pelunasan {$kodeOrder} terverifikasi. Pesanan akan segera dikirim.",
-                        site_url('order/detail/' . $kodeOrder)
+                        $pesanPelunasan,
+                        $detailUrlPelunasan
                     )
                 );
                 sendNotifInApp(
                     $idUserPelanggan,
                     $idOrder,
-                    'Pelunasan Terverifikasi',
-                    isMetodeAmbilSendiri($order)
-                        ? "Pelunasan {$kodeOrder} terverifikasi. Silakan ambil pesanan di toko."
-                        : "Pelunasan {$kodeOrder} terverifikasi. Pesanan akan segera dikirim."
+                    $judulPelunasanOk,
+                    $pesanPelunasan
                 );
 
                 $admins = $db->table('users')->where('role', 'admin')->get()->getResultArray();
@@ -686,9 +761,13 @@ class PaymentController extends BaseController
         }
 
         $order = $db->table('orders o')
-            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
+            ->select(
+                'o.*, u.id_user AS id_user_pelanggan, u.nama, u.email, '
+                . 'k.nama_produk, k.kategori, k.satuan, k.gambar AS gambar_katalog'
+            )
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = p.id_user')
+            ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
             ->where('o.id_order', (int) $payment['id_order'])
             ->get()
             ->getRowArray();
@@ -719,21 +798,35 @@ class PaymentController extends BaseController
                 throw new \RuntimeException('Gagal menolak pelunasan.');
             }
 
+            $detailUrlTolakLunas = pelangganOrderDetailUrl($kodeOrder, 'Bukti Pelunasan Ditolak');
+            $nominalLunasFmt     = number_format((float) ($payment['nominal'] ?? 0), 0, ',', '.');
+
             sendNotifEmail(
                 (string) $order['email'],
                 "Bukti Pelunasan Ditolak-{$kodeOrder}",
-                '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
-                . "<p>Bukti pelunasan untuk pesanan <strong>{$kodeOrder}</strong> ditolak.</p>"
-                . '<p><strong>Alasan:</strong> ' . esc($catatanTolak) . '</p>'
-                . '<p>Silakan upload ulang bukti transfer yang valid.</p>'
+                renderNotifEmail('bukti_ditolak', array_merge(buildEmailOrderViewData($order), [
+                    'pesanHtml' => '<p style="margin:0 0 12px;">Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
+                        . '<p style="margin:0 0 8px;">Bukti pelunasan untuk pesanan '
+                        . emailHighlightKodeOrder($kodeOrder)
+                        . ' <strong>ditolak</strong>.</p>'
+                        . '<p style="margin:0;color:#64748B;font-size:13px;">Silakan unggah ulang bukti transfer yang valid.</p>',
+                    'ctaUrl'             => $detailUrlTolakLunas,
+                    'ctaLabel'           => 'Upload Ulang Bukti',
+                    'jenisPembayaran'    => 'Pelunasan',
+                    'nominalLabel'       => 'Rp ' . $nominalLunasFmt,
+                    'statusLabel'        => 'Ditolak',
+                    'statusTone'         => 'danger',
+                    'tglVerifikasiLabel' => formatEmailDatetime(date('Y-m-d H:i:s')),
+                    'catatanTolak'       => $catatanTolak,
+                ]))
             );
             sendNotifWaForEmail(
                 $db,
                 (string) $order['email'],
                 buildNotifWaText(
                     "Bukti Pelunasan Ditolak-{$kodeOrder}",
-                    "Bukti pelunasan ditolak. Alasan: {$catatanTolak}. Silakan upload ulang.",
-                    site_url('order/detail/' . $kodeOrder)
+                    "Bukti pelunasan {$kodeOrder} ditolak: {$catatanTolak}. Silakan unggah ulang.",
+                    $detailUrlTolakLunas
                 )
             );
 
@@ -741,7 +834,7 @@ class PaymentController extends BaseController
                 (int) $order['id_user_pelanggan'],
                 (int) $order['id_order'],
                 'Bukti Pelunasan Ditolak',
-                "Bukti pelunasan {$kodeOrder} ditolak: {$catatanTolak}. Silakan upload ulang."
+                "Bukti pelunasan {$kodeOrder} ditolak: {$catatanTolak}. Silakan unggah ulang."
             );
         } catch (\Throwable $e) {
             $db->transRollback();

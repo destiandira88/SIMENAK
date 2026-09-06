@@ -188,11 +188,8 @@ $readOnly = (bool) ($readOnly ?? false);
                                         data-confirm-message="<?= esc($kodeOrder) ?>">
                                         <?= csrf_field() ?>
                                         <input type="hidden" name="aksi" value="set_siap">
-                                        <span class="text-xs text-slate-500 italic">
-                                            <?= $ambilSendiri ? 'Ambil Sendiri' : 'Kurir' ?>
-                                        </span>
                                         <button type="submit" class="bg-[#051747] text-white text-xs font-bold px-3 py-1.5 rounded-full hover:bg-[#2E5CE6] transition-colors">
-                                            Set Siap
+                                            <?= $ambilSendiri ? 'Konfirmasi Siap Diambil' : 'Konfirmasi Siap Dikirim' ?>
                                         </button>
                                     </form>
 

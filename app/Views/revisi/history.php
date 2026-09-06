@@ -36,30 +36,44 @@ foreach ($revisList as $r) {
 
 $latestStatus = is_array($latest) ? (string) ($latest['status'] ?? '') : '';
 
-$canAccRevisi = $role === 'pelanggan'
-    && $sisaKuota > 0
-    && is_array($latest)
-    && $latestStatus === 'uploaded'
-    && $latestIdRevisi > 0
-    && in_array($orderStatus, ['proses_desain', 'proses_revisi'], true);
-
-$pilihDraftUntukCetak = $role === 'pelanggan'
-    && $sisaKuota <= 0
+// Dasar: pelanggan, order fase desain/revisi, belum ada draft di-ACC.
+$_baseAcc = $role === 'pelanggan'
     && !$adaDraftAcc
-    && $latestStatus === 'uploaded'
-    && $draftUntukPilih !== []
     && in_array($orderStatus, ['proses_desain', 'proses_revisi'], true);
 
+$_latestUploaded = is_array($latest) && $latestStatus === 'uploaded' && $latestIdRevisi > 0;
+
+// v1-only: satu draft, tampilkan tombol ACC + Ajukan Revisi langsung.
+$canAccRevisi = $_baseAcc
+    && count($revisList) === 1
+    && $_latestUploaded;
+
+// v2+: panel radio pilih versi.
+$bolehPilihAcc = $_baseAcc
+    && count($revisList) >= 2
+    && $_latestUploaded
+    && $draftUntukPilih !== [];
+
+// Ajukan Revisi: hanya saat kuota masih ada.
+$bolehAjukanRevisi = $role === 'pelanggan'
+    && $sisaKuota > 0
+    && $_latestUploaded
+    && !$adaDraftAcc
+    && in_array($orderStatus, ['proses_desain', 'proses_revisi'], true);
+
+// Menunggu Produksi selesai.
 $menungguDraftFinal = $role === 'pelanggan'
-    && $sisaKuota <= 0
     && !$adaDraftAcc
     && $latestStatus === 'diajukan_revisi'
     && in_array($orderStatus, ['proses_desain', 'proses_revisi'], true);
 
+// Tidak lagi dipakai.
+$pilihDraftUntukCetak = false;
+
 $backUrl = $role === 'pelanggan'
     ? site_url('order/detail/' . $kodeOrder)
-    : site_url('antrian-desain');
-$backLabel = $role === 'pelanggan' ? 'Detail Pesanan' : 'Antrian Desain';
+    : site_url('dashboard');
+$backLabel = $role === 'pelanggan' ? 'Detail Pesanan' : 'Beranda';
 ?>
 <?= $this->extend('layouts/main') ?>
 
@@ -112,7 +126,7 @@ $backLabel = $role === 'pelanggan' ? 'Detail Pesanan' : 'Antrian Desain';
         </div>
     </div>
 
-    <?php if ($role === 'pelanggan' && $sisaKuota === 1): ?>
+    <?php if ($role === 'pelanggan' && $sisaKuota === 1 && $bolehAjukanRevisi): ?>
         <div class="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6">
             <p class="font-bold mb-1">⚠ Ini kesempatan revisi terakhir Anda</p>
             <p class="text-xs text-amber-800 leading-relaxed">
@@ -121,6 +135,26 @@ $backLabel = $role === 'pelanggan' ? 'Detail Pesanan' : 'Antrian Desain';
         </div>
     <?php endif; ?>
 
+    <?php
+    $previewDraftFile = is_array($latest) ? (string) ($latest['file_draft'] ?? '') : '';
+    $previewDraftUrl  = resolveDraftDesainUrl($previewDraftFile);
+    if ($previewDraftUrl !== null):
+        $previewVersi = (int) ($latest['versi'] ?? 0);
+        $previewAdjust = normalizeMockupAdjust($latest['mockup_adjust'] ?? null);
+    ?>
+        <div class="mb-6" id="pelangganMockupHost">
+            <?= view('partials/draft_mockup_preview', [
+                'draftUrl'     => $previewDraftUrl,
+                'mockupAngles' => $mockupAngles ?? [],
+                'previewTitle' => 'Preview Draft v' . $previewVersi,
+                'mockupAdjust' => $previewAdjust,
+                'editable'     => false,
+                'layerUrls'    => resolveMockupLayerUrls($previewDraftUrl, $previewAdjust),
+            ]) ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (! $bolehPilihAcc): ?>
     <h3 class="text-sm font-bold text-[#051747] uppercase tracking-wide mb-4">Riwayat Revisi Desain</h3>
 
     <?php if ($revisList === []): ?>
@@ -198,65 +232,140 @@ $backLabel = $role === 'pelanggan' ? 'Detail Pesanan' : 'Antrian Desain';
                                 <?php endif; ?>
                             </div>
                         </div>
+                        <?php
+                        $histDraftUrl = resolveDraftDesainUrl($fileDraft);
+                        $histAdjust   = normalizeMockupAdjust($r['mockup_adjust'] ?? null);
+                        $histAngles   = $mockupAngles ?? [];
+                        if ($histDraftUrl !== null && $histAngles !== []):
+                        ?>
+                            <div class="mt-4">
+                                <?= view('partials/draft_mockup_preview', [
+                                    'draftUrl'     => $histDraftUrl,
+                                    'mockupAngles' => $histAngles,
+                                    'previewTitle' => 'Preview Draft v' . $versi,
+                                    'mockupAdjust' => $histAdjust,
+                                    'editable'     => false,
+                                    'layerUrls'    => resolveMockupLayerUrls($histDraftUrl, $histAdjust),
+                                ]) ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
         </div>
+    <?php endif; ?>
     <?php endif; ?>
 
     <?php if ($menungguDraftFinal): ?>
         <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-5 mb-6">
             <p class="font-bold text-sm text-[#051747] mb-1 inline-flex items-center gap-2">
                 <?= view('partials/order_detail_svg_icon', ['icon' => 'waiting', 'class' => 'h-5 w-5 shrink-0']) ?>
-                Menunggu Produksi mengunggah draft final
+                Menunggu Produksi mengunggah draft terbaru
             </p>
             <p class="text-xs text-slate-600 leading-relaxed">
-                Kuota revisi Anda sudah habis. Tim produksi sedang menyiapkan draft final
-                berdasarkan catatan revisi terakhir Anda. Setelah diunggah, Anda dapat
-                menyetujui (ACC) desain untuk lanjut ke proses cetak.
+                Tim produksi sedang menyiapkan draft berdasarkan catatan revisi Anda.
+                Setelah diunggah, Anda dapat memilih versi yang diinginkan untuk dicetak.
             </p>
         </div>
-    <?php elseif ($pilihDraftUntukCetak): ?>
-        <div class="notice-danger rounded-xl p-5 mb-6">
-            <h4 class="font-bold mb-1">Pilih draft untuk dicetak</h4>
-            <p class="text-xs mb-4">Kuota revisi habis. Pilih versi yang akan diproses produksi.</p>
-            <form method="post" action="<?= esc(site_url('revisi/acc')) ?>" class="space-y-3">
+
+    <?php elseif ($bolehPilihAcc): ?>
+        <?php
+        $mockupPreviewByRevisi = [];
+        foreach ($draftUntukPilih as $d) {
+            $idPick = (int) ($d['id_revisi'] ?? 0);
+            if ($idPick <= 0) {
+                continue;
+            }
+            $urlPick = resolveDraftDesainUrl((string) ($d['file_draft'] ?? ''));
+            if ($urlPick === null) {
+                continue;
+            }
+            $adjPick = normalizeMockupAdjust($d['mockup_adjust'] ?? null);
+            $mockupPreviewByRevisi[(string) $idPick] = [
+                'draftUrl'  => $urlPick,
+                'title'     => 'Preview Draft v' . (int) ($d['versi'] ?? 0),
+                'adjust'    => $adjPick,
+                'layerUrls' => resolveMockupLayerUrls($urlPick, $adjPick),
+            ];
+        }
+        ?>
+        <script type="application/json" id="mockupPreviewByRevisiJson"><?= json_encode($mockupPreviewByRevisi, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
+        <?php /* Panel v2+: radio pilih versi */ ?>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 mb-6">
+            <p class="font-bold text-sm text-[#051747] mb-1">Pilih Versi Desain</p>
+            <p class="text-xs text-slate-500 mb-4">Pilih versi draft yang ingin digunakan untuk proses cetak, lalu klik ACC.</p>
+            <form method="post" action="<?= esc(site_url('revisi/acc')) ?>" class="space-y-3" id="formPilihVersiDesain">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id_order" value="<?= esc((string) $idOrder) ?>">
                 <?php foreach ($draftUntukPilih as $i => $d): ?>
                     <?php
-                    $idRevPick = (int) ($d['id_revisi'] ?? 0);
-                    $versiPick = (int) ($d['versi'] ?? 0);
-                    $filePick  = (string) ($d['file_draft'] ?? '');
-                    $stPick    = (string) ($d['status'] ?? '');
-                    $badgePick = $revisiBadges[$stPick] ?? ['label' => $stPick, 'class' => 'bg-slate-100 text-slate-600'];
+                    $idRevPick  = (int) ($d['id_revisi'] ?? 0);
+                    $versiPick  = (int) ($d['versi'] ?? 0);
+                    $filePick   = (string) ($d['file_draft'] ?? '');
+                    $stPick     = (string) ($d['status'] ?? '');
+                    $badgePick  = $revisiBadges[$stPick] ?? ['label' => $stPick, 'class' => 'bg-slate-100 text-slate-600'];
+                    $isLatestPick = $idRevPick === $latestIdRevisi;
                     ?>
-                    <label class="flex gap-3 items-start p-3 rounded-xl border-2 border-slate-200 bg-white cursor-pointer hover:border-[#2E5CE6] has-[:checked]:border-[#051747] has-[:checked]:bg-blue-50/40">
+                    <label class="flex gap-3 items-start p-3 rounded-xl border-2 border-slate-200 bg-white cursor-pointer hover:border-[#2E5CE6] has-[:checked]:border-[#051747] has-[:checked]:bg-blue-50/40 transition-colors">
                         <input type="radio" name="id_revisi" value="<?= esc((string) $idRevPick) ?>"
                             class="mt-1 shrink-0 accent-[#051747]"
-                            <?= $i === count($draftUntukPilih) - 1 ? 'checked' : '' ?> required>
+                            data-mockup-versi-pick
+                            <?= $isLatestPick ? 'checked' : '' ?> required>
                         <div class="w-16 h-14 bg-slate-100 rounded-lg overflow-hidden shrink-0">
                             <?php if ($filePick !== ''): ?>
-                                <img src="<?= esc(base_url('uploads/draft_desain/' . $filePick)) ?>"
-                                    alt="v<?= esc((string) $versiPick) ?>"
-                                    class="w-full h-full object-cover">
+                                <a href="<?= esc(base_url('uploads/draft_desain/' . $filePick)) ?>" target="_blank" rel="noopener noreferrer" class="w-full h-full block">
+                                    <img src="<?= esc(base_url('uploads/draft_desain/' . $filePick)) ?>"
+                                        alt="v<?= esc((string) $versiPick) ?>"
+                                        class="w-full h-full object-cover">
+                                </a>
+                            <?php else: ?>
+                                <span class="flex items-center justify-center h-full text-lg">🖼</span>
                             <?php endif; ?>
                         </div>
                         <div class="flex-1 text-sm">
-                            <p class="font-bold text-[#051747]">Draft v<?= esc((string) $versiPick) ?></p>
+                            <p class="font-bold text-[#051747]">
+                                Draft v<?= esc((string) $versiPick) ?>
+                                <?php if ($isLatestPick): ?>
+                                    <span class="ml-1 text-[10px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Terbaru</span>
+                                <?php endif; ?>
+                            </p>
                             <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold <?= esc($badgePick['class']) ?>">
                                 <?= esc($badgePick['label']) ?>
                             </span>
+                            <?php if (!empty($d['catatan_prod'])): ?>
+                                <p class="text-xs text-slate-500 mt-1">Produksi: <?= esc((string) $d['catatan_prod']) ?></p>
+                            <?php endif; ?>
+                            <?php if (!empty($d['catatan_revisi'])): ?>
+                                <p class="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 mt-1">
+                                    Catatan Anda: <?= esc((string) $d['catatan_revisi']) ?>
+                                </p>
+                            <?php endif; ?>
+                            <?php if (!empty($d['created_at'])): ?>
+                                <p class="text-xs text-slate-400 mt-1">
+                                    <?= esc(date('d M Y H:i', strtotime((string) $d['created_at']))) ?>
+                                </p>
+                            <?php endif; ?>
                         </div>
                     </label>
                 <?php endforeach; ?>
-                <button type="submit"
-                    class="w-full bg-emerald-500 text-white py-2.5 rounded-full text-sm font-bold hover:bg-emerald-600 transition-colors">
-                    ✓ ACC Draft Terpilih untuk Cetak
-                </button>
+                <div class="flex flex-wrap gap-3 pt-1">
+                    <button type="submit"
+                        class="flex-1 bg-emerald-500 text-white py-2.5 rounded-full text-sm font-bold hover:bg-emerald-600 transition-colors">
+                        ✓ ACC & Gunakan Versi Terpilih
+                    </button>
+                    <?php if ($bolehAjukanRevisi): ?>
+                        <button type="button"
+                            onclick="document.getElementById('modalRevisiHistory').classList.remove('hidden')"
+                            class="flex-1 bg-amber-500 text-white py-2.5 rounded-full text-sm font-bold hover:bg-amber-600 transition-colors">
+                            <?= $sisaKuota === 1 ? '↺ Ajukan Revisi Terakhir' : '↺ Ajukan Revisi' ?>
+                        </button>
+                    <?php endif; ?>
+                </div>
             </form>
         </div>
+
     <?php elseif ($canAccRevisi): ?>
+        <?php /* Panel v1: tombol langsung ACC + Ajukan Revisi */ ?>
         <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6 mb-6">
             <h4 class="font-bold text-[#051747] mb-3">Tindakan pada Draft Terbaru</h4>
             <div class="flex flex-wrap gap-3">
@@ -265,17 +374,19 @@ $backLabel = $role === 'pelanggan' ? 'Detail Pesanan' : 'Antrian Desain';
                     class="bg-emerald-500 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-emerald-600 transition-colors">
                     ✓ ACC Desain
                 </button>
-                <button type="button"
-                    onclick="document.getElementById('modalRevisiHistory').classList.remove('hidden')"
-                    class="bg-amber-500 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-amber-600 transition-colors">
-                    <?= $sisaKuota === 1 ? '↺ Ajukan Revisi Terakhir' : '↺ Ajukan Revisi' ?>
-                </button>
+                <?php if ($bolehAjukanRevisi): ?>
+                    <button type="button"
+                        onclick="document.getElementById('modalRevisiHistory').classList.remove('hidden')"
+                        class="bg-amber-500 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-amber-600 transition-colors">
+                        <?= $sisaKuota === 1 ? '↺ Ajukan Revisi Terakhir' : '↺ Ajukan Revisi' ?>
+                    </button>
+                <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>
 </div>
 
-<?php if ($canAccRevisi && !$pilihDraftUntukCetak): ?>
+<?php if ($canAccRevisi || $bolehPilihAcc): ?>
     <div id="modalAccHistory" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
         <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
             <h3 class="font-bold text-lg text-[#051747] mb-2">Konfirmasi ACC Desain</h3>
@@ -345,7 +456,50 @@ $backLabel = $role === 'pelanggan' ? 'Detail Pesanan' : 'Antrian Desain';
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<?php if ($role === 'pelanggan' && $sisaKuota === 1 && $canAccRevisi && !$pilihDraftUntukCetak): ?>
+<script>
+(function () {
+    var jsonEl = document.getElementById('mockupPreviewByRevisiJson');
+    var form = document.getElementById('formPilihVersiDesain');
+    if (!jsonEl || !form) return;
+
+    var map = {};
+    try { map = JSON.parse(jsonEl.textContent || '{}'); } catch (e) { map = {}; }
+
+    function applyPick(idRevisi) {
+        var payload = map[String(idRevisi)];
+        if (!payload) return;
+        var host = document.getElementById('pelangganMockupHost');
+        var root = host ? host.querySelector('[data-mockup-root]') : null;
+        if (!root) return;
+        if (typeof root.setReadOnlyPreview === 'function') {
+            root.setReadOnlyPreview(payload);
+            return;
+        }
+        window.setTimeout(function () {
+            if (typeof root.setReadOnlyPreview === 'function') {
+                root.setReadOnlyPreview(payload);
+            }
+        }, 50);
+    }
+
+    form.addEventListener('change', function (e) {
+        var t = e.target;
+        if (!t || t.name !== 'id_revisi' || !t.checked) return;
+        applyPick(t.value);
+    });
+
+    form.addEventListener('click', function (e) {
+        var label = e.target && e.target.closest ? e.target.closest('label') : null;
+        if (!label || !form.contains(label)) return;
+        var radio = label.querySelector('input[name="id_revisi"]');
+        if (!radio) return;
+        window.setTimeout(function () {
+            if (radio.checked) applyPick(radio.value);
+        }, 0);
+    });
+})();
+</script>
+<?php if ($role === 'pelanggan' && $sisaKuota === 1 && ($canAccRevisi || $bolehPilihAcc)): ?>
 <script>
 (function() {
     var form = document.getElementById('formAjukanRevisiHistory');

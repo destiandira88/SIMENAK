@@ -33,7 +33,7 @@ if (is_array($lastRevis) && ($lastRevis['status'] ?? '') === 'diajukan_revisi') 
 <?= $this->section('content') ?>
 
 <div class="text-xs text-slate-400 mb-2">
-    <a href="<?= esc(site_url('antrian-desain')) ?>" class="hover:text-[#051747]">Antrian Desain</a>
+    <a href="<?= esc(site_url('dashboard')) ?>" class="hover:text-[#051747]">Beranda</a>
     <span class="mx-1">›</span>
     <span class="text-slate-500">Unggah Draf</span>
     <span class="mx-1">›</span>

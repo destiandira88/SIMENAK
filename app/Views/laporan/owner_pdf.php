@@ -34,8 +34,6 @@ $formatGrowth = static function (?float $value): string {
         th, td { border: 1px solid #e2e8f0; padding: 5px 6px; text-align: left; vertical-align: top; }
         th { background: #051747; color: #fff; font-size: 8px; text-transform: uppercase; }
         .summary-table td:first-child { width: 55%; font-weight: 600; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
         .font-bold { font-weight: 700; color: #051747; }
         .footer { margin-top: 20px; font-size: 8px; color: #94a3b8; text-align: center; }
     </style>
@@ -50,11 +48,12 @@ $formatGrowth = static function (?float $value): string {
     <h2>Ringkasan</h2>
     <table class="summary-table">
         <tbody>
-            <tr><td>Total Pesanan</td><td class="text-right"><?= esc((string) ($report['totalPesanan'] ?? 0)) ?></td></tr>
-            <tr><td>Total Pendapatan</td><td class="text-right font-bold"><?= esc($formatRupiah((float) ($report['totalPendapatan'] ?? 0))) ?></td></tr>
-            <tr><td>Pertumbuhan Pesanan (%)</td><td class="text-right"><?= esc($formatGrowth(isset($report['growthOrders']) ? (float) $report['growthOrders'] : null)) ?></td></tr>
-            <tr><td>Rata-rata Selesai (hari)</td><td class="text-right"><?= esc($report['avgSelesaiHari'] !== null ? (string) $report['avgSelesaiHari'] : '-') ?></td></tr>
-            <tr><td>Pesanan Dibatalkan</td><td class="text-right"><?= esc((string) ($report['pesananDibatalkan'] ?? 0)) ?></td></tr>
+            <tr><td>Total Pesanan</td><td><?= esc((string) ($report['totalPesanan'] ?? 0)) ?></td></tr>
+            <tr><td>Pesanan Selesai</td><td><?= esc((string) ($report['pesananSelesai'] ?? 0)) ?></td></tr>
+            <tr><td>Total Pendapatan</td><td class="font-bold"><?= esc($formatRupiah((float) ($report['totalPendapatan'] ?? 0))) ?></td></tr>
+            <tr><td>Pertumbuhan Pesanan (%)</td><td><?= esc($formatGrowth(isset($report['growthOrders']) ? (float) $report['growthOrders'] : null)) ?></td></tr>
+            <tr><td>Rata-rata Selesai (hari)</td><td><?= esc($report['avgSelesaiHari'] !== null ? (string) $report['avgSelesaiHari'] : '-') ?></td></tr>
+            <tr><td>Pesanan Dibatalkan</td><td><?= esc((string) ($report['pesananDibatalkan'] ?? 0)) ?></td></tr>
         </tbody>
     </table>
 
@@ -106,7 +105,7 @@ $formatGrowth = static function (?float $value): string {
         </tbody>
     </table>
 
-    <h2>Rekap Per Kategori</h2>
+    <h2>Rekap Per Kategori <span style="font-weight:400;font-size:9px;color:#64748b;">(dihitung dari pesanan selesai)</span></h2>
     <table>
         <thead>
             <tr>

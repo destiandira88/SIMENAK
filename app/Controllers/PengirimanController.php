@@ -76,9 +76,13 @@ class PengirimanController extends BaseController
         $aksi = (string) $this->request->getPost('aksi');
 
         $order = $db->table('orders o')
-            ->select('o.*, u.id_user AS id_user_pelanggan, u.nama, u.email')
+            ->select(
+                'o.*, u.id_user AS id_user_pelanggan, u.nama, u.email, '
+                . 'k.nama_produk, k.kategori, k.satuan, k.gambar AS gambar_katalog'
+            )
             ->join('pelanggan pl', 'pl.id_pelanggan = o.id_pelanggan')
             ->join('users u', 'u.id_user = pl.id_user')
+            ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
             ->where('o.id_order', $idOrder)
             ->get()->getRowArray();
 
@@ -110,34 +114,43 @@ class PengirimanController extends BaseController
                 ]);
                 $activityKeterangan = "Mengubah status pesanan {$kodeOrder} dari {$currentStatus} menjadi {$newStatus}";
 
-                $detailUrl    = site_url('order/detail/' . $kodeOrder);
-                $emailTitle   = $newStatus === 'siap_diambil' ? 'Pesanan Siap Diambil' : 'Pesanan Siap Dikirim';
-                $emailSubject = "[No-Reply] {$emailTitle}-{$kodeOrder}";
-                $emailBody    = buildNotifEmailHtml(
-                    $emailTitle,
-                    '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
-                    . "<p>Pesanan <strong>{$kodeOrder}</strong> "
-                    . ($newStatus === 'siap_diambil'
-                        ? 'sudah siap untuk diambil di toko kami.'
-                        : 'sedang dalam persiapan pengiriman.')
-                    . '</p>',
-                    $detailUrl,
-                    'Lihat Detail Pesanan'
-                );
+                $judulSiap   = $newStatus === 'siap_diambil' ? 'Pesanan Siap Diambil' : 'Pesanan Siap Dikirim';
+                $pesanSiap   = $newStatus === 'siap_diambil'
+                    ? "Pesanan {$kodeOrder} siap diambil di toko."
+                    : "Pesanan {$kodeOrder} siap dikirim.";
+                $detailUrl   = pelangganOrderDetailUrl($kodeOrder, $judulSiap);
+                $emailSubject = "[No-Reply] {$judulSiap}-{$kodeOrder}";
+                $ambil        = $newStatus === 'siap_diambil';
 
-                sendNotifEmail((string) $order['email'], $emailSubject, $emailBody);
+                sendNotifEmail(
+                    (string) $order['email'],
+                    $emailSubject,
+                    renderNotifEmail('siap_pengiriman', array_merge(buildEmailOrderViewData($order), [
+                        'pesanHtml' => '<p style="margin:0 0 12px;">Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
+                            . '<p style="margin:0;">Pesanan '
+                            . emailHighlightKodeOrder($kodeOrder)
+                            . ($ambil
+                                ? ' sudah <strong>siap untuk diambil</strong> di toko kami.'
+                                : ' sudah <strong>siap untuk dikirim</strong>.')
+                            . '</p>',
+                        'ctaUrl'        => $detailUrl,
+                        'ctaLabel'      => 'Lihat Info Pengiriman',
+                        'metodeLabel'   => emailMetodePengirimanLabel($order),
+                        'noResi'        => null,
+                        'ekspedisi'     => null,
+                        'tglKirimLabel' => null,
+                    ]))
+                );
                 sendNotifWaForEmail(
                     $db,
                     (string) $order['email'],
                     buildNotifWaText(
-                        $newStatus === 'siap_diambil' ? "Pesanan Siap Diambil-{$kodeOrder}" : "Pesanan Siap Dikirim-{$kodeOrder}",
-                        $newStatus === 'siap_diambil'
-                            ? "Pesanan {$kodeOrder} siap diambil di toko kami."
-                            : "Pesanan {$kodeOrder} sedang dalam persiapan pengiriman.",
+                        "{$judulSiap}-{$kodeOrder}",
+                        $pesanSiap,
                         $detailUrl
                     )
                 );
-                sendNotifInApp($idUserPelanggan, $idOrder, 'Pesanan ' . ($newStatus === 'siap_diambil' ? 'Siap Diambil' : 'Siap Dikirim'), "Pesanan {$kodeOrder} siap.");
+                sendNotifInApp($idUserPelanggan, $idOrder, $judulSiap, $pesanSiap);
 
             } elseif ($aksi === 'set_dikirim') {
                 if (isMetodeAmbilSendiri($order)) {
@@ -187,31 +200,36 @@ class PengirimanController extends BaseController
                     ]);
                 }
 
-                $detailUrl = site_url('order/detail/' . $kodeOrder);
+                $judulDikirim = 'Pesanan Dikirim';
+                $pesanDikirim = "Pesanan {$kodeOrder} dikirim. Resi: {$noResi}"
+                    . ($namaEkspedisi !== '' ? " ({$namaEkspedisi})" : '');
+                $detailUrl    = pelangganOrderDetailUrl($kodeOrder, $judulDikirim);
                 sendNotifEmail(
                     (string) $order['email'],
                     "[No-Reply] Pesanan Dikirim-{$kodeOrder}",
-                    buildNotifEmailHtml(
-                        'Pesanan Dikirim',
-                        '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
-                        . "<p>Pesanan <strong>{$kodeOrder}</strong> telah dikirim.</p>"
-                        . '<p>No. Resi: <strong>' . esc($noResi) . '</strong>'
-                        . ($namaEkspedisi !== '' ? ' via <strong>' . esc($namaEkspedisi) . '</strong>' : '')
-                        . '</p>',
-                        $detailUrl,
-                        'Lihat Detail Pesanan'
-                    )
+                    renderNotifEmail('siap_pengiriman', array_merge(buildEmailOrderViewData($order), [
+                        'pesanHtml' => '<p style="margin:0 0 12px;">Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
+                            . '<p style="margin:0;">Pesanan '
+                            . emailHighlightKodeOrder($kodeOrder)
+                            . ' sudah <strong>dikirim</strong> menuju alamat Anda.</p>',
+                        'ctaUrl'        => $detailUrl,
+                        'ctaLabel'      => 'Lacak Pesanan',
+                        'metodeLabel'   => emailMetodePengirimanLabel($order),
+                        'noResi'        => $noResi,
+                        'ekspedisi'     => $namaEkspedisi !== '' ? $namaEkspedisi : null,
+                        'tglKirimLabel' => formatEmailDate($now),
+                    ]))
                 );
                 sendNotifWaForEmail(
                     $db,
                     (string) $order['email'],
                     buildNotifWaText(
                         "Pesanan Dikirim-{$kodeOrder}",
-                        "Pesanan {$kodeOrder} dikirim. Resi: {$noResi}" . ($namaEkspedisi ? " ({$namaEkspedisi})" : ''),
+                        $pesanDikirim,
                         $detailUrl
                     )
                 );
-                sendNotifInApp($idUserPelanggan, $idOrder, 'Pesanan Dikirim', "Pesanan {$kodeOrder} dikirim. Resi: {$noResi}" . ($namaEkspedisi ? " ({$namaEkspedisi})" : ''));
+                sendNotifInApp($idUserPelanggan, $idOrder, $judulDikirim, $pesanDikirim);
 
             } elseif ($aksi === 'konfirmasi_diambil') {
                 if (!isMetodeAmbilSendiri($order)) {
@@ -244,12 +262,26 @@ class PengirimanController extends BaseController
                         ]);
                     }
 
-                    sendNotifInApp($idUserPelanggan, $idOrder, 'Pesanan Selesai', "Pesanan {$kodeOrder} telah diambil. Terima kasih!");
+                    $detailUrlSelesaiAmbil = pelangganOrderDetailUrl($kodeOrder, 'Pesanan Selesai');
+                    sendNotifInApp(
+                        $idUserPelanggan,
+                        $idOrder,
+                        'Pesanan Selesai',
+                        "Pesanan {$kodeOrder} telah diambil. Terima kasih!"
+                    );
                     sendNotifEmail(
                         (string) $order['email'],
                         "[No-Reply] Pesanan Selesai-{$kodeOrder}",
-                        '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
-                        . "<p>Pesanan <strong>{$kodeOrder}</strong> telah diambil. Terima kasih!</p>"
+                        renderNotifEmail('pesanan_selesai', array_merge(buildEmailOrderViewData($order), [
+                            'pesanHtml' => '<p style="margin:0 0 12px;">Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
+                                . '<p style="margin:0;">Pesanan '
+                                . emailHighlightKodeOrder($kodeOrder)
+                                . ' telah <strong>diambil</strong>.</p>',
+                            'ctaUrl'             => $detailUrlSelesaiAmbil,
+                            'ctaLabel'           => 'Lihat Detail Pesanan',
+                            'statusSelesaiLabel' => 'Selesai',
+                            'catatanSelesai'     => 'Pesanan telah diambil di toko.',
+                        ]))
                     );
                     sendNotifWaForEmail(
                         $db,
@@ -257,7 +289,7 @@ class PengirimanController extends BaseController
                         buildNotifWaText(
                             "Pesanan Selesai-{$kodeOrder}",
                             "Pesanan {$kodeOrder} telah diambil. Terima kasih!",
-                            site_url('order/detail/' . $kodeOrder)
+                            $detailUrlSelesaiAmbil
                         )
                     );
                 } else {
@@ -284,26 +316,30 @@ class PengirimanController extends BaseController
                         ]);
                     }
 
+                    $judulNotaAmbil = 'Nota Tagihan Pelunasan';
+                    $pesanNotaAmbil = "Pesanan {$kodeOrder} telah diambil. Silakan unggah bukti transfer pelunasan.";
+                    $detailUrlNotaAmbil = pelangganOrderDetailUrl($kodeOrder, $judulNotaAmbil);
                     sendNotifInApp(
                         $idUserPelanggan,
                         $idOrder,
-                        'Nota Tagihan Pelunasan',
-                        "Pesanan {$kodeOrder} telah diambil. Silakan upload bukti transfer pelunasan."
+                        $judulNotaAmbil,
+                        $pesanNotaAmbil
                     );
                     sendNotifEmail(
                         (string) $order['email'],
                         "[No-Reply] Pesanan Diambil-Nota Tagihan {$kodeOrder}",
                         '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
                         . "<p>Pesanan <strong>{$kodeOrder}</strong> telah diambil.</p>"
-                        . '<p>Silakan lakukan transfer pelunasan sesuai nota tagihan di detail pesanan.</p>'
+                        . '<p>Silakan lakukan transfer pelunasan sesuai nota tagihan, lalu unggah bukti di halaman pembayaran.</p>'
+                        . '<p><a href="' . esc($detailUrlNotaAmbil) . '">Unggah bukti pelunasan</a></p>'
                     );
                     sendNotifWaForEmail(
                         $db,
                         (string) $order['email'],
                         buildNotifWaText(
-                            "Pesanan Diambil-Nota Tagihan {$kodeOrder}",
-                            "Pesanan {$kodeOrder} telah diambil. Silakan transfer pelunasan sesuai nota tagihan.",
-                            site_url('order/detail/' . $kodeOrder)
+                            "{$judulNotaAmbil}-{$kodeOrder}",
+                            $pesanNotaAmbil,
+                            $detailUrlNotaAmbil
                         )
                     );
                 }
@@ -449,12 +485,26 @@ class PengirimanController extends BaseController
                     'status_kirim' => 'diterima',
                     'tgl_diterima' => $now,
                 ]);
-                sendNotifInApp($idUserPelanggan, $idOrder, 'Pesanan Selesai', "Pesanan {$kodeOrder} telah diterima. Terima kasih!");
+                $detailUrlSelesaiTerima = pelangganOrderDetailUrl($kodeOrder, 'Pesanan Selesai');
+                sendNotifInApp(
+                    $idUserPelanggan,
+                    $idOrder,
+                    'Pesanan Selesai',
+                    "Pesanan {$kodeOrder} telah diterima. Terima kasih!"
+                );
                 sendNotifEmail(
                     (string) $order['email'],
                     "[No-Reply] Pesanan Selesai-{$kodeOrder}",
-                    '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
-                    . "<p>Pesanan <strong>{$kodeOrder}</strong> telah diterima. Terima kasih!</p>"
+                    renderNotifEmail('pesanan_selesai', array_merge(buildEmailOrderViewData($order), [
+                        'pesanHtml' => '<p style="margin:0 0 12px;">Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
+                            . '<p style="margin:0;">Pesanan '
+                            . emailHighlightKodeOrder($kodeOrder)
+                            . ' telah <strong>diterima</strong>.</p>',
+                        'ctaUrl'             => $detailUrlSelesaiTerima,
+                        'ctaLabel'           => 'Lihat Detail Pesanan',
+                        'statusSelesaiLabel' => 'Selesai',
+                        'catatanSelesai'     => 'Pesanan telah diterima.',
+                    ]))
                 );
                 sendNotifWaForEmail(
                     $db,
@@ -462,7 +512,7 @@ class PengirimanController extends BaseController
                     buildNotifWaText(
                         "Pesanan Selesai-{$kodeOrder}",
                         "Pesanan {$kodeOrder} telah diterima. Terima kasih!",
-                        site_url('order/detail/' . $kodeOrder)
+                        $detailUrlSelesaiTerima
                     )
                 );
             } else {
@@ -471,26 +521,30 @@ class PengirimanController extends BaseController
                     'status_kirim' => 'diterima',
                     'tgl_diterima' => $now,
                 ]);
+                $judulNotaTerima = 'Nota Tagihan Pelunasan';
+                $pesanNotaTerima = "Pesanan {$kodeOrder} diterima. Silakan unggah bukti transfer pelunasan.";
+                $detailUrlNotaTerima = pelangganOrderDetailUrl($kodeOrder, $judulNotaTerima);
                 sendNotifInApp(
                     $idUserPelanggan,
                     $idOrder,
-                    'Nota Tagihan Pelunasan',
-                    "Pesanan {$kodeOrder} diterima. Silakan upload bukti transfer pelunasan."
+                    $judulNotaTerima,
+                    $pesanNotaTerima
                 );
                 sendNotifEmail(
                     (string) $order['email'],
                     "[No-Reply] Pesanan Diterima-Nota Tagihan {$kodeOrder}",
                     '<p>Halo <strong>' . esc((string) $order['nama']) . '</strong>,</p>'
                     . "<p>Pesanan <strong>{$kodeOrder}</strong> telah diterima.</p>"
-                    . '<p>Silakan lakukan transfer pelunasan sesuai nota tagihan di detail pesanan.</p>'
+                    . '<p>Silakan lakukan transfer pelunasan sesuai nota tagihan, lalu unggah bukti di halaman pembayaran.</p>'
+                    . '<p><a href="' . esc($detailUrlNotaTerima) . '">Unggah bukti pelunasan</a></p>'
                 );
                 sendNotifWaForEmail(
                     $db,
                     (string) $order['email'],
                     buildNotifWaText(
-                        "Pesanan Diterima-Nota Tagihan {$kodeOrder}",
-                        "Pesanan {$kodeOrder} telah diterima. Silakan transfer pelunasan sesuai nota tagihan.",
-                        site_url('order/detail/' . $kodeOrder)
+                        "{$judulNotaTerima}-{$kodeOrder}",
+                        $pesanNotaTerima,
+                        $detailUrlNotaTerima
                     )
                 );
             }

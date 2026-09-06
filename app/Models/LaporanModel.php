@@ -85,16 +85,16 @@ class LaporanModel
         $orders = $this->db()->table('orders o')
             ->select(
                 'o.id_order, o.kode_order, o.total_harga, o.created_at, o.status, '
-                    . 'o.jenis_pelanggan, o.is_custom, pg.tgl_diterima, '
+                    . 'o.jenis_pelanggan, o.is_custom, '
                     . 'k.id_katalog, k.nama_produk, k.kategori'
             )
             ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
-            ->join('pengiriman pg', 'pg.id_order = o.id_order', 'left')
             ->where('o.status', 'selesai')
             ->orderBy('o.created_at', 'DESC')
             ->get()
             ->getResultArray();
 
+        $orders = $this->dedupeOrdersById($orders);
         $orders = $this->attachCompletionDates($orders);
 
         return $this->filterSelesaiByCompletionDate($orders, $start, $end);
@@ -128,6 +128,11 @@ class LaporanModel
         $dariTgl   = $range['dateFrom'];
         $sampaiTgl = $range['dateTo'];
 
+        $allOrders = $this->attachCompletionDates(
+            $this->fetchAdminOrdersBase('', 'semua', 'semua')
+        );
+        $totalPesanan = count($this->filterOrdersCreatedInPeriod($allOrders, $range));
+
         $totalPendapatan = getTotalPendapatanPeriode($dariTgl, $sampaiTgl);
         $prevPendapatan  = getTotalPendapatanPeriode($prevRange['dateFrom'], $prevRange['dateTo']);
         $growthOrders    = $this->percentGrowth(count($current), count($prev));
@@ -152,7 +157,8 @@ class LaporanModel
 
         return [
             'period'            => $period,
-            'totalPesanan'      => count($current),
+            'totalPesanan'      => $totalPesanan,
+            'pesananSelesai'    => count($current),
             'totalPendapatan'   => $totalPendapatan,
             'growthOrders'      => $growthOrders,
             'growthRevenue'     => $growthRevenue,
@@ -974,12 +980,11 @@ class LaporanModel
             ->select(
                 'o.id_order, o.kode_order, o.total_harga, o.created_at, o.deadline_produksi AS deadline, o.status, '
                     . 'o.jenis_pelanggan, o.metode_pengiriman, o.is_custom, k.nama_produk, k.kategori, '
-                    . 'u.nama AS nama_pelanggan, pg.tgl_diterima'
+                    . 'u.nama AS nama_pelanggan'
             )
             ->join('katalog k', 'k.id_katalog = o.id_katalog', 'left')
             ->join('pelanggan p', 'p.id_pelanggan = o.id_pelanggan', 'left')
             ->join('users u', 'u.id_user = p.id_user', 'left')
-            ->join('pengiriman pg', 'pg.id_order = o.id_order', 'left')
             ->orderBy('o.created_at', 'DESC');
 
         if ($kategoriFilter !== '') {
@@ -996,7 +1001,56 @@ class LaporanModel
             $builder->where('o.is_custom', 0);
         }
 
-        return $builder->get()->getResultArray();
+        return $this->dedupeOrdersById($builder->get()->getResultArray());
+    }
+
+    /**
+     * @param list<array<string, mixed>> $orders
+     * @return list<array<string, mixed>>
+     */
+    private function dedupeOrdersById(array $orders): array
+    {
+        $seen   = [];
+        $result = [];
+
+        foreach ($orders as $order) {
+            $idOrder = (int) ($order['id_order'] ?? 0);
+            if ($idOrder <= 0 || isset($seen[$idOrder])) {
+                continue;
+            }
+
+            $seen[$idOrder] = true;
+            $result[]       = $order;
+        }
+
+        return $result;
+    }
+
+    private function isOrderCreatedInPeriod(array $order, string $start, string $endExclusive): bool
+    {
+        $created = (string) ($order['created_at'] ?? '');
+
+        return $created !== '' && $created >= $start && $created < $endExclusive;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $orders
+     * @param array<string, string>     $range
+     * @return list<array<string, mixed>>
+     */
+    private function filterOrdersCreatedInPeriod(array $orders, array $range): array
+    {
+        $start        = (string) ($range['start'] ?? '');
+        $endExclusive = (string) ($range['endExclusive'] ?? '');
+        $result       = [];
+
+        foreach ($orders as $order) {
+            if ($this->isOrderCreatedInPeriod($order, $start, $endExclusive)) {
+                $result[] = $order;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -1015,6 +1069,7 @@ class LaporanModel
         )));
 
         $pelunasanMap = [];
+        $diterimaMap  = [];
         if ($orderIds !== []) {
             $rows = $this->db()->table('payments')
                 ->select('id_order, MAX(tgl_verifikasi) AS tgl_pelunasan')
@@ -1028,6 +1083,17 @@ class LaporanModel
             foreach ($rows as $row) {
                 $pelunasanMap[(int) $row['id_order']] = (string) ($row['tgl_pelunasan'] ?? '');
             }
+
+            $pengirimanRows = $this->db()->table('pengiriman')
+                ->select('id_order, MAX(tgl_diterima) AS tgl_diterima')
+                ->whereIn('id_order', $orderIds)
+                ->groupBy('id_order')
+                ->get()
+                ->getResultArray();
+
+            foreach ($pengirimanRows as $row) {
+                $diterimaMap[(int) $row['id_order']] = (string) ($row['tgl_diterima'] ?? '');
+            }
         }
 
         foreach ($orders as &$order) {
@@ -1038,7 +1104,7 @@ class LaporanModel
                 $tgl = $pelunasanMap[$idOrder] ?? '';
                 $order['tgl_selesai'] = $tgl !== '' ? $tgl : null;
             } else {
-                $tgl = trim((string) ($order['tgl_diterima'] ?? ''));
+                $tgl = trim((string) ($diterimaMap[$idOrder] ?? ''));
                 $order['tgl_selesai'] = $tgl !== '' ? $tgl : null;
             }
         }
@@ -1078,22 +1144,17 @@ class LaporanModel
     private function filterAdminOrderList(array $orders, array $range, string $statusFilter): array
     {
         $result = [];
+        $start  = (string) ($range['start'] ?? '');
+        $endExclusive = (string) ($range['endExclusive'] ?? '');
+
         foreach ($orders as $order) {
             $status = (string) ($order['status'] ?? '');
             if (!$this->matchesAdminStatusFilter($status, $statusFilter)) {
                 continue;
             }
 
-            if ($status === 'selesai') {
-                $tgl = (string) ($order['tgl_selesai'] ?? '');
-                if ($tgl === '' || $tgl < $range['start'] || $tgl >= $range['endExclusive']) {
-                    continue;
-                }
-            } else {
-                $created = (string) ($order['created_at'] ?? '');
-                if ($created === '' || $created < $range['start'] || $created >= $range['endExclusive']) {
-                    continue;
-                }
+            if (!$this->isOrderCreatedInPeriod($order, $start, $endExclusive)) {
+                continue;
             }
 
             $result[] = $order;
@@ -1128,31 +1189,15 @@ class LaporanModel
         $endExclusive = (string) ($range['endExclusive'] ?? '');
 
         $totalPesanan      = 0;
-        $pesananMasuk      = 0;
         $pesananDibatalkan = 0;
 
         foreach ($orders as $order) {
-            $status  = (string) ($order['status'] ?? '');
-            $created = (string) ($order['created_at'] ?? '');
-
-            if ($created !== '' && $created >= $start && $created < $endExclusive) {
-                $pesananMasuk++;
-            }
-
-            $inPeriod = false;
-            if ($status === 'selesai') {
-                $tgl = (string) ($order['tgl_selesai'] ?? '');
-                $inPeriod = $tgl !== '' && $tgl >= $start && $tgl < $endExclusive;
-            } else {
-                $inPeriod = $created !== '' && $created >= $start && $created < $endExclusive;
-            }
-
-            if (!$inPeriod) {
+            if (!$this->isOrderCreatedInPeriod($order, $start, $endExclusive)) {
                 continue;
             }
 
             $totalPesanan++;
-            if ($status === 'dibatalkan') {
+            if ((string) ($order['status'] ?? '') === 'dibatalkan') {
                 $pesananDibatalkan++;
             }
         }
@@ -1162,7 +1207,7 @@ class LaporanModel
 
         return [
             'totalPesanan'      => $totalPesanan,
-            'pesananMasuk'      => $pesananMasuk,
+            'pesananMasuk'      => $totalPesanan,
             'pesananSelesai'    => getPesananSelesaiPeriode($dariTgl, $sampaiTgl),
             'pesananDibatalkan' => $pesananDibatalkan,
         ];

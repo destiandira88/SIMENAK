@@ -52,6 +52,14 @@ $updateUrl  = site_url('produksi/update-status');
             </svg>
             Approval History
         </a>
+        <?php if (in_array($status, ['proses_cetak', 'finishing'], true)): ?>
+        <a href="<?= esc(site_url('monitoring-produksi/' . $kodeOrder)) ?>" role="menuitem">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            Monitoring Produksi
+        </a>
+        <?php endif; ?>
         <?php else: ?>
         <a href="<?= esc($uploadUrl) ?>" role="menuitem">
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
@@ -65,6 +73,14 @@ $updateUrl  = site_url('produksi/update-status');
             </svg>
             History Revisi
         </a>
+        <?php if (in_array($status, ['proses_cetak', 'finishing'], true)): ?>
+        <a href="<?= esc(site_url('monitoring-produksi/' . $kodeOrder)) ?>" role="menuitem">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            Monitoring Produksi
+        </a>
+        <?php endif; ?>
         <?php if ($status === 'proses_cetak' && ! $hideCetakSelesai): ?>
             <form method="post"
                 action="<?= esc($updateUrl) ?>"

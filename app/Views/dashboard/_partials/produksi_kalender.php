@@ -12,10 +12,10 @@ $detailBase = rtrim(site_url('manajemen-desain'), '/');
                 Deadline pesanan aktif. Klik tanggal/item untuk melihat detail.
             </p>
         </div>
-        <a href="<?= esc(site_url('antrian-desain')) ?>"
+        <a href="<?= esc(site_url('dashboard')) ?>"
             class="inline-flex items-center justify-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full border-2 border-[#051747] text-[#051747] hover:bg-[#051747] hover:text-white transition-colors w-fit">
             <?= view('partials/order_detail_svg_icon', ['icon' => 'arrow-left', 'class' => 'h-3.5 w-3.5 shrink-0']) ?>
-            Antrian Desain
+            Beranda
         </a>
     </div>
 

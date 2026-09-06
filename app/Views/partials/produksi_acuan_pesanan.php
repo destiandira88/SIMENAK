@@ -201,6 +201,10 @@ if ($gambarKatalog !== '' && is_file(FCPATH . 'uploads/katalog/' . $gambarKatalo
         </div>
 
         <?php if ($status === 'proses_cetak'): ?>
+            <a href="<?= esc(site_url('monitoring-produksi/' . $kodeOrder)) ?>"
+                class="block w-full text-center border-2 border-[#051747] text-[#051747] py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors mb-3">
+                Monitoring Produksi
+            </a>
             <form method="post"
                 action="<?= esc(site_url('produksi/update-status')) ?>"
                 class="js-action-confirm-form"
@@ -214,6 +218,11 @@ if ($gambarKatalog !== '' && is_file(FCPATH . 'uploads/katalog/' . $gambarKatalo
                     ✓ Cetak Selesai
                 </button>
             </form>
+        <?php elseif ($status === 'finishing'): ?>
+            <a href="<?= esc(site_url('monitoring-produksi/' . $kodeOrder)) ?>"
+                class="block w-full text-center border-2 border-[#051747] text-[#051747] py-2.5 rounded-full text-sm font-bold hover:bg-[#051747] hover:text-white transition-colors">
+                Monitoring Produksi
+            </a>
         <?php endif; ?>
     </div>
 </div>

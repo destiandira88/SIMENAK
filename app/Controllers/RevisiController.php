@@ -7,7 +7,7 @@ use CodeIgniter\HTTP\RedirectResponse;
 
 class RevisiController extends BaseController
 {
-    protected $helpers = ['form', 'url', 'notification'];
+    protected $helpers = ['form', 'url', 'notification', 'mockup'];
 
     private const STATUSES_ANTRIAN = [
         'terverifikasi',
@@ -56,7 +56,7 @@ class RevisiController extends BaseController
         }
 
         $readOnly = $role === 'owner';
-        $backUrl  = $readOnly ? 'manajemen-desain' : 'antrian-desain';
+        $backUrl  = $readOnly ? 'manajemen-desain' : 'dashboard';
 
         $context = $this->loadWorkspaceContext($idOrder);
         if ($context === null) {
@@ -80,6 +80,84 @@ class RevisiController extends BaseController
         return view('revisi/workspace', $context);
     }
 
+    /**
+     * Daftar pesanan tahap cetak (Manajemen Produksi).
+     */
+    public function manajemenProduksi(): RedirectResponse|string
+    {
+        $role = (string) session()->get('role');
+        if (! in_array($role, ['produksi', 'owner'], true)) {
+            return redirect()->to(site_url('dashboard'));
+        }
+
+        $orders = $this->fetchOrdersQueue(['proses_cetak']);
+
+        return view('revisi/manajemen_produksi', [
+            'title'      => 'Manajemen Produksi',
+            'page_title' => 'Manajemen Produksi',
+            'orders'     => $orders,
+            'role'       => $role,
+            'readOnly'   => $role === 'owner',
+        ]);
+    }
+
+    /**
+     * Halaman monitoring cetak → finishing (1 pesanan).
+     */
+    public function monitoringCetak(string $kodeOrder): RedirectResponse|string
+    {
+        $role = (string) session()->get('role');
+        if (! in_array($role, ['produksi', 'owner'], true)) {
+            return redirect()->to(site_url('dashboard'));
+        }
+
+        helper('deadline');
+
+        $order = $this->fetchOrderByKode($kodeOrder);
+        if ($order === null) {
+            return redirect()->to(site_url($role === 'owner' ? 'manajemen-produksi' : 'manajemen-produksi'))
+                ->with('error', 'Pesanan tidak ditemukan.');
+        }
+
+        $status = (string) ($order['status'] ?? '');
+        $allowed = ['proses_cetak', 'finishing', 'siap_kirim', 'siap_diambil', 'dikirim', 'menunggu_verifikasi_lunas', 'pelunasan_terverifikasi', 'selesai'];
+        if (! in_array($status, $allowed, true)) {
+            return redirect()->to(site_url('manajemen-produksi'))
+                ->with('error', 'Pesanan belum masuk tahap cetak.');
+        }
+
+        // Jangan backfill tanggal saat buka halaman — hanya dari ACC (mulai cetak) / klik Finishing.
+        $tglMulaiCetak = trim((string) ($order['tgl_mulai_cetak'] ?? ''));
+        $tglFinishing  = trim((string) ($order['tgl_finishing'] ?? ''));
+        $durasiHari    = null;
+        if ($tglMulaiCetak !== '' && $tglFinishing !== '') {
+            try {
+                $start = new \DateTimeImmutable($tglMulaiCetak);
+                $end   = new \DateTimeImmutable($tglFinishing);
+                $durasiHari = (int) $start->diff($end)->days;
+            } catch (\Throwable) {
+                $durasiHari = null;
+            }
+        }
+
+        $stepCetakDone      = $tglMulaiCetak !== '' || in_array($status, ['proses_cetak', 'finishing', 'siap_kirim', 'siap_diambil', 'dikirim', 'menunggu_verifikasi_lunas', 'pelunasan_terverifikasi', 'selesai'], true);
+        $stepFinishingDone  = $tglFinishing !== '' || in_array($status, ['finishing', 'siap_kirim', 'siap_diambil', 'dikirim', 'menunggu_verifikasi_lunas', 'pelunasan_terverifikasi', 'selesai'], true);
+        $canKlikFinishing   = $role === 'produksi' && $status === 'proses_cetak';
+
+        return view('revisi/monitoring_cetak', [
+            'title'             => 'Monitoring Produksi-' . ($order['kode_order'] ?? ''),
+            'page_title'        => 'Monitoring Produksi',
+            'order'             => $order,
+            'role'              => $role,
+            'tglMulaiCetak'     => $tglMulaiCetak,
+            'tglFinishing'      => $tglFinishing,
+            'durasiHari'        => $durasiHari,
+            'stepCetakDone'     => $stepCetakDone,
+            'stepFinishingDone' => $stepFinishingDone,
+            'canKlikFinishing'  => $canKlikFinishing,
+        ]);
+    }
+
     public function upload(int $idOrder): RedirectResponse
     {
         if ((string) session()->get('role') !== 'produksi') {
@@ -88,19 +166,19 @@ class RevisiController extends BaseController
 
         $order = $this->fetchOrderById($idOrder);
         if ($order === null) {
-            return redirect()->to(site_url('antrian-desain'))
+            return redirect()->to(site_url('dashboard'))
                 ->with('error', 'Pesanan tidak ditemukan.');
         }
 
         if (!in_array((string) ($order['status'] ?? ''), self::STATUSES_UPLOAD_DETAIL, true)) {
-            return redirect()->to(site_url('antrian-desain'))
+            return redirect()->to(site_url('dashboard'))
                 ->with('error', 'Upload draft tidak tersedia pada status ini.');
         }
 
         $revisiModel = model(RevisiDesainModel::class);
         $lastRevis   = $revisiModel->getLatestByOrder($idOrder);
         if (!canProduksiUploadDraft($order, $lastRevis)) {
-            return redirect()->to(site_url('antrian-desain'))
+            return redirect()->to(site_url('dashboard'))
                 ->with('error', 'Upload draft tidak tersedia. Menunggu review atau ACC pelanggan.');
         }
 
@@ -136,20 +214,55 @@ class RevisiController extends BaseController
         $versi       = $revisiModel->getNextVersi($idOrder);
         $kodeOrder   = (string) ($order['kode_order'] ?? '');
         $catatanProd = trim((string) $this->request->getPost('catatan_prod'));
+        $adjustArr   = normalizeMockupAdjust($this->request->getPost('mockup_adjust'));
+
+        $pendingMap = [];
+        $uploaded   = $this->request->getFiles();
+        $layerFiles = $uploaded['layer_file'] ?? null;
+        if (is_array($layerFiles)) {
+            foreach ($layerFiles as $pendingId => $file) {
+                if (! is_object($file) || ! method_exists($file, 'isValid') || ! $file->isValid()) {
+                    continue;
+                }
+                $ext = strtolower($file->getExtension());
+                if (! in_array($ext, ['jpg', 'jpeg', 'png'], true) || $file->getSize() > 1024 * 1024) {
+                    continue;
+                }
+                $pendingKey = (string) $pendingId;
+                if ($pendingKey === '' || ! str_starts_with($pendingKey, 'pending_')) {
+                    continue;
+                }
+                $layerName = time() . '_' . $file->getClientName();
+                try {
+                    $file->move($uploadDir, $layerName);
+                    $pendingMap[$pendingKey] = $layerName;
+                } catch (\Throwable $e) {
+                    log_message('error', '[upload] layer: {msg}', ['msg' => $e->getMessage()]);
+                }
+            }
+        }
+        if ($pendingMap !== []) {
+            $adjustArr = remapMockupLayerFiles($adjustArr, $pendingMap);
+        }
+        $mockupJson = encodeMockupAdjust($adjustArr);
+        if ($mockupJson === null && $this->request->getPost('mockup_adjust') !== null) {
+            $mockupJson = '{}';
+        }
 
         $db = \Config\Database::connect();
         $db->transStart();
 
         try {
             $revisiModel->insert([
-                'id_order'      => $idOrder,
-                'id_produksi'   => (int) session()->get('id_user'),
-                'versi'         => $versi,
-                'kode_revisi'   => 'REV-' . $kodeOrder . '-V' . $versi,
-                'file_draft'    => $newName,
-                'catatan_prod'  => $catatanProd !== '' ? $catatanProd : null,
-                'status'        => 'uploaded',
-                'created_at'    => date('Y-m-d H:i:s'),
+                'id_order'       => $idOrder,
+                'id_produksi'    => (int) session()->get('id_user'),
+                'versi'          => $versi,
+                'kode_revisi'    => 'REV-' . $kodeOrder . '-V' . $versi,
+                'file_draft'     => $newName,
+                'mockup_adjust'  => $mockupJson,
+                'catatan_prod'   => $catatanProd !== '' ? $catatanProd : null,
+                'status'         => 'uploaded',
+                'created_at'     => date('Y-m-d H:i:s'),
             ]);
 
             $db->table('orders')->where('id_order', $idOrder)->update([
@@ -179,31 +292,54 @@ class RevisiController extends BaseController
         $emailPelanggan  = (string) ($order['email_pelanggan'] ?? '');
         $namaPelanggan   = (string) ($order['nama_pelanggan'] ?? 'Pelanggan');
 
+        $judulDraft = 'Draft Desain Tersedia';
+        $pesanDraft = "Draft v{$versi} pesanan {$kodeOrder} siap Anda review.";
+        $detailUrlDraft = pelangganOrderDetailUrl($kodeOrder, $judulDraft);
+
         if ($idUserPelanggan > 0) {
             sendNotifInApp(
                 $idUserPelanggan,
                 $idOrder,
-                'Draft Desain Tersedia',
-                "Draft v{$versi} pesanan {$kodeOrder} siap direview."
+                $judulDraft,
+                $pesanDraft
             );
         }
 
         if ($emailPelanggan !== '') {
+            $tglUploadDraft = date('Y-m-d H:i:s');
+            $deadlineRaw    = (string) ($order['deadline_produksi'] ?? $order['deadline_diajukan'] ?? '');
+
             sendNotifEmail(
                 $emailPelanggan,
                 "Draft Desain v{$versi} Tersedia-{$kodeOrder}",
-                '<p>Halo <strong>' . esc($namaPelanggan) . '</strong>,</p>'
-                . "<p>Draft v{$versi} untuk pesanan <strong>" . esc($kodeOrder) . '</strong> sudah tersedia.</p>'
-                . '<p>Silakan login dan review draft-nya.</p>'
-                . '<p><a href="' . esc(site_url('order/detail/' . $kodeOrder)) . '">Buka detail pesanan</a></p>'
+                renderNotifEmail('draft_siap', [
+                    'pesanHtml' => '<p style="margin:0 0 12px;">Halo <strong>' . esc($namaPelanggan) . '</strong>,</p>'
+                        . '<p style="margin:0 0 8px;">Draft desain <strong>versi ' . (int) $versi . '</strong> untuk pesanan '
+                        . emailHighlightKodeOrder($kodeOrder)
+                        . ' sudah siap direview.</p>'
+                        . '<p style="margin:0;color:#64748B;font-size:13px;">Silakan tinjau dan ACC atau ajukan revisi dari halaman pesanan.</p>',
+                    'ctaUrl'         => $detailUrlDraft,
+                    'ctaLabel'       => 'Review Draft Sekarang',
+                    'kodeOrder'      => $kodeOrder,
+                    'namaProduk'     => (string) ($order['nama_produk'] ?? 'Produk Custom'),
+                    'gambarUrl'      => resolveKatalogGambarEmailUrl($order['gambar_katalog'] ?? null),
+                    'produkSubteks'  => buildEmailProdukSubteks($order),
+                    'tglOrderLabel'  => formatEmailDatetime($order['created_at'] ?? null),
+                    'deadlineLabel'  => formatEmailDate($deadlineRaw !== '' ? $deadlineRaw : null),
+                    'versi'          => $versi,
+                    'draftUrl'       => resolveDraftGambarEmailUrl($newName),
+                    'tglUploadLabel' => formatEmailDatetime($tglUploadDraft),
+                    'sisaKuota'      => (int) ($order['sisa_kuota'] ?? 0),
+                    'kuotaRevisi'    => (int) ($order['kuota_revisi'] ?? 0),
+                ])
             );
             sendNotifWaForEmail(
                 \Config\Database::connect(),
                 $emailPelanggan,
                 buildNotifWaText(
                     "Draft Desain v{$versi} Tersedia-{$kodeOrder}",
-                    "Draft v{$versi} untuk pesanan {$kodeOrder} sudah tersedia. Silakan review draft.",
-                    site_url('order/detail/' . $kodeOrder)
+                    $pesanDraft,
+                    $detailUrlDraft
                 )
             );
         }
@@ -211,6 +347,114 @@ class RevisiController extends BaseController
         return redirect()->to(site_url('manajemen-desain/' . $idOrder))
             ->with('success', "Draft v{$versi} berhasil diunggah.");
     }
+
+    /**
+     * Simpan penyesuaian mockup (zoom/geser) untuk draft yang sudah ada — tanpa unggah ulang.
+     */
+    public function saveMockupAdjust(int $idOrder): RedirectResponse
+    {
+        if ((string) session()->get('role') !== 'produksi') {
+            return redirect()->to(site_url('dashboard'));
+        }
+
+        $order = $this->fetchOrderById($idOrder);
+        if ($order === null) {
+            return redirect()->to(site_url('dashboard'))
+                ->with('error', 'Pesanan tidak ditemukan.');
+        }
+
+        if (! in_array((string) ($order['status'] ?? ''), self::STATUSES_UPLOAD_DETAIL, true)) {
+            return redirect()->back()
+                ->with('error', 'Penyesuaian mockup tidak tersedia pada status ini.');
+        }
+
+        $revisiModel = model(RevisiDesainModel::class);
+        $idRevisi    = (int) $this->request->getPost('id_revisi');
+        $revisi      = null;
+
+        if ($idRevisi > 0) {
+            $revisi = $revisiModel->where('id_revisi', $idRevisi)
+                ->where('id_order', $idOrder)
+                ->first();
+        }
+
+        if ($revisi === null) {
+            $revisi = $revisiModel->getLatestByOrder($idOrder);
+        }
+
+        if ($revisi === null || trim((string) ($revisi['file_draft'] ?? '')) === '') {
+            return redirect()->back()
+                ->with('error', 'Belum ada draft yang bisa disesuaikan.');
+        }
+
+        $adjustArr = normalizeMockupAdjust($this->request->getPost('mockup_adjust'));
+
+        // Upload gambar layer tambahan (layer_file[pending_xxx])
+        $pendingMap = [];
+        $uploaded    = $this->request->getFiles();
+        $layerFiles  = $uploaded['layer_file'] ?? null;
+        if (is_array($layerFiles)) {
+            $uploadDir = FCPATH . 'uploads/draft_desain/';
+            if (! is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            foreach ($layerFiles as $pendingId => $file) {
+                if (! is_object($file) || ! method_exists($file, 'isValid') || ! $file->isValid()) {
+                    continue;
+                }
+                $ext = strtolower($file->getExtension());
+                if (! in_array($ext, ['jpg', 'jpeg', 'png'], true)) {
+                    continue;
+                }
+                if ($file->getSize() > 1024 * 1024) {
+                    continue;
+                }
+                $pendingKey = (string) $pendingId;
+                if ($pendingKey === '' || ! str_starts_with($pendingKey, 'pending_')) {
+                    continue;
+                }
+                $newName = time() . '_' . $file->getClientName();
+                try {
+                    $file->move($uploadDir, $newName);
+                    $pendingMap[$pendingKey] = $newName;
+                } catch (\Throwable $e) {
+                    log_message('error', '[saveMockupAdjust] layer upload: {msg}', ['msg' => $e->getMessage()]);
+                }
+            }
+        }
+
+        if ($pendingMap !== []) {
+            $adjustArr = remapMockupLayerFiles($adjustArr, $pendingMap);
+        }
+        $mockupJson = encodeMockupAdjust($adjustArr);
+        if ($mockupJson === null) {
+            $mockupJson = '{}';
+        }
+
+        try {
+            $revisiModel->update((int) $revisi['id_revisi'], [
+                'mockup_adjust' => $mockupJson,
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', '[RevisiController::saveMockupAdjust] {msg}', ['msg' => $e->getMessage()]);
+
+            return redirect()->back()->with('error', 'Gagal menyimpan penyesuaian mockup.');
+        }
+
+        $versi     = (int) ($revisi['versi'] ?? 0);
+        $kodeOrder = (string) ($order['kode_order'] ?? '');
+
+        helper('activity_log');
+        logActivity(
+            'ubah',
+            'produksi',
+            "Menyesuaikan preview mockup draft v{$versi} pesanan {$kodeOrder}"
+        );
+
+        return redirect()->to(site_url('manajemen-desain/' . $idOrder))
+            ->with('success', "Penyesuaian mockup draft v{$versi} tersimpan. Pelanggan akan melihat preview yang sama.");
+    }
+
     public function updateStatusProduksi(): RedirectResponse
     {
         if ((string) session()->get('role') !== 'produksi') {
@@ -235,11 +479,17 @@ class RevisiController extends BaseController
 
         $kodeOrder = (string) ($order['kode_order'] ?? '');
 
+        $tglFinishing  = date('Y-m-d');
+        $updatePayload = [
+            'status'        => 'finishing',
+            'tgl_finishing' => $tglFinishing,
+        ];
+
         try {
             \Config\Database::connect()
                 ->table('orders')
                 ->where('id_order', $idOrder)
-                ->update(['status' => 'finishing']);
+                ->update($updatePayload);
         } catch (\Throwable $e) {
             log_message('error', '[RevisiController::updateStatusProduksi] {msg}', ['msg' => $e->getMessage()]);
 
@@ -257,24 +507,37 @@ class RevisiController extends BaseController
         $namaPelanggan  = (string) ($order['nama_pelanggan'] ?? 'Pelanggan');
 
         if ($emailPelanggan !== '') {
+            $judulFinishing = 'Pesanan Masuk Tahap Finishing';
+            $detailUrlFinishing = pelangganOrderDetailUrl($kodeOrder, $judulFinishing);
             sendNotifEmail(
                 $emailPelanggan,
-                "[No-Reply] Pesanan Masuk Tahap Finishing-{$kodeOrder}",
-                '<p>Halo <strong>' . esc($namaPelanggan) . '</strong>,</p>'
-                . "<p>Pesanan <strong>" . esc($kodeOrder) . '</strong> telah selesai proses cetak '
-                . 'dan sedang dalam tahap <strong>Finishing</strong> (penyelesaian akhir).</p>'
-                . '<p>Kami akan segera menghubungi Anda jika pesanan sudah siap dikirim atau diambil.</p>'
-                . '<p><a href="' . esc(site_url('order/detail/' . $kodeOrder)) . '">Lihat detail pesanan</a></p>'
+                "[No-Reply] {$judulFinishing}-{$kodeOrder}",
+                renderNotifEmail('finishing', array_merge(buildEmailOrderViewData($order), [
+                    'pesanHtml' => '<p style="margin:0 0 12px;">Halo <strong>' . esc($namaPelanggan) . '</strong>,</p>'
+                        . '<p style="margin:0;">Pesanan '
+                        . emailHighlightKodeOrder($kodeOrder)
+                        . ' telah selesai dicetak dan sedang dalam tahap penyelesaian akhir (finishing).</p>',
+                    'ctaUrl'      => $detailUrlFinishing,
+                    'ctaLabel'    => 'Lihat Status Pesanan',
+                    'statusLabel' => 'Finishing',
+                    'statusNote'  => 'Kami akan memberi tahu Anda saat pesanan siap dikirim atau diambil.',
+                ]))
             );
             sendNotifWaForEmail(
                 \Config\Database::connect(),
                 $emailPelanggan,
                 buildNotifWaText(
-                    "Pesanan Masuk Tahap Finishing-{$kodeOrder}",
-                    "Pesanan {$kodeOrder} selesai proses cetak dan masuk tahap Finishing.",
-                    site_url('order/detail/' . $kodeOrder)
+                    "{$judulFinishing}-{$kodeOrder}",
+                    "Pesanan {$kodeOrder} selesai dicetak dan masuk tahap finishing.",
+                    $detailUrlFinishing
                 )
             );
+        }
+
+        $returnTo = (string) $this->request->getPost('return_to');
+        if ($returnTo === 'monitoring') {
+            return redirect()->to(site_url('monitoring-produksi/' . $kodeOrder))
+                ->with('success', "Pesanan {$kodeOrder} masuk tahap Finishing.");
         }
 
         return redirect()->back()
@@ -303,37 +566,30 @@ class RevisiController extends BaseController
             return redirect()->back()->with('error', 'Akses ditolak.');
         }
 
-        $sisaKuota = (int) ($order['sisa_kuota'] ?? 0);
         $revisStatus = (string) ($revisi['status'] ?? '');
 
-        if ($sisaKuota > 0) {
-            $latest = model(RevisiDesainModel::class)->getLatestByOrder($idOrder);
-            if ($latest === null
-                || (int) ($latest['id_revisi'] ?? 0) !== $idRevisi
-                || ($latest['status'] ?? '') !== 'uploaded') {
-                return redirect()->back()->with('error', 'Hanya draft terbaru yang menunggu review yang dapat di-ACC.');
-            }
-        } else {
-            // Kuota habis: panel pilih-draft baru boleh dipakai setelah Produksi upload draft final
-            // (terbaru = uploaded). Versi lama (diajukan_revisi) tetap boleh dipilih.
-            $latest = model(RevisiDesainModel::class)->getLatestByOrder($idOrder);
-            if ($latest === null || ($latest['status'] ?? '') !== 'uploaded') {
-                return redirect()->back()->with(
-                    'error',
-                    'Menunggu Produksi mengunggah draft final sebelum dapat memilih draft untuk cetak.'
-                );
-            }
-            if (!in_array($revisStatus, ['uploaded', 'diajukan_revisi'], true)) {
-                return redirect()->back()->with('error', 'Draft ini tidak dapat dipilih untuk cetak.');
-            }
+        // Draft terbaru harus sudah uploaded (Produksi selesai iterasi)
+        // sebelum ACC ke versi mana pun diperbolehkan.
+        $latest = model(RevisiDesainModel::class)->getLatestByOrder($idOrder);
+        if ($latest === null || ($latest['status'] ?? '') !== 'uploaded') {
+            return redirect()->back()->with(
+                'error',
+                'ACC belum bisa dilakukan. Menunggu Produksi mengunggah draft terbaru terlebih dahulu.'
+            );
+        }
 
-            $sudahAcc = $db->table('revisi_desain')
-                ->where('id_order', $idOrder)
-                ->where('status', 'acc')
-                ->countAllResults();
-            if ($sudahAcc > 0) {
-                return redirect()->back()->with('error', 'Sudah ada draft yang di-ACC untuk pesanan ini.');
-            }
+        // Draft target harus berstatus uploaded atau diajukan_revisi (belum pernah ditolak/acc).
+        if (!in_array($revisStatus, ['uploaded', 'diajukan_revisi'], true)) {
+            return redirect()->back()->with('error', 'Draft ini tidak dapat dipilih untuk cetak.');
+        }
+
+        // Pastikan belum ada draft lain yang di-ACC untuk pesanan ini.
+        $sudahAcc = $db->table('revisi_desain')
+            ->where('id_order', $idOrder)
+            ->where('status', 'acc')
+            ->countAllResults();
+        if ($sudahAcc > 0) {
+            return redirect()->back()->with('error', 'Sudah ada draft yang di-ACC untuk pesanan ini.');
         }
 
         $kodeOrder = (string) ($order['kode_order'] ?? '');
@@ -341,7 +597,11 @@ class RevisiController extends BaseController
 
         try {
             $db->table('revisi_desain')->where('id_revisi', $idRevisi)->update(['status' => 'acc']);
-            $db->table('orders')->where('id_order', $idOrder)->update(['status' => 'proses_cetak']);
+            $db->table('orders')->where('id_order', $idOrder)->update([
+                'status'          => 'proses_cetak',
+                'tgl_mulai_cetak' => date('Y-m-d'),
+                'tgl_finishing'   => null,
+            ]);
         } catch (\Throwable $e) {
             log_message('error', '[RevisiController::acc] {msg}', ['msg' => $e->getMessage()]);
 
@@ -354,9 +614,7 @@ class RevisiController extends BaseController
             "Pelanggan memilih draft v{$versi} untuk dicetak-{$kodeOrder}. Lanjut proses cetak."
         );
 
-        $successMsg = $sisaKuota <= 0
-            ? "Draft v{$versi} dipilih untuk cetak. Pesanan lanjut ke proses cetak."
-            : 'Desain berhasil di-ACC. Pesanan lanjut ke proses cetak.';
+        $successMsg = "Draft v{$versi} dipilih untuk cetak. Pesanan lanjut ke proses cetak.";
 
         return redirect()->to(site_url('order/detail/' . $kodeOrder))
             ->with('success', $successMsg);
@@ -464,12 +722,13 @@ class RevisiController extends BaseController
         $latest    = model(RevisiDesainModel::class)->getLatestByOrder($idOrder);
 
         return view('revisi/history', [
-            'title'      => 'Riwayat Revisi-' . $kodeOrder,
-            'page_title' => 'Approval History Revisi',
-            'order'      => $order,
-            'revisList'  => $revisList,
-            'latest'     => $latest,
-            'role'       => $role,
+            'title'         => 'Riwayat Revisi-' . $kodeOrder,
+            'page_title'    => 'Approval History Revisi',
+            'order'         => $order,
+            'revisList'     => $revisList,
+            'latest'        => $latest,
+            'role'          => $role,
+            'mockupAngles'  => getMockupAnglesForProduk((int) ($order['id_katalog'] ?? 0)),
         ]);
     }
 
