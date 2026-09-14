@@ -1,0 +1,1459 @@
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1
+-- Generation Time: Sep 14, 2026 at 04:38 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `simenak_db`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `activity_logs`
+--
+
+CREATE TABLE `activity_logs` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `id_user` int(10) UNSIGNED NOT NULL,
+  `nama_user` varchar(100) DEFAULT NULL,
+  `role` varchar(20) DEFAULT NULL,
+  `aksi` varchar(50) NOT NULL,
+  `modul` varchar(50) NOT NULL,
+  `keterangan` text NOT NULL,
+  `created_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `activity_logs`
+--
+
+INSERT INTO `activity_logs` (`id`, `id_user`, `nama_user`, `role`, `aksi`, `modul`, `keterangan`, `created_at`) VALUES
+(64, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah katalog Kalender Dinding 7  Lembar (With Cover): harga Rp 15.000 menjadi Rp 25.000, min order 1000 menjadi 500 set', '2026-09-01 22:14:01'),
+(65, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah katalog Kalender Dinding 12 Lembar (No Cover): min order 1000 menjadi 500 pcs', '2026-09-01 22:15:15'),
+(66, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah katalog Undangan Pernikahan Softcover B&W1: harga Rp 7.000 menjadi Rp 2.000, min order 500 menjadi 498 pcs', '2026-09-01 22:16:35'),
+(67, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah katalog Brosur A5 Full B&W: harga Rp 500 menjadi Rp 115.000, min order 500 menjadi 1 Rim', '2026-09-01 22:26:02'),
+(68, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah katalog Buku Agenda A (Foil): harga Rp 50.000 menjadi Rp 35.000, min order 1000 menjadi 100 Buku', '2026-09-01 22:26:53'),
+(69, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah katalog Desain Logo: harga Rp 300.000 menjadi Rp 25.000', '2026-09-01 22:27:30'),
+(70, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah katalog Nota / Kwitansi: harga Rp 80.000 menjadi Rp 4.000', '2026-09-01 22:28:36'),
+(71, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah katalog Kalender Dinding [Tanpa Gantungan]: harga Rp 5.000 menjadi Rp 10.000', '2026-09-01 22:29:25'),
+(72, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah katalog Spanduk / Banner: harga Rp 50.000 menjadi Rp 25.000', '2026-09-01 22:34:22'),
+(73, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah katalog Spanduk / Banner (X-Banner) : harga Rp 25.000 menjadi Rp 75.000', '2026-09-01 22:35:18'),
+(74, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah katalog Undangan Khitanan: harga Rp 10.000 menjadi Rp 2.000', '2026-09-01 22:35:55'),
+(75, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah data katalog Undangan Pernikahan Softcover A', '2026-09-01 22:37:33'),
+(76, 2, 'Admin Z\'Plack', 'admin', 'tambah', 'katalog', 'Menambahkan katalog Stample Costum Bulat Diameter 3cm, harga Rp 35.000', '2026-09-01 22:38:52'),
+(77, 2, 'Admin Z\'Plack', 'admin', 'tambah', 'katalog', 'Menambahkan katalog Lanyard 80cm, harga Rp 19.000', '2026-09-01 22:40:32'),
+(78, 2, 'Admin Z\'Plack', 'admin', 'tambah', 'katalog', 'Menambahkan katalog Buku Yasin Hard  Cover , harga Rp 25.000', '2026-09-01 22:41:33'),
+(79, 60, 'Destiandira', 'admin', 'ubah', 'katalog', 'Mengubah data katalog Buku Yasin Hard  Cover', '2026-09-01 22:59:51'),
+(80, 60, 'Destiandira', 'admin', 'ubah', 'katalog', 'Mengubah data katalog Lanyard 80cm', '2026-09-01 23:00:04'),
+(81, 60, 'Destiandira', 'admin', 'ubah', 'katalog', 'Mengubah data katalog Stample Costum Bulat Diameter 3cm', '2026-09-01 23:00:18'),
+(82, 60, 'Destiandira', 'admin', 'ubah', 'katalog', 'Mengubah data katalog Kalender Dinding 8 Lembar (With Cover)', '2026-09-01 23:00:36'),
+(83, 60, 'Destiandira', 'admin', 'ubah', 'katalog', 'Mengubah data katalog Undangan Pernikahan Softcover B&W1', '2026-09-01 23:00:54'),
+(84, 2, 'Admin Z\'Plack', 'admin', 'tambah', 'kerjasama', 'Menetapkan kerja sama perusahaan untuk Yani Isnaeni (Perusahaan Mitra Kasih)', '2026-09-01 23:22:19'),
+(85, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v1 pesanan ORD-20260901-0001, status menjadi proses_desain', '2026-09-01 23:59:04'),
+(86, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v2 pesanan ORD-20260901-0001, status menjadi proses_desain', '2026-09-02 00:00:58'),
+(87, 60, 'Destiandira', 'admin', 'ubah', 'katalog', 'Mengubah katalog Undangan Pernikahan Softcover B&W1: min order 498 menjadi 500 pcs', '2026-09-02 00:01:07'),
+(88, 3, 'Bagian Keuangan', 'keuangan', 'verifikasi', 'pembayaran', 'Memverifikasi DP pesanan ORD-20260901-0002', '2026-09-02 00:02:39'),
+(89, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v1 pesanan ORD-20260901-0002, status menjadi proses_desain', '2026-09-02 00:17:44'),
+(90, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v2 pesanan ORD-20260901-0002, status menjadi proses_desain', '2026-09-02 00:20:20'),
+(91, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengubah status pesanan ORD-20260901-0002 dari proses_cetak menjadi finishing', '2026-09-02 00:20:55'),
+(92, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'pengiriman', 'Mengubah status pesanan ORD-20260901-0002 dari finishing menjadi siap_kirim', '2026-09-02 00:22:40'),
+(93, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'pengiriman', 'Mengubah status pesanan ORD-20260901-0002 dari siap_kirim menjadi dikirim (resi: JX5509244778)', '2026-09-02 00:25:51'),
+(94, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'pemesanan', 'Mengonfirmasi harga custom pesanan ORD-20260902-0034 menjadi Rp 12.000.000', '2026-09-02 02:02:49'),
+(95, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'pemesanan', 'Mengonfirmasi harga custom pesanan ORD-20260902-0031 menjadi Rp 12.000.000', '2026-09-02 02:06:57'),
+(96, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'pemesanan', 'Mengonfirmasi harga custom pesanan ORD-20260902-0033 menjadi Rp 12.000.000', '2026-09-02 02:10:06'),
+(97, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'pemesanan', 'Mengonfirmasi harga custom pesanan ORD-20260902-0032 menjadi Rp 12.000.000', '2026-09-02 02:10:28'),
+(98, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'pemesanan', 'Mengonfirmasi harga custom pesanan ORD-20260902-0022 menjadi Rp 3.125.000', '2026-09-02 02:11:12'),
+(99, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'pemesanan', 'Mengonfirmasi harga custom pesanan ORD-20260902-0021 menjadi Rp 4.500.000', '2026-09-02 02:11:39'),
+(100, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'pemesanan', 'Mengonfirmasi harga custom pesanan ORD-20260902-0013 menjadi Rp 1.500.000', '2026-09-02 02:12:18'),
+(101, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'pemesanan', 'Mengonfirmasi harga custom pesanan ORD-20260902-0003 menjadi Rp 1.900.000', '2026-09-02 02:12:56'),
+(102, 2, 'Admin Z\'Plack', 'admin', 'hapus', 'kerjasama', 'Mencabut kerja sama perusahaan untuk Yani Isnaeni (Perusahaan Mitra Kasih)', '2026-09-02 07:00:32'),
+(103, 3, 'Bagian Keuangan', 'keuangan', 'verifikasi', 'pembayaran', 'Memverifikasi DP pesanan ORD-20260726-0001', '2026-09-02 07:24:13'),
+(104, 3, 'Bagian Keuangan', 'keuangan', 'tolak', 'pembayaran', 'Menolak bukti DP pesanan ORD-20260902-0004', '2026-09-02 07:24:36'),
+(105, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v1 pesanan ORD-20260902-0027, status menjadi proses_desain', '2026-09-03 23:02:07'),
+(106, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v2 pesanan ORD-20260902-0027, status menjadi proses_desain', '2026-09-03 23:07:02'),
+(107, 3, 'Bagian Keuangan', 'keuangan', 'verifikasi', 'pembayaran', 'Memverifikasi DP pesanan ORD-20260902-0034', '2026-09-05 18:40:51'),
+(108, 3, 'Bagian Keuangan', 'keuangan', 'verifikasi', 'pembayaran', 'Memverifikasi DP pesanan ORD-20260902-0033', '2026-09-05 18:59:49'),
+(109, 3, 'Bagian Keuangan', 'keuangan', 'tolak', 'pembayaran', 'Menolak bukti DP pesanan ORD-20260902-0036', '2026-09-05 19:36:16'),
+(110, 3, 'Bagian Keuangan', 'keuangan', 'verifikasi', 'pembayaran', 'Memverifikasi DP pesanan ORD-20260905-0001', '2026-09-05 20:39:05'),
+(111, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v1 pesanan ORD-20260905-0001, status menjadi proses_desain', '2026-09-05 20:44:03'),
+(112, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengubah status pesanan ORD-20260902-0027 dari proses_cetak menjadi finishing', '2026-09-06 07:08:23'),
+(113, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengubah status pesanan ORD-20260706-0002 dari proses_cetak menjadi finishing', '2026-09-06 07:13:33'),
+(114, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v1 pesanan ORD-20260902-0034, status menjadi proses_desain', '2026-09-06 07:14:36'),
+(115, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v1 pesanan ORD-20260902-0033, status menjadi proses_desain', '2026-09-06 17:22:44'),
+(116, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v2 pesanan ORD-20260902-0033, status menjadi proses_desain', '2026-09-06 20:51:27'),
+(117, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v3 pesanan ORD-20260902-0033, status menjadi proses_desain', '2026-09-06 21:08:22'),
+(118, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah data katalog Buku Yasin Hard  Cover', '2026-09-06 21:11:26'),
+(119, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah data katalog Buku Yasin Hard  Cover', '2026-09-06 21:16:45'),
+(120, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengubah status pesanan ORD-20260902-0033 dari proses_cetak menjadi finishing', '2026-09-06 21:22:17'),
+(121, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v1 pesanan ORD-20260726-0001, status menjadi proses_desain', '2026-09-06 21:33:37'),
+(122, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v2 pesanan ORD-20260726-0001, status menjadi proses_desain', '2026-09-06 21:43:35'),
+(123, 2, 'Admin Z\'Plack', 'admin', 'ubah', 'katalog', 'Mengubah data katalog Undangan Khitanan Full Color', '2026-09-06 22:20:52'),
+(124, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v1 pesanan ORD-20260902-0016, status menjadi proses_desain', '2026-09-06 22:32:09'),
+(125, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengubah status pesanan ORD-20260726-0001 dari proses_cetak menjadi finishing', '2026-09-07 10:47:38'),
+(126, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengunggah draft desain v2 pesanan ORD-20260902-0034, status menjadi proses_desain', '2026-09-07 12:57:42'),
+(127, 4, 'Bagian Produksi', 'produksi', 'ubah', 'produksi', 'Mengubah status pesanan ORD-20260902-0034 dari proses_cetak menjadi finishing', '2026-09-07 13:01:37');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `form_templates`
+--
+
+CREATE TABLE `form_templates` (
+  `id_template` int(11) NOT NULL,
+  `id_katalog` int(11) NOT NULL,
+  `field_key` varchar(50) NOT NULL,
+  `field_label` varchar(100) NOT NULL,
+  `field_type` enum('text','date','time','textarea','file') NOT NULL,
+  `placeholder` varchar(150) DEFAULT NULL,
+  `is_required` tinyint(4) DEFAULT 1,
+  `urutan` int(11) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `form_templates`
+--
+
+INSERT INTO `form_templates` (`id_template`, `id_katalog`, `field_key`, `field_label`, `field_type`, `placeholder`, `is_required`, `urutan`) VALUES
+(1, 1, 'nama_mempelai_pria', 'Nama Mempelai Pria', 'text', 'Contoh: Ahmad Fauzi', 1, 1),
+(2, 1, 'nama_mempelai_wanita', 'Nama Mempelai Wanita', 'text', 'Contoh: Siti Rahmah', 1, 2),
+(3, 1, 'nama_keluarga_pria', 'Nama Keluarga Mempelai Pria', 'text', 'Contoh: Bpk. H. Suparman', 1, 3),
+(4, 1, 'nama_keluarga_wanita', 'Nama Keluarga Mempelai Wanita', 'text', 'Contoh: Bpk. H. Sumarno', 1, 4),
+(5, 1, 'akad_hari', 'Hari Akad Nikah', 'text', 'Contoh: Sabtu', 1, 5),
+(6, 1, 'akad_tanggal', 'Tanggal Akad Nikah', 'date', '', 1, 6),
+(7, 1, 'akad_waktu', 'Waktu Akad Nikah', 'time', '', 1, 7),
+(8, 1, 'akad_tempat', 'Tempat Akad Nikah', 'textarea', 'Nama gedung dan alamat lengkap', 1, 8),
+(9, 1, 'resepsi_hari', 'Hari Resepsi', 'text', 'Contoh: Sabtu', 1, 9),
+(10, 1, 'resepsi_tanggal', 'Tanggal Resepsi', 'date', '', 1, 10),
+(11, 1, 'resepsi_waktu', 'Waktu Resepsi', 'time', '', 1, 11),
+(12, 1, 'resepsi_tempat', 'Tempat Resepsi', 'textarea', 'Nama gedung dan alamat lengkap', 1, 12),
+(13, 1, 'turut_mengundang', 'Turut Mengundang', 'textarea', 'Nama-nama yang turut mengundang', 0, 13),
+(14, 1, 'hiburan', 'Hiburan (jika ada)', 'text', 'Contoh: Organ Tunggal', 0, 14),
+(15, 1, 'lampiran_peta', 'Lampiran Peta Lokasi', 'file', '', 0, 15),
+(16, 1, 'keterangan', 'Keterangan Tambahan', 'textarea', 'Informasi tambahan lainnya', 0, 16),
+(17, 2, 'nama_anak', 'Nama Anak yang Dikhitan', 'text', 'Contoh: Muhammad Rafif', 1, 1),
+(18, 2, 'nama_bapak', 'Nama Bapak', 'text', 'Contoh: H. Budi Santoso', 1, 2),
+(19, 2, 'nama_ibu', 'Nama Ibu', 'text', 'Contoh: Hj. Sri Wahyuni', 1, 3),
+(20, 2, 'resepsi_hari', 'Hari Resepsi', 'text', 'Contoh: Minggu', 1, 4),
+(21, 2, 'resepsi_tanggal', 'Tanggal Resepsi', 'date', '', 1, 5),
+(22, 2, 'resepsi_waktu', 'Waktu Resepsi', 'time', '', 1, 6),
+(23, 2, 'resepsi_tempat', 'Tempat Resepsi', 'textarea', 'Nama gedung dan alamat lengkap', 1, 7),
+(24, 2, 'turut_mengundang', 'Turut Mengundang', 'textarea', 'Nama-nama yang turut mengundang', 0, 8),
+(25, 2, 'hiburan', 'Hiburan (jika ada)', 'text', 'Contoh: Organ Tunggal', 0, 9),
+(26, 2, 'lampiran_peta', 'Lampiran Peta Lokasi', 'file', '', 0, 10),
+(27, 2, 'keterangan', 'Keterangan Tambahan', 'textarea', 'Informasi tambahan lainnya', 0, 11),
+(30, 2, 'waktu_selesai_resepsi', 'Waktu Selesai Resepsi', 'time', '', 1, 12),
+(31, 13, 'nama_mempelai_pria', 'Nama Mempelai Pria', 'text', 'Nama Lengkap Mempelai Pria ', 1, 1),
+(32, 13, 'nama_mempelai_wanita', 'Nama Mempelai Wanita', 'text', 'Nama Lengkap Mempelai Wanita', 1, 2),
+(33, 13, 'nama_keluarga_mempelai_pria', 'Nama Keluarga Mempelai Pria', 'text', 'Contoh: Bapak Ahmad dan Ibu Hartini', 1, 3),
+(34, 13, 'nama_keluarga_mempelai_wanita', 'Nama Keluarga Mempelai Wanita', 'text', 'Contoh: Bapak Ahlan dan Ibu Syarifah', 1, 4),
+(36, 13, 'akad_hari', 'HariAkadNikah', 'text', '', 1, 5),
+(37, 13, 'akad_tanggal', 'TanggalAkadNikah', 'date', '', 1, 6),
+(38, 13, 'akad_waktu', 'WaktuAkadNikah', 'time', '', 1, 7),
+(39, 13, 'akad_tempat', 'TempatAkadNikah', 'textarea', '', 1, 8),
+(40, 13, 'resepsi_hari', 'Hari Resepsi', 'text', '', 1, 9),
+(41, 13, 'resepsi_tanggal', 'TanggalResepsi', 'date', '', 1, 10),
+(42, 13, 'resepsi_waktu', 'WaktuResepsi', 'time', '', 1, 11),
+(43, 13, 'resepsi_tempat', 'TempatResepsi', 'textarea', '', 1, 12),
+(44, 13, 'turut_mengundang', 'TurutMengundang', 'textarea', '', 1, 13),
+(45, 13, 'hiburan', 'Hiburan (jika ada)', 'text', '', 1, 14),
+(46, 13, 'lampiran_peta', 'LampiranPetaLokasi', 'file', '', 1, 15),
+(47, 13, 'keterangan', 'Ketarangan Tambahan', 'textarea', '', 1, 16),
+(48, 22, 'nama_alm_almh', 'Nama alm/almh', 'text', '', 1, 1),
+(49, 22, 'nama_ayah', 'NamaAyah Alm/Almh', 'text', '', 1, 2),
+(50, 22, 'nama_keluarga', 'Nama Keluarga Yang Ditinggalkan', 'textarea', '1. John Doe (Anak ke-1) \\n 2. Dadan (Anak ke-2)', 1, 3),
+(51, 22, 'lahir_tanggal', 'Tanggal Lahir', 'date', '', 1, 4),
+(52, 22, 'tanggal_meninggal', 'TanggalMeninggal', 'date', '', 1, 5),
+(53, 22, 'tempat_lahir', 'Tempat Lahir', 'textarea', '', 1, 6),
+(54, 22, 'tempat_meninggal', 'TempatMeninggal', 'textarea', '', 1, 7);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `katalog`
+--
+
+CREATE TABLE `katalog` (
+  `id_katalog` int(11) NOT NULL,
+  `nama_produk` varchar(150) NOT NULL,
+  `kategori` enum('desain_grafis','cetak_digital','cetak_offset','media_promosi') NOT NULL,
+  `harga_dasar` decimal(12,2) NOT NULL,
+  `kuota_revisi_default` int(11) NOT NULL DEFAULT 2,
+  `min_order` int(11) NOT NULL DEFAULT 1,
+  `satuan` varchar(30) NOT NULL DEFAULT 'pcs',
+  `estimasi_hari` varchar(50) DEFAULT NULL,
+  `deskripsi` text DEFAULT NULL,
+  `gambar` varchar(255) DEFAULT NULL,
+  `is_active` tinyint(4) DEFAULT 1,
+  `kode_katalog` varchar(20) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `katalog`
+--
+
+INSERT INTO `katalog` (`id_katalog`, `nama_produk`, `kategori`, `harga_dasar`, `kuota_revisi_default`, `min_order`, `satuan`, `estimasi_hari`, `deskripsi`, `gambar`, `is_active`, `kode_katalog`) VALUES
+(1, 'Undangan Pernikahan Softcover A Full Color', 'cetak_digital', 10000.00, 3, 500, 'pcs', '7 hari kerja', 'Undangan pernikahan softcover full color, Bahan Jasmine + Concorde, include plastik, foil embossed', '1780734244_softcoverA.jpg', 1, 'PRD-001'),
+(2, 'Undangan Khitanan Full Color', 'cetak_digital', 2000.00, 2, 500, 'pcs', '3 hari kerja', 'Jenis Bahan: BC 150 grams, Dicetak dengan mesin Heidelberg terbaru Germany Technology, Soft Cover and Foil ukuran: 28.3 X 19.5 (Cm), Folded Size: 14.1 X 19.5 (Cm) Plastic Size: 14.5 X 24 (Cm), ', '1780559372_animate_undangan khitan.jpg', 1, 'PRD-002'),
+(3, 'Spanduk / Banner (X-Banner) ', 'media_promosi', 75000.00, 2, 1, 'pcs', '2 hari kerja', 'Cetak spanduk dan banner ukuran 3?1 meter', '1783338389_Banners design.jpg', 1, 'PRD-003'),
+(4, 'Brosur A5 Full Colour', 'cetak_digital', 1000.00, 2, 500, 'lembar', '3 hari kerja', 'Brosur A5 full color bolak-balik, laminasi, bahan Art Paper 120gr', '1780559787_brosur.jpg', 1, 'PRD-004'),
+(5, 'Kartu Nama B&W', 'cetak_digital', 1500.00, 2, 500, 'pcs', '2 hari kerja', 'Kartu nama black and white dua sisi', '1783163718_b&w kartunama.jpg', 1, 'PRD-005'),
+(6, 'Kalender Dinding [Tanpa Gantungan]', 'cetak_offset', 10000.00, 2, 100, 'pcs', '14 hari kerja', 'Kalender dinding 1 lembar full color', '1783161059_kalender1.jpg', 1, 'PRD-006'),
+(7, 'Nota / Kwitansi', 'cetak_offset', 4000.00, 1, 500, 'buku', '5 hari kerja', 'Nota kwitansi 2 rangkap NCR', '1783164008_nota.jpg', 1, 'PRD-007'),
+(8, 'Desain Logo', 'desain_grafis', 25000.00, 3, 1, 'desain', '3 hari kerja', 'Jasa desain logo profesional', '1783163832_logo.jpg', 1, 'PRD-008'),
+(11, 'Buku Agenda A (Foil)', 'cetak_offset', 35000.00, 3, 100, 'Buku', '14 hari kerja', 'Cover Kulit (Calf) , Nama perusahaan foil, ukuran 1/5 folio, kertas cetak full colour di ring, laminasi', '1780382632_notebook1.jpg', 1, 'PRD-011'),
+(12, 'Brosur A5 Full B&W', 'cetak_digital', 115000.00, 2, 1, 'Rim', '3 hari kerja', 'Brosur A5 black and white bolak-balik, laminasi, bahan Art Paper 120gr', '1780559963_bw-brosur.jpg', 1, 'PRD-012'),
+(13, 'Undangan Pernikahan Softcover B&W1', 'cetak_digital', 2000.00, 3, 500, 'pcs', '7 hari kerja', 'Bahan Art Paper 26, laminasi doff, foil not embossed, include plastik', '1788278454_Undangan Pernikahan Softcover B&W1.webp', 1, 'PRD-013'),
+(14, 'Kalender Dinding 12 Lembar (No Cover)', 'cetak_digital', 20000.00, 3, 500, 'pcs', '14 hari kerja', '12 lembar (Isi per lembar 1 bulan), finishing gantungan spiral, include Laminasi', '1783162958_kalender dinding 7 lembar.jpg', 1, 'PRD-014'),
+(15, 'Kalender Dinding 8 Lembar (With Cover)', 'cetak_digital', 25000.00, 2, 500, 'set', '14 hari kerja', '8 Lembar (1 cover, halaman per lembar isi 2 bulan, 1 lembar penutup ) + include laminating satu muka bagian depan', '1788278436_kalender8lmbar.webp', 1, 'PRD-015'),
+(20, 'Stample Costum Bulat Diameter 3cm', 'media_promosi', 35000.00, 2, 1, 'pcs', '2 hari kerja', 'Stempel Runaflek (Manual) cap kayu, bagian bawahnya terbuat dari bahan karet yang diukir tulisan atau logo.', '1788278418_stemple.jpg', 1, 'PRD-020'),
+(21, 'Lanyard 80cm', 'cetak_digital', 19000.00, 2, 20, 'pcs', '3 hari kerja', 'Bahan poliester, pilihan lebar 1,5 cm. Dilengkapi dengan pengait (klip) besi atau plastik di ujungnya, serta tambahan aksesoris seperti stopper atau adjuster', '1788278404_Lanyard.jpg', 1, 'PRD-021'),
+(22, 'Buku Yasin Hard  Cover ', 'cetak_digital', 25000.00, 3, 50, 'Buku', '7 hari kerja', 'Yasin Maj\'mu, Hardcover Bludru, Foto Alm/Almh ', '1788278390_yasin.jpg', 1, 'PRD-022');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `migrations`
+--
+
+CREATE TABLE `migrations` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `version` varchar(255) NOT NULL,
+  `class` varchar(255) NOT NULL,
+  `group` varchar(255) NOT NULL,
+  `namespace` varchar(255) NOT NULL,
+  `time` int(11) NOT NULL,
+  `batch` int(11) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `migrations`
+--
+
+INSERT INTO `migrations` (`id`, `version`, `class`, `group`, `namespace`, `time`, `batch`) VALUES
+(1, '2026-06-27-111854', 'App\\Database\\Migrations\\AddEstimasiHariToOrders', 'default', 'App', 1782559165, 1),
+(2, '2026-06-09-120000', 'App\\Database\\Migrations\\AddIsActiveToUsers', 'default', 'App', 1782572554, 2),
+(3, '2026-06-09-140000', 'App\\Database\\Migrations\\AddGoogleIdToUsers', 'default', 'App', 1782986939, 3),
+(4, '2026-07-04-170000', 'App\\Database\\Migrations\\AddReminderHargaEskalasiToOrders', 'default', 'App', 1783159475, 4),
+(5, '2026-07-12-090000', 'App\\Database\\Migrations\\CreateActivityLogs', 'default', 'App', 1783822821, 5),
+(6, '2026-07-24-063339', 'App\\Database\\Migrations\\RemovePendingFromVerifikasiPerusahaanStatus', 'default', 'App', 1784874924, 6),
+(7, '2026-07-29-150000', 'App\\Database\\Migrations\\AddKodeColumnsToUsersPelangganKatalogRevisiDesainPengiriman', 'default', 'App', 1785313847, 7),
+(8, '2026-07-29-150100', 'App\\Database\\Migrations\\AddUniqueKodeColumns', 'default', 'App', 1785313871, 8),
+(9, '2026-07-30-080000', 'App\\Database\\Migrations\\AddWajibGantiPasswordToUsers', 'default', 'App', 1785375812, 9),
+(10, '2026-09-05-200000', 'App\\Database\\Migrations\\CreateMockupTemplates', 'default', 'App', 1788615129, 10),
+(11, '2026-09-05-220000', 'App\\Database\\Migrations\\AlterMockupTemplatesToIdKatalog', 'default', 'App', 1788623841, 11),
+(12, '2026-09-05-230000', 'App\\Database\\Migrations\\DropMockupTemplatesTable', 'default', 'App', 1788624440, 12),
+(13, '2026-09-06-000001', 'App\\Database\\Migrations\\AddTglCetakFinishingToOrders', 'default', 'App', 1788652238, 13),
+(14, '2026-09-06-073622', 'App\\Database\\Migrations\\AddMockupAdjustToRevisiDesain', 'default', 'App', 1788680340, 14);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `notifications`
+--
+
+CREATE TABLE `notifications` (
+  `id_notif` int(11) NOT NULL,
+  `id_user` int(11) NOT NULL,
+  `id_order` int(11) DEFAULT NULL,
+  `judul` varchar(150) DEFAULT NULL,
+  `pesan` text DEFAULT NULL,
+  `is_read` tinyint(4) DEFAULT 0,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`id_notif`, `id_user`, `id_order`, `judul`, `pesan`, `is_read`, `created_at`) VALUES
+(1, 2, 3, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260602-0001. Harap set harga.', 1, '2026-06-02 11:48:22'),
+(2, 5, 3, 'Penawaran Harga Custom', 'Admin Z\'Plack menawarkan harga Rp 23.000 untuk pesanan ORD-20260602-0001. Silakan konfirmasi.', 1, '2026-06-02 14:09:03'),
+(3, 3, 4, 'Bukti DP Baru', 'Pelanggan Test mengunggah bukti DP untuk ORD-20260603-0001.', 1, '2026-06-03 07:26:33'),
+(4, 5, 4, 'Bukti DP Ditolak', 'Bukti DP ORD-20260603-0001 ditolak: Kurang Jelas. Silakan upload ulang.', 1, '2026-06-03 07:28:13'),
+(5, 3, 4, 'Bukti DP Baru', 'Pelanggan Test mengunggah bukti DP untuk ORD-20260603-0001.', 1, '2026-06-03 07:28:53'),
+(6, 5, 4, 'Bukti DP Ditolak', 'Bukti DP ORD-20260603-0001 ditolak: Ini buktinya ga jelas. Silakan upload ulang.', 1, '2026-06-03 07:30:05'),
+(7, 3, 4, 'Bukti DP Baru', 'Pelanggan Test mengunggah bukti DP untuk ORD-20260603-0001.', 1, '2026-06-03 07:31:56'),
+(8, 5, 4, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260603-0001 telah diverifikasi.', 1, '2026-06-03 07:32:20'),
+(9, 3, 8, 'Bukti DP Baru', 'OldMoneySuccess mengunggah bukti DP untuk ORD-20260604-0002.', 1, '2026-06-04 16:31:20'),
+(10, 3, 9, 'Bukti DP Baru', 'OldMoneySuccess mengunggah bukti DP untuk ORD-20260604-0003.', 1, '2026-06-04 17:06:40'),
+(11, 17, 9, 'Bukti DP Ditolak', 'Bukti DP ORD-20260604-0003 ditolak: gambar kurang jelas. Silakan upload ulang.', 1, '2026-06-04 17:24:29'),
+(12, 5, 4, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260603-0001 siap direview.', 1, '2026-06-04 20:59:07'),
+(13, 4, 4, 'Revisi Diajukan', 'Pelanggan ajukan revisi v1 ORD-20260603-0001. Sisa kuota: 1.', 1, '2026-06-04 21:04:42'),
+(14, 5, 4, 'Draft Desain Tersedia', 'Draft v2 pesanan ORD-20260603-0001 siap direview.', 1, '2026-06-04 21:06:10'),
+(15, 5, 4, 'Draft Desain Tersedia', 'Draft v3 pesanan ORD-20260603-0001 siap direview.', 1, '2026-06-04 21:08:32'),
+(16, 4, 4, 'Revisi Diajukan', 'Pelanggan ajukan revisi v3 ORD-20260603-0001. Sisa kuota: 0.', 1, '2026-06-04 21:17:08'),
+(17, 4, 4, 'Desain di-ACC', 'Pelanggan memilih draft v1 untuk dicetak ??? ORD-20260603-0001. Lanjut proses cetak.', 1, '2026-06-04 21:23:59'),
+(18, 3, 8, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260604-0002 belum diverifikasi selama 2 jam.', 1, '2026-06-06 14:08:06'),
+(19, 1, 8, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260604-0002 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 1, '2026-06-06 14:08:10'),
+(20, 3, 10, 'Bukti DP Baru', 'OldMoneySuccess mengunggah bukti DP untuk ORD-20260606-0001.', 1, '2026-06-06 15:01:57'),
+(21, 2, 11, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260606-0002. Harap set harga.', 1, '2026-06-06 15:54:01'),
+(22, 17, 11, 'Penawaran Harga Custom', 'Admin Z\'Plack menawarkan harga Rp 40.000 untuk pesanan ORD-20260606-0002. Silakan konfirmasi.', 1, '2026-06-06 15:56:22'),
+(23, 3, 11, 'Bukti DP Baru', 'OldMoneySuccess mengunggah bukti DP untuk ORD-20260606-0002.', 1, '2026-06-06 16:07:09'),
+(24, 17, 8, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260604-0002 telah diverifikasi.', 1, '2026-06-06 16:07:59'),
+(25, 17, 10, 'Bukti DP Ditolak', 'Bukti DP ORD-20260606-0001 ditolak: kurang jelas, tolong kirimkan agar lebih jelas. Silakan upload ulang.', 1, '2026-06-06 16:08:22'),
+(26, 17, 11, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260606-0002 telah diverifikasi.', 1, '2026-06-06 16:12:18'),
+(27, 3, 12, 'Bukti DP Baru', 'Yani Isnaeni Rakhadian mengunggah bukti DP untuk ORD-20260606-0003.', 1, '2026-06-06 16:34:08'),
+(28, 20, 12, 'Bukti DP Ditolak', 'Bukti DP ORD-20260606-0003 ditolak: kurang jelas, tolong kirimkan agar lebih jelas. Silakan upload ulang.', 1, '2026-06-06 16:34:50'),
+(29, 3, 12, 'Bukti DP Baru', 'Yani Isnaeni Rakhadian mengunggah bukti DP untuk ORD-20260606-0003.', 1, '2026-06-06 16:35:38'),
+(30, 20, 12, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260606-0003 telah diverifikasi.', 1, '2026-06-06 16:37:48'),
+(31, 20, 12, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260606-0003 siap direview.', 1, '2026-06-06 16:40:19'),
+(32, 4, 12, 'Revisi Diajukan', 'Pelanggan ajukan revisi v1 ORD-20260606-0003. Sisa kuota: 2.', 1, '2026-06-06 16:42:00'),
+(33, 20, 12, 'Draft Desain Tersedia', 'Draft v2 pesanan ORD-20260606-0003 siap direview.', 1, '2026-06-06 16:42:28'),
+(34, 4, 12, 'Revisi Diajukan', 'Pelanggan ajukan revisi v2 ORD-20260606-0003. Sisa kuota: 1.', 1, '2026-06-06 16:43:01'),
+(35, 20, 12, 'Draft Desain Tersedia', 'Draft v3 pesanan ORD-20260606-0003 siap direview.', 1, '2026-06-06 16:44:01'),
+(36, 4, 12, 'Desain di-ACC', 'Pelanggan memilih draft v3 untuk dicetak ??? ORD-20260606-0003. Lanjut proses cetak.', 1, '2026-06-06 16:44:21'),
+(37, 2, 13, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260606-0004. Harap set harga.', 1, '2026-06-06 19:10:38'),
+(38, 20, 13, 'Penawaran Harga Custom', 'Admin Z\'Plack menawarkan harga Rp 5.000 untuk pesanan ORD-20260606-0004. Silakan konfirmasi.', 0, '2026-06-06 20:50:56'),
+(39, 2, 13, 'Penawaran Custom Ditolak', 'Pelanggan Yani Isnaeni Rakhadian menolak penawaran harga untuk ORD-20260606-0004.', 1, '2026-06-06 20:52:55'),
+(40, 3, 14, 'Bukti DP Baru', 'Yani Isnaeni Rakhadian mengunggah bukti DP untuk ORD-20260606-0005.', 1, '2026-06-06 20:55:17'),
+(41, 2, 15, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260606-0006. Harap set harga.', 1, '2026-06-06 21:04:26'),
+(42, 20, 15, 'Penawaran Harga Custom', 'Admin Z\'Plack menawarkan harga Rp 6.000.000 untuk pesanan ORD-20260606-0006. Silakan konfirmasi.', 0, '2026-06-06 21:08:45'),
+(43, 3, 15, 'Bukti DP Baru', 'Yani Isnaeni Rakhadian mengunggah bukti DP untuk ORD-20260606-0006.', 1, '2026-06-06 21:10:42'),
+(44, 20, 15, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260606-0006 telah diverifikasi.', 0, '2026-06-06 21:19:03'),
+(45, 20, 15, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260606-0006 siap direview.', 0, '2026-06-06 21:23:41'),
+(46, 3, 14, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260606-0005 belum diverifikasi selama 2 jam.', 1, '2026-06-07 10:05:06'),
+(47, 1, 14, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260606-0005 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-06-07 10:05:10'),
+(48, 2, NULL, 'Pengajuan Verifikasi Perusahaan', 'OldMoneySuccess mengajukan verifikasi perusahaan PT Bloom Reverse.', 1, '2026-06-07 10:55:21'),
+(49, 17, NULL, 'Verifikasi Perusahaan Ditolak', 'Verifikasi perusahaan PT Bloom Reverse ditolak: NPWPNya gabener yg diinputkan, tolong betulkan', 1, '2026-06-07 11:01:26'),
+(50, 2, NULL, 'Pengajuan Verifikasi Perusahaan', 'OldMoneySuccess mengajukan verifikasi perusahaan PT Bloom Reverse.', 1, '2026-06-07 11:13:31'),
+(51, 17, NULL, 'Tier Terpercaya Aktif', 'Perusahaan PT Bloom Reverse dipromosikan ke tier Terpercaya.', 1, '2026-06-07 14:15:05'),
+(52, 17, NULL, 'Verifikasi Perusahaan Ditolak', 'Verifikasi perusahaan PT Bloom Reverse ditolak: NPWPNya gabener yg diinputkan, tolong betulkan', 1, '2026-06-07 20:50:32'),
+(53, 17, 10, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260606-0001 dibatalkan otomatis karena batas upload DP terlewat.', 1, '2026-06-07 21:05:07'),
+(54, 5, 4, 'Pesanan Siap Diambil', 'Pesanan ORD-20260603-0001 siap.', 1, '2026-06-07 21:08:31'),
+(55, 20, 12, 'Pesanan Siap Diambil', 'Pesanan ORD-20260606-0003 siap.', 0, '2026-06-08 14:44:26'),
+(56, 17, 16, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260607-0001 dibatalkan otomatis karena batas upload DP terlewat.', 1, '2026-06-08 14:54:04'),
+(57, 3, 4, 'Bukti Pelunasan Baru', 'Pelanggan Test mengunggah bukti pelunasan untuk ORD-20260603-0001.', 1, '2026-06-08 15:22:13'),
+(58, 5, 4, 'Pelunasan Terverifikasi', 'Pelunasan ORD-20260603-0001 terverifikasi. Silakan ambil pesanan di toko.', 1, '2026-06-08 15:42:41'),
+(59, 2, 4, 'Siap Diproses Pengiriman', 'Pelunasan ORD-20260603-0001 terverifikasi. Silakan set pengiriman.', 1, '2026-06-08 15:42:41'),
+(60, 5, 30, 'Pesanan Siap Dikirim', 'Pesanan SKN-TEST-001 siap.', 1, '2026-06-08 15:45:39'),
+(61, 5, 4, 'Pesanan Selesai', 'Pesanan ORD-20260603-0001 telah diambil. Terima kasih!', 1, '2026-06-08 15:45:44'),
+(62, 3, 31, 'Bukti Pelunasan Baru', 'OldMoneySuccess mengunggah bukti pelunasan untuk SKN-TEST-002.', 1, '2026-06-08 15:47:53'),
+(63, 17, 31, 'Bukti Pelunasan Ditolak', 'Bukti pelunasan SKN-TEST-002 ditolak: kurang jelas. Silakan upload ulang.', 1, '2026-06-08 15:49:19'),
+(64, 3, 31, 'Bukti Pelunasan Baru', 'OldMoneySuccess mengunggah bukti pelunasan untuk SKN-TEST-002.', 1, '2026-06-08 15:50:14'),
+(65, 3, 30, 'Bukti Pelunasan Baru', 'Pelanggan Test mengunggah bukti pelunasan untuk SKN-TEST-001.', 1, '2026-06-08 16:08:35'),
+(66, 5, 30, 'Bukti Pelunasan Ditolak', 'Bukti pelunasan SKN-TEST-001 ditolak: kurang jelas, mohon upload ulang. Silakan upload ulang.', 0, '2026-06-08 16:09:27'),
+(67, 3, 30, 'Bukti Pelunasan Baru', 'Pelanggan Test mengunggah bukti pelunasan untuk SKN-TEST-001.', 1, '2026-06-08 16:18:53'),
+(68, 5, 30, 'Pelunasan Terverifikasi', 'Pelunasan SKN-TEST-001 terverifikasi. Pesanan akan segera dikirim.', 0, '2026-06-08 16:54:58'),
+(69, 2, 30, 'Siap Diproses Pengiriman', 'Pelunasan SKN-TEST-001 terverifikasi. Silakan set pengiriman.', 1, '2026-06-08 16:54:58'),
+(70, 5, 30, 'Pesanan Dikirim', 'Pesanan SKN-TEST-001 dikirim. Resi: 370910002526519 (JNE)', 0, '2026-06-08 17:01:31'),
+(71, 5, 30, 'Pesanan Selesai', 'Pesanan SKN-TEST-001 telah diterima. Terima kasih!', 0, '2026-06-08 17:02:46'),
+(72, 2, 33, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260608-0001. Harap set harga.', 1, '2026-06-08 21:22:11'),
+(73, 20, 33, 'Penawaran Harga Custom', 'Admin Z\'Plack menawarkan harga Rp 2.400.000 untuk pesanan ORD-20260608-0001. Silakan konfirmasi.', 1, '2026-06-09 11:09:30'),
+(74, 2, 34, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260609-0001. Harap set harga.', 1, '2026-06-09 11:16:36'),
+(75, 20, 34, 'Penawaran Harga Custom', 'Admin Z\'Plack menawarkan harga Rp 1.250.000 untuk pesanan ORD-20260609-0001. Silakan konfirmasi.', 0, '2026-06-09 11:19:09'),
+(76, 2, 35, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260609-0002. Harap set harga.', 1, '2026-06-09 20:20:27'),
+(77, 20, 35, 'Penawaran Harga Custom', 'Admin Z\'Plack menawarkan harga Rp 3.500.000 untuk pesanan ORD-20260609-0002. Silakan konfirmasi.', 1, '2026-06-09 20:23:40'),
+(78, 3, 35, 'Bukti DP Baru', 'Yani Isnaeni Rakhadian mengunggah bukti DP untuk ORD-20260609-0002.', 1, '2026-06-09 20:24:38'),
+(79, 20, 35, 'Bukti DP Ditolak', 'Bukti DP ORD-20260609-0002 ditolak: kurang jelas, upload ulang. Silakan upload ulang.', 1, '2026-06-09 20:26:52'),
+(80, 3, 35, 'Bukti DP Baru', 'Yani Isnaeni Rakhadian mengunggah bukti DP untuk ORD-20260609-0002.', 0, '2026-06-09 20:28:34'),
+(81, 20, 35, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260609-0002 telah diverifikasi.', 0, '2026-06-10 08:51:09'),
+(82, 17, 31, 'Pelunasan Terverifikasi', 'Pelunasan SKN-TEST-002 terverifikasi. Silakan ambil pesanan di toko.', 0, '2026-06-10 08:51:20'),
+(83, 2, 31, 'Siap Diproses Pengiriman', 'Pelunasan SKN-TEST-002 terverifikasi. Silakan set pengiriman.', 1, '2026-06-10 08:51:20'),
+(84, 17, 31, 'Pesanan Selesai', 'Pesanan SKN-TEST-002 telah diambil. Terima kasih!', 0, '2026-06-10 08:52:11'),
+(85, 17, 11, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260606-0002 siap direview.', 1, '2026-06-10 09:05:32'),
+(86, 4, 11, 'Revisi Diajukan', 'Pelanggan ajukan revisi v1 ORD-20260606-0002. Sisa kuota: 1.', 1, '2026-06-10 09:19:56'),
+(87, 17, 11, 'Draft Desain Tersedia', 'Draft v2 pesanan ORD-20260606-0002 siap direview.', 1, '2026-06-10 09:20:27'),
+(88, 4, 11, 'Desain di-ACC', 'Pelanggan memilih draft v2 untuk dicetak-ORD-20260606-0002. Lanjut proses cetak.', 1, '2026-06-10 09:22:32'),
+(89, 17, 11, 'Pesanan Siap Dikirim', 'Pesanan ORD-20260606-0002 siap.', 1, '2026-06-10 09:34:16'),
+(90, 3, 11, 'Bukti Pelunasan Baru', 'OldMoneySuccess mengunggah bukti pelunasan untuk ORD-20260606-0002.', 0, '2026-06-10 10:18:49'),
+(91, 17, 11, 'Bukti Pelunasan Ditolak', 'Bukti pelunasan ORD-20260606-0002 ditolak: tolong upload bukti transfer yang lebih jelas. Silakan upload ulang.', 1, '2026-06-10 10:37:12'),
+(92, 20, 33, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260608-0001 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-06-10 11:54:00'),
+(93, 20, 34, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260609-0001 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-06-10 11:54:04'),
+(94, 3, 11, 'Bukti Pelunasan Baru', 'OldMoneySuccess mengunggah bukti pelunasan untuk ORD-20260606-0002.', 0, '2026-06-12 09:39:19'),
+(95, 17, 11, 'Pelunasan Terverifikasi', 'Pelunasan ORD-20260606-0002 terverifikasi. Pesanan akan segera dikirim.', 0, '2026-06-12 09:40:13'),
+(96, 2, 11, 'Siap Diproses Pengiriman', 'Pelunasan ORD-20260606-0002 terverifikasi. Silakan set pengiriman.', 1, '2026-06-12 09:40:13'),
+(97, 17, 11, 'Pesanan Dikirim', 'Pesanan ORD-20260606-0002 dikirim. Resi: 370910002526519 (JNE)', 0, '2026-06-12 09:40:48'),
+(98, 3, 36, 'Bukti DP Baru', 'Yani Isnaeni Rakhadiann mengunggah bukti DP untuk ORD-20260611-0001.', 0, '2026-06-12 09:42:05'),
+(99, 3, 12, 'Bukti Pelunasan Baru', 'Yani Isnaeni Rakhadiann mengunggah bukti pelunasan untuk ORD-20260606-0003.', 0, '2026-06-12 09:42:30'),
+(100, 20, 12, 'Pelunasan Terverifikasi', 'Pelunasan ORD-20260606-0003 terverifikasi. Silakan ambil pesanan di toko.', 0, '2026-06-12 09:43:11'),
+(101, 2, 12, 'Siap Diproses Pengiriman', 'Pelunasan ORD-20260606-0003 terverifikasi. Silakan set pengiriman.', 1, '2026-06-12 09:43:11'),
+(102, 20, 12, 'Pesanan Selesai', 'Pesanan ORD-20260606-0003 telah diambil. Terima kasih!', 0, '2026-06-12 09:43:18'),
+(103, 20, 36, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260611-0001 telah diverifikasi.', 0, '2026-06-12 09:43:44'),
+(110, 1, NULL, 'Pengajuan Verifikasi Perusahaan', 'Diandra Alawiyah mengajukan verifikasi perusahaan PT Abadi Nan Jaya.', 0, '2026-06-23 17:43:27'),
+(111, 1, NULL, 'Pengajuan Verifikasi Perusahaan', 'Diandra Alawiyah mengajukan verifikasi perusahaan PT Abadi Nan Jaya.', 1, '2026-06-23 21:46:52'),
+(112, 2, 40, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260625-0001. Harap set harga.', 1, '2026-06-25 17:35:39'),
+(113, 20, 41, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260626-0001 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-06-27 15:05:07'),
+(114, 24, 40, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 750.000 untuk pesanan ORD-20260625-0001. Silakan konfirmasi.', 0, '2026-06-27 18:56:51'),
+(115, 3, 40, 'Bukti DP Baru', 'Diandra Alawiyah mengunggah bukti DP untuk ORD-20260625-0001.', 0, '2026-06-27 19:12:47'),
+(116, 3, 40, 'Bukti DP Baru', 'Diandra Alawiyah mengunggah bukti DP untuk ORD-20260625-0001.', 0, '2026-06-27 19:15:02'),
+(117, 18, NULL, 'Kerja Sama Perusahaan Dicabut', 'Status kerja sama CV. Maju Bersama dicabut. Pesanan baru mengikuti skema perseorangan.', 0, '2026-06-27 22:01:14'),
+(118, 3, 40, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260625-0001 belum diverifikasi selama 2 jam.', 0, '2026-06-28 13:05:08'),
+(119, 1, 40, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260625-0001 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-06-28 13:05:12'),
+(120, 4, 15, 'Desain di-ACC', 'Pelanggan memilih draft v1 untuk dicetak-ORD-20260606-0006. Lanjut proses cetak.', 1, '2026-06-28 15:40:58'),
+(121, 24, 42, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260629-0001 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-06-30 16:29:31'),
+(122, 2, 44, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260703-0002. Harap set harga.', 1, '2026-07-03 20:46:29'),
+(123, 2, 45, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260703-0003. Harap set harga.', 1, '2026-07-03 21:13:15'),
+(124, 17, 45, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 350.000 untuk pesanan ORD-20260703-0003. Silakan konfirmasi.', 0, '2026-07-04 17:00:45'),
+(125, 2, 45, 'Konfirmasi Harga Ditolak', 'Pelanggan OldMoneySuccess menolak konfirmasi harga untuk ORD-20260703-0003.', 1, '2026-07-04 17:09:22'),
+(126, 17, 44, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 15.000.000 untuk pesanan ORD-20260703-0002. Silakan konfirmasi.', 0, '2026-07-04 17:22:06'),
+(127, 17, 43, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260703-0001 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-07-04 18:54:32'),
+(128, 24, 40, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260625-0001 telah diverifikasi.', 0, '2026-07-05 16:38:03'),
+(129, 17, 44, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260703-0002 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-07-05 19:58:54'),
+(130, 20, 14, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260606-0005 siap direview.', 1, '2026-07-05 20:04:12'),
+(131, 17, 29, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260607-0002 siap direview.', 0, '2026-07-05 20:10:34'),
+(132, 4, 14, 'Revisi Diajukan', 'Pelanggan ajukan revisi v1 ORD-20260606-0005. Sisa kuota: 3.', 1, '2026-07-05 20:16:01'),
+(133, 2, 47, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260705-0002. Harap set harga.', 1, '2026-07-05 20:18:21'),
+(134, 2, 48, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260705-0003. Harap set harga.', 1, '2026-07-05 20:28:14'),
+(135, 3, 49, 'Bukti DP Baru', 'Yani Isnaeni Rakhadiann mengunggah bukti DP untuk ORD-20260705-0004.', 0, '2026-07-05 20:31:46'),
+(136, 2, 50, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260705-0005. Harap set harga.', 1, '2026-07-05 20:32:34'),
+(137, 20, 50, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 100.000.000 untuk pesanan ORD-20260705-0005. Silakan konfirmasi.', 1, '2026-07-05 20:36:04'),
+(138, 3, 50, 'Bukti DP Baru', 'Yani Isnaeni Rakhadiann mengunggah bukti DP untuk ORD-20260705-0005.', 0, '2026-07-05 20:36:54'),
+(139, 20, 48, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 75.000.000 untuk pesanan ORD-20260705-0003. Silakan konfirmasi.', 0, '2026-07-05 20:38:43'),
+(140, 20, 49, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260705-0004 telah diverifikasi.', 0, '2026-07-05 20:39:38'),
+(141, 20, 50, 'Bukti DP Ditolak', 'Bukti DP ORD-20260705-0005 ditolak: Kurang jelas, mohon mengirimkan ulang bukti bayar dp. Silakan upload ulang.', 0, '2026-07-05 20:40:08'),
+(142, 3, 51, 'Bukti DP Baru', 'Yani Isnaeni Rakhadiann mengunggah bukti DP untuk ORD-20260705-0006.', 0, '2026-07-05 20:41:42'),
+(143, 3, 53, 'Bukti DP Baru', 'Yani Isnaeni Rakhadiann mengunggah bukti DP untuk ORD-20260705-0008.', 0, '2026-07-05 20:45:52'),
+(144, 20, 36, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260611-0001 siap direview.', 0, '2026-07-05 20:48:39'),
+(145, 3, 51, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260705-0006 belum diverifikasi selama 2 jam.', 0, '2026-07-06 17:16:48'),
+(146, 3, 53, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260705-0008 belum diverifikasi selama 2 jam.', 0, '2026-07-06 17:16:53'),
+(147, 1, 51, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260705-0006 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-07-06 17:16:58'),
+(148, 1, 53, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260705-0008 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-07-06 17:17:02'),
+(149, 24, NULL, 'Kerja Sama Perusahaan Aktif', 'Akun ditetapkan kerja sama perusahaan: PT Abadi Nan Jaya.', 0, '2026-07-06 19:25:40'),
+(150, 20, 46, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260705-0001 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-07-06 20:54:02'),
+(151, 20, 50, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260705-0005 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-07-06 20:54:08'),
+(152, 20, 52, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260705-0007 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-07-06 20:54:13'),
+(153, 24, 55, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260706-0002 siap direview.', 1, '2026-07-06 20:58:19'),
+(154, 4, 55, 'Desain di-ACC', 'Pelanggan memilih draft v1 untuk dicetak-ORD-20260706-0002. Lanjut proses cetak.', 1, '2026-07-06 20:58:39'),
+(155, 2, 56, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260707-0001. Harap set harga.', 1, '2026-07-07 10:33:36'),
+(156, 3, 57, 'Bukti DP Baru', 'OldMoneySuccess mengunggah bukti DP untuk ORD-20260707-0002.', 0, '2026-07-07 10:34:45'),
+(157, 3, 59, 'Bukti DP Baru', 'OldMoneySuccess mengunggah bukti DP untuk ORD-20260707-0004.', 0, '2026-07-07 10:44:39'),
+(158, 3, 60, 'Bukti DP Baru', 'Diandra Alawiyah mengunggah bukti DP untuk ORD-20260707-0005.', 0, '2026-07-07 11:43:02'),
+(159, 3, 58, 'Bukti DP Baru', 'OldMoneySuccess mengunggah bukti DP untuk ORD-20260707-0003.', 0, '2026-07-07 13:58:30'),
+(160, 3, 57, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260707-0002 belum diverifikasi selama 2 jam.', 0, '2026-07-07 14:24:14'),
+(161, 3, 59, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260707-0004 belum diverifikasi selama 2 jam.', 0, '2026-07-07 14:24:18'),
+(162, 3, 60, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260707-0005 belum diverifikasi selama 2 jam.', 0, '2026-07-07 14:24:22'),
+(163, 20, 62, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260707-0007 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-07-12 08:54:09'),
+(164, 24, 54, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260706-0001 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-07-12 08:54:18'),
+(165, 3, 58, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260707-0003 belum diverifikasi selama 2 jam.', 0, '2026-07-12 09:05:07'),
+(166, 1, 57, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260707-0002 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-07-12 09:05:12'),
+(167, 1, 59, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260707-0004 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-07-12 09:05:17'),
+(168, 1, 60, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260707-0005 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-07-12 09:05:22'),
+(169, 1, 58, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260707-0003 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-07-12 09:05:29'),
+(170, 1, 56, 'Eskalasi: Konfirmasi Harga Custom', 'Pesanan ORD-20260707-0001 belum dikonfirmasi admin >2 hari kerja. Koordinasikan tim admin.', 0, '2026-07-12 09:05:35'),
+(171, 1, 47, 'Eskalasi: Konfirmasi Harga Custom', 'Pesanan ORD-20260705-0002 belum dikonfirmasi admin >2 hari kerja. Koordinasikan tim admin.', 0, '2026-07-12 09:05:40'),
+(172, 17, 56, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 7.000.000 untuk pesanan ORD-20260707-0001. Silakan konfirmasi.', 1, '2026-07-12 10:10:25'),
+(173, 20, 14, 'Draft Desain Tersedia', 'Draft v2 pesanan ORD-20260606-0005 siap direview.', 1, '2026-07-24 15:57:01'),
+(174, 4, 14, 'Desain di-ACC', 'Pelanggan memilih draft v2 untuk dicetak-ORD-20260606-0005. Lanjut proses cetak.', 1, '2026-07-24 15:58:45'),
+(175, 20, 14, 'Pesanan Siap Diambil', 'Pesanan ORD-20260606-0005 siap.', 0, '2026-07-24 16:12:45'),
+(176, 20, 15, 'Pesanan Siap Diambil', 'Pesanan ORD-20260606-0006 siap.', 1, '2026-07-24 17:11:39'),
+(177, 3, 63, 'Bukti DP Baru', 'OldMoneySuccess mengunggah bukti DP untuk ORD-20260726-0001.', 0, '2026-07-26 08:45:34'),
+(178, 3, 63, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260726-0001 belum diverifikasi selama 2 jam.', 1, '2026-07-26 11:05:06'),
+(179, 1, 63, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260726-0001 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-07-26 15:05:10'),
+(180, 20, 51, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260705-0006 telah diverifikasi.', 0, '2026-07-29 05:53:20'),
+(181, 20, 53, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260705-0008 telah diverifikasi.', 0, '2026-07-29 05:53:25'),
+(182, 17, 57, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260707-0002 telah diverifikasi.', 0, '2026-07-29 05:53:49'),
+(183, 17, 59, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260707-0004 telah diverifikasi.', 0, '2026-07-29 05:53:59'),
+(184, 4, 29, 'Desain di-ACC', 'Pelanggan memilih draft v1 untuk dicetak-ORD-20260607-0002. Lanjut proses cetak.', 0, '2026-07-29 20:59:04'),
+(185, 4, 36, 'Desain di-ACC', 'Pelanggan memilih draft v1 untuk dicetak-ORD-20260611-0001. Lanjut proses cetak.', 0, '2026-07-29 21:27:41'),
+(186, 3, 15, 'Bukti Pelunasan Baru', 'Yani Isnaeni Rakhadiann mengunggah bukti pelunasan untuk ORD-20260606-0006.', 0, '2026-07-29 21:36:29'),
+(187, 3, 14, 'Bukti Pelunasan Baru', 'Yani Isnaeni Rakhadiann mengunggah bukti pelunasan untuk ORD-20260606-0005.', 1, '2026-07-29 21:37:10'),
+(188, 20, 15, 'Pelunasan Terverifikasi', 'Pelunasan ORD-20260606-0006 terverifikasi. Silakan ambil pesanan di toko.', 0, '2026-07-29 21:38:26'),
+(189, 2, 15, 'Siap Diproses Pengiriman', 'Pelunasan ORD-20260606-0006 terverifikasi. Silakan set pengiriman.', 1, '2026-07-29 21:38:26'),
+(190, 20, 14, 'Pelunasan Terverifikasi', 'Pelunasan ORD-20260606-0005 terverifikasi. Silakan ambil pesanan di toko.', 0, '2026-07-29 21:38:30'),
+(191, 2, 14, 'Siap Diproses Pengiriman', 'Pelunasan ORD-20260606-0005 terverifikasi. Silakan set pengiriman.', 1, '2026-07-29 21:38:30'),
+(192, 20, 36, 'Pesanan Siap Dikirim', 'Pesanan ORD-20260611-0001 siap.', 0, '2026-07-29 21:41:43'),
+(193, 3, 36, 'Bukti Pelunasan Baru', 'Yani Isnaeni Rakhadiann mengunggah bukti pelunasan untuk ORD-20260611-0001.', 0, '2026-07-29 21:43:22'),
+(194, 20, 36, 'Pelunasan Terverifikasi', 'Pelunasan ORD-20260611-0001 terverifikasi. Pesanan akan segera dikirim.', 0, '2026-07-29 21:44:01'),
+(195, 2, 36, 'Siap Diproses Pengiriman', 'Pelunasan ORD-20260611-0001 terverifikasi. Silakan set pengiriman.', 1, '2026-07-29 21:44:01'),
+(308, 3, 97, 'Bukti DP Baru', 'Yani Isnaeni Rakhadiann mengunggah bukti DP untuk ORD-20260811-0001.', 0, '2026-08-11 09:09:48'),
+(315, 24, 60, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260707-0005 telah diverifikasi.', 0, '2026-08-11 09:13:15'),
+(316, 17, 58, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260707-0003 telah diverifikasi.', 0, '2026-08-11 09:13:20'),
+(317, 20, 97, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260811-0001 telah diverifikasi.', 0, '2026-08-11 09:15:11'),
+(318, 20, 97, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260811-0001 siap direview.', 0, '2026-08-11 09:16:21'),
+(319, 4, 97, 'Revisi Diajukan', 'Pelanggan ajukan revisi v1 ORD-20260811-0001. Sisa kuota: 1.', 0, '2026-08-11 09:16:39'),
+(328, 20, 97, 'Draft Desain Tersedia', 'Draft v2 pesanan ORD-20260811-0001 siap direview.', 0, '2026-08-11 09:17:49'),
+(329, 4, 97, 'Revisi Diajukan', 'Pelanggan ajukan revisi v2 ORD-20260811-0001. Sisa kuota: 0.', 0, '2026-08-11 09:28:16'),
+(338, 20, 97, 'Draft Desain Tersedia', 'Draft v3 pesanan ORD-20260811-0001 siap direview.', 0, '2026-08-11 09:40:15'),
+(339, 4, 97, 'Desain di-ACC', 'Pelanggan memilih draft v2 untuk dicetak-ORD-20260811-0001. Lanjut proses cetak.', 0, '2026-08-11 09:44:44'),
+(348, 20, 36, 'Pesanan Dikirim', 'Pesanan ORD-20260611-0001 dikirim. Resi: ABC123456-56784 (JNE)', 1, '2026-08-12 14:29:49'),
+(349, 20, 97, 'Pesanan Siap Dikirim', 'Pesanan ORD-20260811-0001 siap.', 0, '2026-08-12 21:11:11'),
+(350, 3, 97, 'Bukti Pelunasan Baru', 'Yani Isnaeni Rakhadiann mengunggah bukti pelunasan untuk ORD-20260811-0001.', 0, '2026-08-12 21:12:22'),
+(357, 20, 97, 'Pelunasan Terverifikasi', 'Pelunasan ORD-20260811-0001 terverifikasi. Pesanan akan segera dikirim.', 0, '2026-08-12 21:15:16'),
+(358, 2, 97, 'Siap Diproses Pengiriman', 'Pelunasan ORD-20260811-0001 terverifikasi. Silakan set pengiriman.', 1, '2026-08-12 21:15:16'),
+(364, 56, 97, 'Siap Diproses Pengiriman', 'Pelunasan ORD-20260811-0001 terverifikasi. Silakan set pengiriman.', 0, '2026-08-12 21:15:16'),
+(365, 20, 97, 'Pesanan Dikirim', 'Pesanan ORD-20260811-0001 dikirim. Resi: QARESITO123 (JNT)', 0, '2026-08-12 21:17:47'),
+(366, 20, 14, 'Pesanan Selesai', 'Pesanan ORD-20260606-0005 telah diambil. Terima kasih!', 0, '2026-08-13 20:24:46'),
+(367, 20, NULL, 'Kerja Sama Perusahaan Aktif', 'Akun ditetapkan kerja sama perusahaan: Perusahaan Mitra Kasih.', 0, '2026-09-01 23:22:19'),
+(368, 2, 100, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260901-0003. Harap set harga.', 1, '2026-09-01 23:41:54'),
+(369, 56, 100, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260901-0003. Harap set harga.', 0, '2026-09-01 23:41:57'),
+(370, 2, 102, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260901-0005. Harap set harga.', 1, '2026-09-01 23:53:59'),
+(371, 56, 102, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260901-0005. Harap set harga.', 0, '2026-09-01 23:54:03'),
+(372, 3, 99, 'Bukti DP Baru', 'Yani Isnaeni mengunggah bukti DP untuk ORD-20260901-0002.', 0, '2026-09-01 23:55:07'),
+(373, 20, 98, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260901-0001 siap direview.', 1, '2026-09-01 23:59:04'),
+(374, 4, 98, 'Revisi Diajukan', 'Pelanggan ajukan revisi v1 ORD-20260901-0001. Sisa kuota: 1.', 0, '2026-09-02 00:00:09'),
+(375, 20, 98, 'Draft Desain Tersedia', 'Draft v2 pesanan ORD-20260901-0001 siap direview.', 0, '2026-09-02 00:00:58'),
+(376, 20, 99, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260901-0002 telah diverifikasi.', 1, '2026-09-02 00:02:39'),
+(377, 2, 105, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0003. Harap set harga.', 1, '2026-09-02 00:15:15'),
+(378, 56, 105, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0003. Harap set harga.', 0, '2026-09-02 00:15:19'),
+(379, 20, 99, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260901-0002 siap direview.', 0, '2026-09-02 00:17:44'),
+(380, 4, 99, 'Revisi Diajukan', 'Pelanggan ajukan revisi v1 ORD-20260901-0002. Sisa kuota: 1.', 0, '2026-09-02 00:18:20'),
+(381, 20, 99, 'Draft Desain Tersedia', 'Draft v2 pesanan ORD-20260901-0002 siap direview.', 0, '2026-09-02 00:20:20'),
+(382, 4, 99, 'Desain di-ACC', 'Pelanggan memilih draft v2 untuk dicetak-ORD-20260901-0002. Lanjut proses cetak.', 0, '2026-09-02 00:20:45'),
+(383, 20, 99, 'Pesanan Siap Dikirim', 'Pesanan ORD-20260901-0002 siap.', 0, '2026-09-02 00:22:40'),
+(384, 20, 99, 'Pesanan Dikirim', 'Pesanan ORD-20260901-0002 dikirim. Resi: JX5509244778 (JNT)', 0, '2026-09-02 00:25:51'),
+(385, 20, 99, 'Nota Tagihan Pelunasan', 'Pesanan ORD-20260901-0002 diterima. Silakan upload bukti transfer pelunasan.', 0, '2026-09-02 00:26:01'),
+(386, 3, 99, 'Bukti Pelunasan Baru', 'Yani Isnaeni mengunggah bukti pelunasan untuk ORD-20260901-0002.', 0, '2026-09-02 00:26:31'),
+(387, 3, 106, 'Bukti DP Baru', 'Yani Isnaeni mengunggah bukti DP untuk ORD-20260902-0004.', 0, '2026-09-02 00:39:14'),
+(388, 2, 115, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0013. Harap set harga.', 1, '2026-09-02 00:53:57'),
+(389, 56, 115, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0013. Harap set harga.', 0, '2026-09-02 00:54:00'),
+(390, 2, 123, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0021. Harap set harga.', 1, '2026-09-02 01:36:05'),
+(391, 56, 123, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0021. Harap set harga.', 0, '2026-09-02 01:36:09'),
+(392, 2, 124, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0022. Harap set harga.', 1, '2026-09-02 01:36:16'),
+(393, 56, 124, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0022. Harap set harga.', 0, '2026-09-02 01:36:20'),
+(394, 2, 133, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0031. Harap set harga.', 1, '2026-09-02 01:48:20'),
+(395, 56, 133, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0031. Harap set harga.', 0, '2026-09-02 01:48:23'),
+(396, 2, 134, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0032. Harap set harga.', 1, '2026-09-02 01:48:31'),
+(397, 56, 134, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0032. Harap set harga.', 0, '2026-09-02 01:48:35'),
+(398, 2, 136, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0034. Harap set harga.', 1, '2026-09-02 01:48:42'),
+(399, 56, 136, 'Pesanan Custom Baru', 'Pesanan custom masuk: ORD-20260902-0034. Harap set harga.', 0, '2026-09-02 01:48:46'),
+(400, 20, 136, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 12.000.000 untuk pesanan ORD-20260902-0034. Silakan konfirmasi.', 1, '2026-09-02 02:02:49'),
+(401, 3, 136, 'Bukti DP Baru', 'Yani Isnaeni mengunggah bukti DP untuk ORD-20260902-0034.', 0, '2026-09-02 02:04:30'),
+(402, 20, 133, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 12.000.000 untuk pesanan ORD-20260902-0031. Silakan konfirmasi.', 1, '2026-09-02 02:06:57'),
+(403, 3, 133, 'Bukti DP Baru', 'Yani Isnaeni mengunggah bukti DP untuk ORD-20260902-0031.', 0, '2026-09-02 02:07:56'),
+(404, 20, 135, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 12.000.000 untuk pesanan ORD-20260902-0033. Silakan konfirmasi.', 0, '2026-09-02 02:10:06'),
+(405, 20, 134, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 12.000.000 untuk pesanan ORD-20260902-0032. Silakan konfirmasi.', 0, '2026-09-02 02:10:28'),
+(406, 20, 124, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 3.125.000 untuk pesanan ORD-20260902-0022. Silakan konfirmasi.', 0, '2026-09-02 02:11:12'),
+(407, 20, 123, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 4.500.000 untuk pesanan ORD-20260902-0021. Silakan konfirmasi.', 0, '2026-09-02 02:11:39'),
+(408, 20, 115, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 1.500.000 untuk pesanan ORD-20260902-0013. Silakan konfirmasi.', 0, '2026-09-02 02:12:18'),
+(409, 20, 105, 'Konfirmasi Harga Custom', 'Admin Z\'Plack mengonfirmasi harga Rp 1.900.000 untuk pesanan ORD-20260902-0003. Silakan konfirmasi.', 0, '2026-09-02 02:12:56'),
+(410, 3, 99, 'Reminder Verifikasi Pelunasan', 'Bukti pelunasan ORD-20260901-0002 belum diverifikasi selama 2 jam.', 0, '2026-09-02 03:00:05'),
+(411, 3, 106, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260902-0004 belum diverifikasi selama 2 jam.', 0, '2026-09-02 03:00:05'),
+(412, 3, 136, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260902-0034 belum diverifikasi selama 2 jam.', 0, '2026-09-02 05:00:05'),
+(413, 3, 133, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260902-0031 belum diverifikasi selama 2 jam.', 0, '2026-09-02 05:00:08'),
+(414, 1, 106, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260902-0004 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-09-02 07:00:05'),
+(415, 1, 99, 'Eskalasi: Pelunasan Belum Diverifikasi', 'Pelunasan ORD-20260901-0002 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-09-02 07:00:06'),
+(416, 20, NULL, 'Kerja Sama Perusahaan Dicabut', 'Status kerja sama Perusahaan Mitra Kasih dicabut. Pesanan baru mengikuti skema perseorangan.', 0, '2026-09-02 07:00:32'),
+(417, 3, 138, 'Bukti DP Baru', 'Suryaningrat mengunggah bukti DP untuk ORD-20260902-0036.', 1, '2026-09-02 07:20:21'),
+(418, 17, 63, 'DP Terverifikasi', 'Pembayaran DP pesanan ORD-20260726-0001 telah diverifikasi.', 0, '2026-09-02 07:24:13'),
+(419, 20, 106, 'Bukti DP Ditolak', 'Bukti DP ORD-20260902-0004 ditolak: Kurang jelas bukti bayarnya, tolong unggahl lgi. Silakan upload ulang.', 0, '2026-09-02 07:24:36'),
+(420, 3, 138, 'Reminder Verifikasi DP', 'Bukti DP ORD-20260902-0036 belum diverifikasi selama 2 jam.', 0, '2026-09-02 13:05:06'),
+(421, 1, 136, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260902-0034 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-09-02 13:05:11'),
+(422, 1, 133, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260902-0031 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-09-02 13:05:15'),
+(423, 1, 138, 'Eskalasi: DP Belum Diverifikasi', 'DP ORD-20260902-0036 belum diverifikasi 6 jam. Koordinasikan bagian keuangan.', 0, '2026-09-02 14:05:05'),
+(424, 20, 101, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260901-0004 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-09-03 13:11:07'),
+(425, 20, 106, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260902-0004 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-09-03 13:11:11'),
+(426, 20, 106, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260902-0004 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-09-03 13:11:13'),
+(427, 26, 137, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260902-0035 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-09-03 13:11:15'),
+(428, 26, 137, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260902-0035 dibatalkan otomatis karena batas upload DP terlewat.', 0, '2026-09-03 13:11:18'),
+(429, 1, 100, 'Eskalasi: Konfirmasi Harga Custom', 'Pesanan ORD-20260901-0003 belum dikonfirmasi admin >2 hari kerja. Koordinasikan tim admin.', 0, '2026-09-03 13:11:31'),
+(430, 1, 102, 'Eskalasi: Konfirmasi Harga Custom', 'Pesanan ORD-20260901-0005 belum dikonfirmasi admin >2 hari kerja. Koordinasikan tim admin.', 0, '2026-09-03 13:11:39'),
+(431, 20, 129, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260902-0027 siap direview.', 1, '2026-09-03 23:02:07'),
+(432, 4, 129, 'Revisi Diajukan', 'Pelanggan ajukan revisi v1 ORD-20260902-0027. Sisa kuota: 1.', 0, '2026-09-03 23:06:34'),
+(433, 20, 129, 'Draft Desain Tersedia', 'Draft v2 pesanan ORD-20260902-0027 siap direview.', 0, '2026-09-03 23:07:02'),
+(434, 4, 129, 'Desain di-ACC', 'Pelanggan memilih draft v1 untuk dicetak-ORD-20260902-0027. Lanjut proses cetak.', 1, '2026-09-03 23:07:27'),
+(435, 3, 135, 'Bukti DP Baru', 'Yani Isnaeni mengunggah bukti DP untuk ORD-20260902-0033.', 1, '2026-09-05 18:36:39'),
+(436, 20, 136, 'DP Terverifikasi', 'DP pesanan ORD-20260902-0034 (Rp 6.000.000) sudah diverifikasi. Desain segera diproses.', 0, '2026-09-05 18:40:51'),
+(437, 20, 135, 'DP Terverifikasi', 'DP pesanan ORD-20260902-0033 (Rp 6.000.000) sudah diverifikasi. Desain segera diproses.', 0, '2026-09-05 18:59:49'),
+(438, 17, 138, 'Bukti DP Ditolak', 'Bukti DP ORD-20260902-0036 ditolak: bukti tidak jelas, tolong unggah ulang. Silakan unggah ulang.', 0, '2026-09-05 19:36:16'),
+(439, 3, 139, 'Bukti DP Baru', 'Suryaningrat mengunggah bukti DP untuk ORD-20260905-0001.', 0, '2026-09-05 20:38:08'),
+(440, 17, 139, 'DP Terverifikasi', 'DP pesanan ORD-20260905-0001 (Rp 1.000.000) sudah diverifikasi. Desain segera diproses.', 0, '2026-09-05 20:39:05'),
+(441, 17, 139, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260905-0001 siap Anda review.', 1, '2026-09-05 20:44:03'),
+(442, 20, 136, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260902-0034 siap Anda review.', 1, '2026-09-06 07:14:36'),
+(443, 17, 138, 'Pengingat Upload Bukti DP', 'Pesanan ORD-20260902-0036: unggah bukti DP sebelum 06 Sep 2026 19:36 WIB.', 0, '2026-09-06 07:54:07'),
+(444, 20, 135, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260902-0033 siap Anda review.', 1, '2026-09-06 17:22:44'),
+(445, 4, 135, 'Revisi Diajukan', 'Pelanggan ajukan revisi v1 ORD-20260902-0033. Sisa kuota: 2.', 1, '2026-09-06 17:31:24'),
+(446, 17, 138, 'Pesanan Dibatalkan (Timeout DP)', 'Pesanan ORD-20260902-0036 dibatalkan karena batas unggah bukti DP terlewat.', 0, '2026-09-06 19:54:03'),
+(447, 20, 135, 'Draft Desain Tersedia', 'Draft v2 pesanan ORD-20260902-0033 siap Anda review.', 1, '2026-09-06 20:51:27'),
+(448, 4, 135, 'Revisi Diajukan', 'Pelanggan ajukan revisi v2 ORD-20260902-0033. Sisa kuota: 1.', 0, '2026-09-06 21:07:48'),
+(449, 20, 135, 'Draft Desain Tersedia', 'Draft v3 pesanan ORD-20260902-0033 siap Anda review.', 0, '2026-09-06 21:08:22'),
+(450, 4, 135, 'Desain di-ACC', 'Pelanggan memilih draft v2 untuk dicetak-ORD-20260902-0033. Lanjut proses cetak.', 0, '2026-09-06 21:15:14'),
+(451, 4, 139, 'Desain di-ACC', 'Pelanggan memilih draft v1 untuk dicetak-ORD-20260905-0001. Lanjut proses cetak.', 0, '2026-09-06 21:29:19'),
+(452, 17, 63, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260726-0001 siap Anda review.', 1, '2026-09-06 21:33:37'),
+(453, 4, 63, 'Revisi Diajukan', 'Pelanggan ajukan revisi v1 ORD-20260726-0001. Sisa kuota: 1.', 0, '2026-09-06 21:34:38'),
+(454, 17, 63, 'Draft Desain Tersedia', 'Draft v2 pesanan ORD-20260726-0001 siap Anda review.', 0, '2026-09-06 21:43:35'),
+(455, 4, 63, 'Desain di-ACC', 'Pelanggan memilih draft v1 untuk dicetak-ORD-20260726-0001. Lanjut proses cetak.', 0, '2026-09-06 22:16:22'),
+(456, 20, 118, 'Draft Desain Tersedia', 'Draft v1 pesanan ORD-20260902-0016 siap Anda review.', 0, '2026-09-06 22:32:09'),
+(457, 4, 136, 'Revisi Diajukan', 'Pelanggan ajukan revisi v1 ORD-20260902-0034. Sisa kuota: 2.', 0, '2026-09-07 10:51:18'),
+(458, 20, 136, 'Draft Desain Tersedia', 'Draft v2 pesanan ORD-20260902-0034 siap Anda review.', 1, '2026-09-07 12:57:42'),
+(459, 4, 136, 'Desain di-ACC', 'Pelanggan memilih draft v1 untuk dicetak-ORD-20260902-0034. Lanjut proses cetak.', 0, '2026-09-07 13:00:34');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `orders`
+--
+
+CREATE TABLE `orders` (
+  `id_order` int(11) NOT NULL,
+  `kode_order` varchar(25) NOT NULL,
+  `id_pelanggan` int(11) NOT NULL,
+  `id_katalog` int(11) NOT NULL,
+  `jenis_pelanggan` enum('perseorangan','perusahaan') NOT NULL,
+  `is_custom` tinyint(4) DEFAULT 0,
+  `jumlah_order` int(11) NOT NULL DEFAULT 1,
+  `catatan_custom` text DEFAULT NULL,
+  `harga_custom` decimal(12,2) DEFAULT NULL,
+  `estimasi_custom` varchar(50) DEFAULT NULL,
+  `estimasi_hari` int(10) UNSIGNED DEFAULT NULL,
+  `catatan_admin_custom` text DEFAULT NULL,
+  `referensi_desain` varchar(255) DEFAULT NULL,
+  `detail_pesanan` text DEFAULT NULL,
+  `deadline_diajukan` date DEFAULT NULL,
+  `deadline_produksi` date DEFAULT NULL,
+  `metode_pengiriman` enum('kurir','ambil_sendiri') NOT NULL,
+  `alamat_kirim` text DEFAULT NULL,
+  `kuota_revisi` int(11) NOT NULL,
+  `sisa_kuota` int(11) NOT NULL,
+  `total_harga` decimal(12,2) DEFAULT NULL,
+  `require_dp` tinyint(4) DEFAULT 1,
+  `status` enum('menunggu_konfirmasi_harga','menunggu_konfirmasi_pelanggan','menunggu_verifikasi_dp','terverifikasi','proses_desain','proses_revisi','proses_cetak','finishing','siap_kirim','siap_diambil','dikirim','pesanan_diterima','menunggu_verifikasi_lunas','pelunasan_terverifikasi','selesai','dibatalkan') NOT NULL DEFAULT 'menunggu_verifikasi_dp',
+  `tgl_mulai_cetak` date DEFAULT NULL,
+  `tgl_finishing` date DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `batas_upload_dp` datetime DEFAULT NULL,
+  `reminder_dp_sent` tinyint(1) NOT NULL DEFAULT 0,
+  `reminder_harga_eskalasi_sent` tinyint(1) UNSIGNED NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `orders`
+--
+
+INSERT INTO `orders` (`id_order`, `kode_order`, `id_pelanggan`, `id_katalog`, `jenis_pelanggan`, `is_custom`, `jumlah_order`, `catatan_custom`, `harga_custom`, `estimasi_custom`, `estimasi_hari`, `catatan_admin_custom`, `referensi_desain`, `detail_pesanan`, `deadline_diajukan`, `deadline_produksi`, `metode_pengiriman`, `alamat_kirim`, `kuota_revisi`, `sisa_kuota`, `total_harga`, `require_dp`, `status`, `tgl_mulai_cetak`, `tgl_finishing`, `created_at`, `batas_upload_dp`, `reminder_dp_sent`, `reminder_harga_eskalasi_sent`) VALUES
+(1, 'ORD-20260601-0001', 1, 1, 'perseorangan', 0, 100, NULL, NULL, NULL, NULL, NULL, '1780316828_Screenshot (247).png', 'finishing foil embossed, bahan jasmine', '2026-06-05', '2026-06-05', 'kurir', 'Kp. Manglayang', 3, 3, 15000000.00, 1, 'menunggu_verifikasi_dp', NULL, NULL, '2026-06-01 12:27:08', NULL, 0, 0),
+(2, 'ORD-20260601-0002', 1, 4, 'perseorangan', 0, 100, NULL, NULL, NULL, NULL, NULL, '1780323691_Screenshot (314).png', 'Brosur untuk UMKM ayam geprek Ratu', '2026-06-06', '2026-06-06', 'ambil_sendiri', '', 2, 2, 7500000.00, 1, 'menunggu_verifikasi_dp', NULL, NULL, '2026-06-01 14:21:31', NULL, 0, 0),
+(3, 'ORD-20260602-0001', 1, 6, 'perseorangan', 1, 100, 'Saya ingin kalender dindingnya desainnya berbentuk ovale. Lalu ada beberapa hiasan 3D dengan mengusung konsep tema sakura.', 23000.00, '7-14 hari kerja', NULL, 'Sudah foil embossed', '1780400902_kalnder 1.jpg', 'Kalnder dinding perusahaan PT Sinergi Karya Utama', '2026-06-16', '2026-06-16', 'ambil_sendiri', '', 2, 2, 23000.00, 1, 'menunggu_verifikasi_dp', NULL, NULL, '2026-06-02 11:48:22', NULL, 0, 0),
+(4, 'ORD-20260603-0001', 1, 3, 'perseorangan', 0, 5, NULL, NULL, NULL, NULL, NULL, '1780467219_cookies.jpg', 'Banner untuk jualan UMKM makanan, Bloomy Cookies..konsepnya ingin seperti referensi yang telah dikirimkan. Namun warnanya beda2. \r\n1. Warna Merah seperti referensi 2\r\n2. Warna Navy 1\r\n3. Warna Green matcha 2\r\n', '2026-06-08', '2026-06-08', 'ambil_sendiri', '', 2, 0, 250000.00, 1, 'selesai', NULL, NULL, '2026-06-03 06:13:39', '2026-06-04 06:13:39', 0, 0),
+(5, 'ORD-20260603-0002', 5, 2, 'perseorangan', 0, 500, NULL, NULL, NULL, NULL, NULL, '1780480674_animate_undangan khitan.jpg', 'Ada nuansa Maroon Gold, ditambah dengan karakter 3D', '2026-06-27', '2026-06-27', 'kurir', 'Jl. Taman Sari Rt.004/001', 2, 2, 50000000.00, 1, 'dibatalkan', NULL, NULL, '2026-06-03 09:57:54', '2026-06-04 09:57:54', 0, 0),
+(6, 'ORD-20260603-0003', 5, 5, 'perseorangan', 0, 200, NULL, NULL, NULL, NULL, NULL, '1780490867_kartu-nama.jpg', 'Hitam Doff kasar, ada QR Codenya. A.N Emily Ahmad Riyadh, CEO PT Ahlan Ranud. No Tel. 082236745118', '2026-06-05', '2026-06-05', 'kurir', 'Komplek Sukatani Mulya, Cigadung, Rt.005/010', 2, 2, 6000000.00, 1, 'dibatalkan', NULL, NULL, '2026-06-03 19:47:47', '2026-06-04 19:47:47', 0, 0),
+(7, 'ORD-20260604-0001', 3, 4, 'perseorangan', 0, 1000, NULL, NULL, NULL, NULL, NULL, '1780561055_brosur-gold.jpg', 'Brosur PT Kusumadinata Putra, warna dominan black.. konsep modern-elegant', '2026-06-07', '2026-06-07', 'kurir', 'Jl. Purnama Bhakti Kencana, Bandung', 2, 2, 1000000.00, 1, 'dibatalkan', NULL, NULL, '2026-06-04 15:17:35', '2026-06-05 15:17:35', 1, 0),
+(8, 'ORD-20260604-0002', 3, 6, 'perseorangan', 0, 500, NULL, NULL, NULL, NULL, NULL, '1780565378_kalnder 1.jpg', 'Kalender untuk Toko Emas John Doe Jewelery', '2026-06-20', '2026-06-20', 'ambil_sendiri', '', 2, 2, 100000000.00, 1, 'terverifikasi', NULL, NULL, '2026-06-04 16:29:38', '2026-06-05 16:29:38', 0, 0),
+(9, 'ORD-20260604-0003', 3, 8, 'perseorangan', 0, 1, NULL, NULL, NULL, NULL, NULL, NULL, 'Desain untuk perusahaan yang bergerak di bidang F&B, nama perusahaan PT Surawung Sukma Asih. Ingin konsepnya autentik, curtural budaya sunda. Warnanya ingin ada gold + hijau tua', '2026-06-07', '2026-06-07', 'kurir', 'Kp. Asih Sedak Sinten,  Karyawangi Kaler No.60', 4, 4, 300000.00, 1, 'dibatalkan', NULL, NULL, '2026-06-04 17:05:30', '2026-06-05 17:24:25', 0, 0),
+(10, 'ORD-20260606-0001', 3, 1, 'perseorangan', 0, 1000, NULL, NULL, NULL, NULL, NULL, '1780732820_maroon.jpg', 'Desain undangan sama seperti foto katalog, namun warnanya ingin Merah maroon, dengan campuran gold. ', '2026-06-24', '2026-06-24', 'ambil_sendiri', '', 3, 3, 150000000.00, 1, 'dibatalkan', NULL, NULL, '2026-06-06 15:00:20', '2026-06-07 16:08:19', 1, 0),
+(11, 'ORD-20260606-0002', 3, 11, 'perseorangan', 1, 1000, 'Ingin berbentuk Lonjong dengan sprinkle blink-blink dengan bunga 3D di depannya. Dengan Hardcover dan ceklekan gold', 40000.00, '14-21  hari kerja', NULL, 'Hal tersebut dikarenakan masuknya ke dalam handy craft, untuk pengerjaan bunga 3D itu dikerjakan manual menggunakan tangan dalam merangkainya, sudah include plastik/pcsnya', '1780736041_agenda-girly.jpg', 'Rose Pink dan juga cream tema konsepnya girly', '2026-07-08', '2026-07-08', 'kurir', 'Jl. Setiabudi Asih', 2, 1, 40000.00, 1, 'dikirim', NULL, NULL, '2026-06-06 15:54:01', '2026-06-07 16:01:56', 0, 0),
+(12, 'ORD-20260606-0003', 6, 1, 'perseorangan', 0, 1000, NULL, NULL, NULL, NULL, NULL, '1780738200_animate_undangan khitan.jpg', 'Soft Pink, Foil rose gold ', '2026-06-14', '2026-06-14', 'ambil_sendiri', '', 3, 1, 10000000.00, 1, 'selesai', NULL, NULL, '2026-06-06 16:30:00', '2026-06-07 16:34:46', 0, 0),
+(13, 'ORD-20260606-0004', 6, 4, 'perseorangan', 1, 500, 'Brosurnya igin berbentuk daun', 5000.00, '7-10 hari kerja', NULL, 'Hal tersebut dikarenakan bentuk yang diinginkan unik', '1780747838_unik brossr.jpg', 'Warna hijau tua, muda dan sedang.. untuk PT Hijau Bijaksana, seperti lampiran contoh', '2026-06-09', '2026-06-09', 'ambil_sendiri', '', 2, 2, 5000.00, 1, 'dibatalkan', NULL, NULL, '2026-06-06 19:10:38', NULL, 0, 0),
+(14, 'ORD-20260606-0005', 6, 8, 'perseorangan', 0, 2, NULL, NULL, NULL, NULL, NULL, '1780754071_peta_lokasi.jpg', 'untuk PT Marga Satwa, pingin konsepnya tentang alam dan lokasi', '2026-06-08', '2026-06-08', 'ambil_sendiri', '', 4, 3, 600000.00, 1, 'selesai', NULL, NULL, '2026-06-06 20:54:31', '2026-06-07 20:54:31', 0, 0),
+(15, 'ORD-20260606-0006', 6, 5, 'perseorangan', 1, 150, 'Bentuknya pingin seperti referensi desain, namun strawberry', 6000000.00, '7-10 hari kerja', NULL, 'sesuai dengan keinginan dengn finishing clear laminasi', '1780754666_kartu_nama.jpg', 'Warnanya sama seperti Referensi Desain. Data yang tertera. Dahlan Aini Fitri, CEO Fruity Sweet', '2026-06-11', '2026-06-11', 'ambil_sendiri', '', 2, 2, 6000000.00, 1, 'pelunasan_terverifikasi', NULL, NULL, '2026-06-06 21:04:26', '2026-06-07 21:10:07', 0, 0),
+(16, 'ORD-20260607-0001', 3, 3, 'perseorangan', 0, 1, NULL, NULL, NULL, NULL, NULL, '1780802850_cookies.jpg', 'Mau banner untuk jualan icookies namanya..', '2026-06-12', '2026-06-12', 'ambil_sendiri', '', 2, 2, 50000.00, 1, 'dibatalkan', NULL, NULL, '2026-06-07 10:27:30', '2026-06-08 10:27:30', 1, 0),
+(20, 'TST-L060701', 3, 1, 'perusahaan', 0, 100, NULL, NULL, NULL, NULL, NULL, NULL, 'Order uji promosi tier 1/3', '2026-06-14', '2026-06-14', 'ambil_sendiri', NULL, 2, 2, 2500000.00, 1, 'selesai', NULL, NULL, '2026-05-08 13:53:03', NULL, 0, 0),
+(21, 'TST-L060702', 3, 2, 'perusahaan', 0, 50, NULL, NULL, NULL, NULL, NULL, NULL, 'Order uji promosi tier 2/3', '2026-06-14', '2026-06-14', 'ambil_sendiri', NULL, 2, 2, 1800000.00, 1, 'selesai', NULL, NULL, '2026-05-18 13:53:03', NULL, 0, 0),
+(22, 'TST-L060703', 3, 3, 'perusahaan', 0, 10, NULL, NULL, NULL, NULL, NULL, NULL, 'Order uji promosi tier 3/3', '2026-06-14', '2026-06-14', 'kurir', NULL, 2, 2, 3200000.00, 1, 'selesai', NULL, NULL, '2026-05-28 13:53:03', NULL, 0, 0),
+(29, 'ORD-20260607-0002', 3, 7, 'perusahaan', 0, 1, NULL, NULL, NULL, NULL, NULL, NULL, 'Sesuai dengan gambar catalog', '2026-06-13', '2026-06-13', 'ambil_sendiri', '', 1, 1, 80000.00, 0, 'finishing', NULL, NULL, '2026-06-07 14:15:58', NULL, 0, 0),
+(30, 'ORD-20260605-0091', 1, 3, 'perseorangan', 0, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'kurir', 'Jl. Test No. 1, Bandung Barat', 2, 2, 500000.00, 1, 'selesai', NULL, NULL, '2026-06-05 14:58:37', NULL, 0, 0),
+(31, 'ORD-20260606-0092', 3, 5, 'perseorangan', 0, 100, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ambil_sendiri', NULL, 2, 2, 300000.00, 1, 'selesai', NULL, NULL, '2026-06-06 14:58:49', NULL, 0, 0),
+(32, 'ORD-20260607-0093', 4, 1, 'perusahaan', 0, 200, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'kurir', 'Jl. Bisnis No. 5, Jakarta Selatan', 2, 2, 1500000.00, 0, 'dikirim', NULL, NULL, '2026-06-03 14:59:00', NULL, 0, 0),
+(33, 'ORD-20260608-0001', 6, 6, 'perseorangan', 1, 12, 'Warna blue dove, menggunakan logo perusahaan ', 2400000.00, '14-20 hari kerja', NULL, 'Hal tersebut dikarenakan bentuk yang diinginkan termasuk unik dan handy craft, sehingga take time', '1780928531_softcover b.jpg', 'Warna blue dove ', '2026-06-30', '2026-06-30', 'ambil_sendiri', '', 2, 2, 2400000.00, 1, 'dibatalkan', NULL, NULL, '2026-06-08 21:22:11', '2026-06-10 11:14:50', 1, 0),
+(34, 'ORD-20260609-0001', 6, 4, 'perseorangan', 1, 500, 'Pingin bentuk daun', 1250000.00, '5-7harikerja', NULL, '-', NULL, 'seperti daun', '2026-06-12', '2026-06-12', 'ambil_sendiri', '', 2, 2, 1250000.00, 1, 'dibatalkan', NULL, NULL, '2026-06-09 11:16:36', '2026-06-10 11:19:35', 1, 0),
+(35, 'ORD-20260609-0002', 6, 5, 'perseorangan', 1, 100, 'Mau ungu', 3500000.00, '5-7hari kerja', NULL, '-', '1781011227_flash modal.png', 'Seperti referensi', '2026-06-17', '2026-06-17', 'ambil_sendiri', '', 2, 2, 3500000.00, 1, 'terverifikasi', NULL, NULL, '2026-06-09 20:20:27', '2026-06-10 20:26:48', 0, 0),
+(36, 'ORD-20260611-0001', 6, 3, 'perseorangan', 0, 1, NULL, NULL, NULL, NULL, NULL, NULL, 'sdada', '2026-06-13', '2026-06-13', 'kurir', 'Jl. Babut Girang, Cimahi, No 31', 2, 2, 50000.00, 1, 'dikirim', NULL, NULL, '2026-06-11 10:43:07', '2026-06-12 10:43:07', 0, 0),
+(37, 'ORD-20260601-0101', 1, 3, 'perseorangan', 0, 10, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'kurir', 'Jl. Demo Sidang No. 1, Bandung', 2, 2, 2000000.00, 1, 'selesai', NULL, NULL, '2026-06-01 10:00:00', NULL, 0, 0),
+(38, 'ORD-20260602-0102', 3, 5, 'perseorangan', 0, 50, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ambil_sendiri', NULL, 2, 2, 1600000.00, 1, 'selesai', NULL, NULL, '2026-06-02 14:30:00', NULL, 0, 0),
+(40, 'ORD-20260625-0001', 10, 12, 'perseorangan', 1, 1000, 'Desain brosur berbentuk Daun, dengan warna hijau Gradasi. Untuk keperluan brosur PT Wijaya Kusuma (Perusahaan perkebunan Teh di CIwidey. ', 750000.00, '8 hari kerja', 8, 'Sudah sesuai dengan requestan ', '1782383739_unik brossr.jpg', 'Saya lampirkan referensi desain sebagai contohnya.', '2026-06-30', '2026-07-08', 'kurir', 'Kp. Batununggal, Rt.001/018', 2, 2, 750000.00, 1, 'terverifikasi', NULL, NULL, '2026-06-25 17:35:39', '2026-06-28 19:01:21', 0, 0),
+(41, 'ORD-20260626-0001', 6, 1, 'perseorangan', 0, 500, NULL, NULL, NULL, NULL, NULL, NULL, 'Ingin campuran warna biru dongker, dengan warna putih, dan gold, namun dominan biru dongkernya. Birunya pingin seperti referensi desain yg saya kasih', '2026-07-08', '2026-07-08', 'ambil_sendiri', NULL, 3, 3, 5000000.00, 1, 'dibatalkan', NULL, NULL, '2026-06-26 10:38:28', '2026-06-27 10:38:28', 1, 0),
+(42, 'ORD-20260629-0001', 10, 1, 'perseorangan', 0, 1000, NULL, NULL, NULL, NULL, NULL, '1782720766_prewedding.jpg', 'Ini ada tambahan link foto pengantin yang akan dimasukan', '2026-07-31', '2026-07-31', 'kurir', 'Kp. Batununggal, Rt.001/018', 3, 3, 10000000.00, 1, 'dibatalkan', NULL, NULL, '2026-06-29 15:12:46', '2026-06-30 15:12:46', 1, 0),
+(43, 'ORD-20260703-0001', 3, 11, 'perseorangan', 0, 1000, NULL, NULL, NULL, NULL, NULL, NULL, 'untuk perusahaan PT Adiguna DIgjaya, ingin warna Hitam dan Gold', '2026-07-18', '2026-07-18', 'ambil_sendiri', NULL, 2, 2, 50000000.00, 1, 'dibatalkan', NULL, NULL, '2026-07-03 18:39:19', '2026-07-04 18:39:19', 1, 0),
+(44, 'ORD-20260703-0002', 3, 1, 'perseorangan', 1, 1000, 'Undangannya ingin berbentuk Bunga, seperi gambar yang dikirimkan', 15000000.00, '20 hari kerja', 20, 'Sesuai request', '1783086389_bunga_pink_undangan.jpg', 'Dominan warna Pink Muda, Ingin mirip seperti referensi yang dikirimkan', '2026-07-31', '2026-07-31', 'kurir', 'Komplek Pondok Hijau No.45', 3, 3, 15000000.00, 1, 'dibatalkan', NULL, NULL, '2026-07-03 20:46:29', '2026-07-05 19:22:27', 1, 0),
+(45, 'ORD-20260703-0003', 3, 8, 'perseorangan', 1, 1, 'Ingin Desain logo untuk perusahaan  FnB, Yaitu Bakery, Namanya Ronald Bakery', 350000.00, '10 hari kerja', 10, 'Sesuai dengan request', '1783087990_logo_burgundy.jpg', 'Pingin Elegant dan luxury temanya, warnanya burgundy seperti referensi yang dilampirkan', '2026-07-17', '2026-07-17', 'kurir', 'Komplek Pondok Hijau No.45', 4, 4, 350000.00, 1, 'dibatalkan', NULL, NULL, '2026-07-03 21:13:10', NULL, 0, 0),
+(46, 'ORD-20260705-0001', 6, 6, 'perseorangan', 0, 100, NULL, NULL, NULL, NULL, NULL, NULL, 'Pingin ada nama Yani~ di ujung kanan paling bawahnya tiap halaman', '2026-07-24', '2026-07-24', 'ambil_sendiri', NULL, 2, 2, 500000.00, 1, 'dibatalkan', NULL, NULL, '2026-07-05 20:17:15', '2026-07-06 20:17:15', 1, 0),
+(47, 'ORD-20260705-0002', 6, 5, 'perseorangan', 1, 1000, 'Saya mau kartu nama berwarna, dan bentuknya seperti referensi gambar', NULL, NULL, NULL, NULL, '1783257495_kartu_nama_unik.jpg', 'Untuk kartu nama Dentist', '2026-07-20', NULL, 'kurir', 'Komp. Sukaraja Residence', 2, 2, 0.00, 1, 'menunggu_konfirmasi_harga', NULL, NULL, '2026-07-05 20:18:15', NULL, 0, 1),
+(48, 'ORD-20260705-0003', 6, 11, 'perseorangan', 1, 2000, 'Mau buku agenda tapi di laminasi covernya, dan mau yang bahan jasmine isinya ', 75000000.00, '20 hari kerja', 20, 'Sesuai keinginan, termasuk packaging ', '1783258088_4agenda.jpg', 'Desain mau seperti referensi yang saya kirim', '2026-07-19', '2026-07-31', 'kurir', 'Komp. Sukaraja Residence Nol1234', 2, 2, 75000000.00, 1, 'menunggu_konfirmasi_pelanggan', NULL, NULL, '2026-07-05 20:28:08', NULL, 0, 0),
+(49, 'ORD-20260705-0004', 6, 12, 'perseorangan', 0, 500, NULL, NULL, NULL, NULL, NULL, NULL, 'Untuk PT. Aryaguna Mandiri', '2026-07-08', '2026-07-08', 'ambil_sendiri', NULL, 2, 2, 250000.00, 1, 'terverifikasi', NULL, NULL, '2026-07-05 20:31:24', '2026-07-06 20:31:24', 0, 0),
+(50, 'ORD-20260705-0005', 6, 11, 'perseorangan', 1, 2000, 'Mau buku agenda tapi di laminasi covernya, dan mau yang bahan jasmine isinya ', 100000000.00, '25 hari kerja', 25, 'Masuknya Handy Craft, sehingga deadline pengerjaannya membutuhkan waktu tambahan, dengan spesifikasi yang diminta (bahan jasmine dengan 100 halaman/buku) membutuhkan harga yang lumayan karena bahan jasmine itu sendiri sekitar 20ribu perlembar ukuran A4', '1783258349_4agenda.jpg', 'Desain mau seperti referensi yang saya kirim', '2026-07-25', '2026-08-07', 'kurir', 'Komp. Sukaraja Residence Nol1234', 2, 2, 100000000.00, 1, 'dibatalkan', NULL, NULL, '2026-07-05 20:32:29', '2026-07-06 20:40:03', 1, 0),
+(51, 'ORD-20260705-0006', 6, 5, 'perseorangan', 0, 500, NULL, NULL, NULL, NULL, NULL, NULL, 'Lorem Ipsum is dummy or placeholder text commonly used in graphic design, publishing, and web development to fill layouts and demonstrate visual elements without distracting from the design itself. It allows designers to focus on typography, spacing, and layout rather than the content', '2026-07-07', '2026-07-07', 'ambil_sendiri', NULL, 2, 2, 750000.00, 1, 'terverifikasi', NULL, NULL, '2026-07-05 20:41:05', '2026-07-06 20:41:05', 0, 0),
+(52, 'ORD-20260705-0007', 6, 12, 'perseorangan', 0, 500, NULL, NULL, NULL, NULL, NULL, NULL, 'mau untuk Aduwiyata Singaraja CEO PT Gumelar Wicaksono, notel 0899583672021', '2026-07-08', '2026-07-08', 'ambil_sendiri', NULL, 2, 2, 250000.00, 1, 'dibatalkan', NULL, NULL, '2026-07-05 20:44:02', '2026-07-06 20:44:02', 1, 0),
+(53, 'ORD-20260705-0008', 6, 4, 'perseorangan', 0, 500, NULL, NULL, NULL, NULL, NULL, '1783259137_Dessert Menu Trifold Brochure Layout Stock Template.jpg', 'pingin seperi referensi, untuk makanan', '2026-07-17', '2026-07-17', 'kurir', 'Komp. Sukaraja Residence', 2, 2, 500000.00, 1, 'terverifikasi', NULL, NULL, '2026-07-05 20:45:37', '2026-07-06 20:45:37', 0, 0),
+(54, 'ORD-20260706-0001', 10, 3, 'perseorangan', 0, 1, NULL, NULL, NULL, NULL, NULL, '1783338586_banner_unik.jpg', 'Namanya mau The Cuanki Asoyy , nanti pingin ada foto saya megang cuanki disitu', '2026-07-09', '2026-07-09', 'ambil_sendiri', NULL, 2, 2, 50000.00, 1, 'dibatalkan', NULL, NULL, '2026-07-06 18:49:46', '2026-07-07 18:49:46', 1, 0),
+(55, 'ORD-20260706-0002', 10, 4, 'perusahaan', 0, 500, NULL, NULL, NULL, NULL, NULL, NULL, 'Untuk Banner bukber  PT Abadi Nan Jaya.', '2026-07-16', '2026-07-16', 'ambil_sendiri', NULL, 2, 2, 500000.00, 0, 'finishing', NULL, '2026-09-06', '2026-07-06 19:40:45', NULL, 0, 0),
+(56, 'ORD-20260707-0001', 3, 6, 'perseorangan', 1, 1000, 'Pingin ada pakai gantungan tapi dari tali gitu', 7000000.00, '8 hari kerja', 8, 'sesuai request', '1783395212_kalender dinding 7 lembar.jpg', 'Samakan untuk desainnya. untuk gantungannya kayak referensi', '2026-07-17', '2026-07-22', 'kurir', 'Komplek Pondok Hijau No.45', 2, 2, 7000000.00, 1, 'menunggu_konfirmasi_pelanggan', NULL, NULL, '2026-07-07 10:33:32', NULL, 0, 1),
+(57, 'ORD-20260707-0002', 3, 8, 'perseorangan', 0, 1, NULL, NULL, NULL, NULL, NULL, NULL, 'Logo dari nama usaha Maniac Dimsum', '2026-07-11', '2026-07-11', 'ambil_sendiri', NULL, 3, 3, 300000.00, 1, 'terverifikasi', NULL, NULL, '2026-07-07 10:34:26', '2026-07-08 10:34:26', 0, 0),
+(58, 'ORD-20260707-0003', 3, 5, 'perseorangan', 0, 500, NULL, NULL, NULL, NULL, NULL, NULL, 'Nama: Arunika Lania Xaphire, CEO PT Bintang Abadi', '2026-07-23', '2026-07-23', 'kurir', 'Komplek Pondok Hijau No.45', 2, 2, 750000.00, 1, 'terverifikasi', NULL, NULL, '2026-07-07 10:36:19', '2026-07-08 10:36:19', 0, 0),
+(59, 'ORD-20260707-0004', 3, 11, 'perseorangan', 0, 1000, NULL, NULL, NULL, NULL, NULL, NULL, '', '2026-07-29', '2026-07-29', 'kurir', 'Komplek Pondok Hijau No.45', 2, 2, 50000000.00, 1, 'terverifikasi', NULL, NULL, '2026-07-07 10:44:13', '2026-07-08 10:44:13', 0, 0),
+(60, 'ORD-20260707-0005', 10, 7, 'perusahaan', 0, 500, NULL, NULL, NULL, NULL, NULL, NULL, '', '2026-07-12', '2026-07-12', 'ambil_sendiri', NULL, 1, 1, 40000000.00, 1, 'terverifikasi', NULL, NULL, '2026-07-07 11:42:29', '2026-07-08 11:42:29', 0, 0),
+(61, 'ORD-20260707-0006', 10, 3, 'perusahaan', 0, 3, NULL, NULL, NULL, NULL, NULL, '1783399420_Banners design.jpg', 'Banner Bukber', '2026-07-09', '2026-07-09', 'kurir', 'Kp. Haji Asgar', 2, 2, 150000.00, 0, 'terverifikasi', NULL, NULL, '2026-07-07 11:43:40', NULL, 0, 0),
+(62, 'ORD-20260707-0007', 6, 3, 'perseorangan', 0, 1, NULL, NULL, NULL, NULL, NULL, NULL, '', '2026-07-09', '2026-07-09', 'kurir', 'Kp. Babut Girang', 2, 2, 50000.00, 1, 'dibatalkan', NULL, NULL, '2026-07-07 14:47:08', '2026-07-08 14:47:08', 1, 0),
+(63, 'ORD-20260726-0001', 3, 3, 'perseorangan', 0, 1, NULL, NULL, NULL, NULL, NULL, '1785028749_Vintage Photography Trifold Brochure.jpg', 'Dominan warna Ungu', '2026-07-28', '2026-07-28', 'kurir', 'Komplek Pondok Hijau No.45', 2, 1, 50000.00, 1, 'finishing', '2026-09-06', '2026-09-07', '2026-07-26 08:19:09', '2026-07-27 08:19:09', 0, 0),
+(97, 'ORD-20260811-0001', 6, 3, 'perseorangan', 0, 3, NULL, NULL, NULL, NULL, NULL, NULL, 'sesuai katalog', '2026-08-13', '2026-08-13', 'kurir', 'Komp. Sukaraja Residence', 2, 0, 150000.00, 1, 'dikirim', NULL, NULL, '2026-08-11 09:09:28', '2026-08-12 09:09:28', 0, 0),
+(98, 'ORD-20260901-0001', 6, 12, 'perusahaan', 0, 25, NULL, NULL, NULL, NULL, NULL, '1788280366_draft_brosurbw1.jpg', 'Mohon hasil cetak hitam pekat dan tidak buram, dipakai untuk kebutuhan promosi internal minggu depan', '2026-09-09', '2026-09-09', 'kurir', 'Kp. Ciwangun Indah Camp', 2, 1, 2875000.00, 0, 'proses_desain', NULL, NULL, '2026-09-01 23:32:46', NULL, 0, 0),
+(99, 'ORD-20260901-0002', 6, 12, 'perusahaan', 0, 250, NULL, NULL, NULL, NULL, NULL, '1788280504_draft_brosurbw3.jpg', 'Mohon hasil cetak hitam pekat dan tidak buram, dipakai untuk kebutuhan promosi besar-besaran internal. Tolong sesuaikan dengan desain yang saya kirimkan ya mas', '2026-09-16', '2026-09-16', 'kurir', 'Kp. Ciwangun Indah Camp', 2, 1, 28750000.00, 1, 'menunggu_verifikasi_lunas', NULL, NULL, '2026-09-01 23:35:04', '2026-09-02 23:35:04', 0, 0),
+(100, 'ORD-20260901-0003', 6, 12, 'perusahaan', 1, 12, 'Brosur A5, kertas Art Paper 150gsm dua sisi, full colour, tri-fold (bukan spesifikasi katalog standar)', NULL, NULL, NULL, NULL, '1788280911_draft_brosurbw1.jpg', 'Perkiraan budget Rp7.000.000?8.000.000, mohon konfirmasi harga secepatnya.', '2026-09-10', NULL, 'ambil_sendiri', NULL, 2, 2, 0.00, 1, 'menunggu_konfirmasi_harga', NULL, NULL, '2026-09-01 23:41:51', NULL, 0, 1),
+(101, 'ORD-20260901-0004', 6, 11, 'perusahaan', 0, 200, NULL, NULL, NULL, NULL, NULL, NULL, 'Tolong cetaknya sesuaikan dengan desain yang telah dibuat ya mas. Untuk Perusahaan Mitra Kasih.', '2026-09-15', '2026-09-15', 'kurir', 'Kp. Ciwangun Indah Camp', 3, 3, 7000000.00, 1, 'dibatalkan', NULL, NULL, '2026-09-01 23:49:15', '2026-09-02 23:49:15', 1, 0),
+(102, 'ORD-20260901-0005', 6, 3, 'perusahaan', 1, 5, 'Untuk perusahaan Mitra Kasih. Sebuah perusahaan Otomotif. saya ingin warna merah ya sesuai dengan referensi desain. Ukurannya 4x1meter. mau full laminatig, bahan korcin', NULL, NULL, NULL, NULL, '1788281635_otomotif_red1.jpg', 'Untuk perusahaan Mitra Kasih. Sebuah perusahaan Otomotif. saya ingin warna merah ya sesuai dengan referensi desain. Ukurannya 4x1meter', '2026-09-04', NULL, 'ambil_sendiri', NULL, 2, 2, 0.00, 1, 'menunggu_konfirmasi_harga', NULL, NULL, '2026-09-01 23:53:55', NULL, 0, 1),
+(103, 'ORD-20260902-0001', 6, 4, 'perusahaan', 0, 500, NULL, NULL, NULL, NULL, NULL, '1788282722_draft_brosurwarna1.jpg', '', '2026-09-05', '2026-09-05', 'kurir', 'Kp. Ciwangun Indah Camp', 2, 2, 500000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 00:12:02', NULL, 0, 0),
+(104, 'ORD-20260902-0002', 6, 4, 'perusahaan', 0, 500, NULL, NULL, NULL, NULL, NULL, '1788282725_draft_brosurwarna1.jpg', '', '2026-09-05', '2026-09-05', 'kurir', 'Kp. Ciwangun Indah Camp', 2, 2, 500000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 00:12:05', NULL, 0, 0),
+(105, 'ORD-20260902-0003', 6, 5, 'perusahaan', 1, 1000, 'Bentuk Gigi ukuran tetap sama seperti standar', 1900000.00, '2 hari kerja', 2, '', '1788282911_kartu_nama_unik.jpg', '', '2026-09-04', '2026-09-04', 'ambil_sendiri', NULL, 2, 2, 1900000.00, 1, 'menunggu_konfirmasi_pelanggan', NULL, NULL, '2026-09-02 00:15:11', NULL, 0, 0),
+(106, 'ORD-20260902-0004', 6, 1, 'perusahaan', 0, 1000, NULL, NULL, NULL, NULL, NULL, '1788284306_Bw.png', '', '2026-09-09', '2026-09-09', 'ambil_sendiri', NULL, 3, 3, 10000000.00, 1, 'dibatalkan', NULL, NULL, '2026-09-02 00:38:26', '2026-09-03 07:24:33', 1, 0),
+(107, 'ORD-20260902-0005', 6, 3, 'perusahaan', 0, 12, NULL, NULL, NULL, NULL, NULL, NULL, 'Gradasi ungu tua dengan ungu muda, ingin memakai logo perrusahaan (menggunakan logo terbaru ), Ingin bertuliskan \"TOURING BERSAMA YGF (YANS FAMILY GROUP)\"', '2026-09-09', '2026-09-09', 'ambil_sendiri', NULL, 2, 2, 900000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 00:43:12', NULL, 0, 0),
+(108, 'ORD-20260902-0006', 6, 3, 'perusahaan', 0, 12, NULL, NULL, NULL, NULL, NULL, NULL, 'Gradasi ungu tua dengan ungu muda, ingin memakai logo perrusahaan (menggunakan logo terbaru ), Ingin bertuliskan \"TOURING BERSAMA YGF (YANS FAMILY GROUP)\"', '2026-09-09', '2026-09-09', 'ambil_sendiri', NULL, 2, 2, 900000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 00:43:16', NULL, 0, 0),
+(109, 'ORD-20260902-0007', 6, 3, 'perusahaan', 0, 12, NULL, NULL, NULL, NULL, NULL, NULL, 'Gradasi ungu tua dengan ungu muda, ingin memakai logo perrusahaan (menggunakan logo terbaru ), Ingin bertuliskan \"TOURING BERSAMA YGF (YANS FAMILY GROUP)\"', '2026-09-09', '2026-09-09', 'ambil_sendiri', NULL, 2, 2, 900000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 00:43:20', NULL, 0, 0),
+(110, 'ORD-20260902-0008', 6, 4, 'perusahaan', 0, 2000, NULL, NULL, NULL, NULL, NULL, NULL, 'Berwarna soft sage pada coover depan dan menggunakan warna putih pada dalam brosur', '2026-09-05', '2026-09-05', 'ambil_sendiri', NULL, 2, 2, 2000000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 00:48:44', NULL, 0, 0),
+(111, 'ORD-20260902-0009', 6, 4, 'perusahaan', 0, 2000, NULL, NULL, NULL, NULL, NULL, NULL, 'Berwarna soft sage pada coover depan dan menggunakan warna putih pada dalam brosur', '2026-09-05', '2026-09-05', 'ambil_sendiri', NULL, 2, 2, 2000000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 00:48:46', NULL, 0, 0),
+(112, 'ORD-20260902-0010', 6, 4, 'perusahaan', 0, 2000, NULL, NULL, NULL, NULL, NULL, NULL, 'Berwarna soft sage pada coover depan dan menggunakan warna putih pada dalam brosur', '2026-09-05', '2026-09-05', 'ambil_sendiri', NULL, 2, 2, 2000000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 00:48:51', NULL, 0, 0),
+(113, 'ORD-20260902-0011', 6, 4, 'perusahaan', 0, 2000, NULL, NULL, NULL, NULL, NULL, NULL, 'Berwarna soft sage pada coover depan dan menggunakan warna putih pada dalam brosur', '2026-09-05', '2026-09-05', 'ambil_sendiri', NULL, 2, 2, 2000000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 00:48:54', NULL, 0, 0),
+(114, 'ORD-20260902-0012', 6, 4, 'perusahaan', 0, 2000, NULL, NULL, NULL, NULL, NULL, NULL, 'Berwarna soft sage pada coover depan dan menggunakan warna putih pada dalam brosur', '2026-09-05', '2026-09-05', 'ambil_sendiri', NULL, 2, 2, 2000000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 00:48:57', NULL, 0, 0),
+(115, 'ORD-20260902-0013', 6, 3, 'perusahaan', 1, 12, 'Menggunakan Tulisan \"Open Gathering ANS GROUP\" memakai tema pecel lele', 1500000.00, '2 hari kerja', 2, '', '1788285233_karta.png', 'Ingin ada gradasi putih namun dominan berwarna hijau tua (Hijau Blorong)\r\n', '2026-09-05', '2026-09-05', 'ambil_sendiri', NULL, 2, 2, 1500000.00, 1, 'menunggu_konfirmasi_pelanggan', NULL, NULL, '2026-09-02 00:53:53', NULL, 0, 0),
+(116, 'ORD-20260902-0014', 6, 2, 'perusahaan', 0, 1000, NULL, NULL, NULL, NULL, NULL, NULL, '', '2026-09-05', '2026-09-05', 'ambil_sendiri', NULL, 2, 2, 2000000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 01:06:15', NULL, 0, 0),
+(117, 'ORD-20260902-0015', 6, 2, 'perusahaan', 0, 1000, NULL, NULL, NULL, NULL, NULL, NULL, '', '2026-09-05', '2026-09-05', 'ambil_sendiri', NULL, 2, 2, 2000000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 01:06:17', NULL, 0, 0),
+(118, 'ORD-20260902-0016', 6, 2, 'perusahaan', 0, 1000, NULL, NULL, NULL, NULL, NULL, NULL, '', '2026-09-05', '2026-09-05', 'ambil_sendiri', NULL, 2, 2, 2000000.00, 0, 'proses_desain', NULL, NULL, '2026-09-02 01:06:20', NULL, 0, 0),
+(119, 'ORD-20260902-0017', 6, 5, 'perusahaan', 0, 1000, NULL, NULL, NULL, NULL, NULL, NULL, 'Menggunakan tulisan font Aquatic', '2026-09-15', '2026-09-15', 'ambil_sendiri', NULL, 2, 2, 1500000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 01:11:24', NULL, 0, 0),
+(120, 'ORD-20260902-0018', 6, 5, 'perusahaan', 0, 1000, NULL, NULL, NULL, NULL, NULL, NULL, 'Menggunakan tulisan font Aquatic', '2026-09-15', '2026-09-15', 'ambil_sendiri', NULL, 2, 2, 1500000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 01:11:25', NULL, 0, 0),
+(121, 'ORD-20260902-0019', 6, 6, 'perusahaan', 0, 125, NULL, NULL, NULL, NULL, NULL, NULL, 'Menggunakan Kata - kata motivasi  setiap lembarnya', '2026-09-16', '2026-09-16', 'ambil_sendiri', NULL, 2, 2, 1250000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 01:21:18', NULL, 0, 0),
+(122, 'ORD-20260902-0020', 6, 6, 'perusahaan', 0, 125, NULL, NULL, NULL, NULL, NULL, NULL, 'Menggunakan Kata - kata motivasi  setiap lembarnya', '2026-09-16', '2026-09-16', 'ambil_sendiri', NULL, 2, 2, 1250000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 01:21:19', NULL, 0, 0),
+(123, 'ORD-20260902-0021', 6, 6, 'perusahaan', 1, 125, 'Ingin menggunakan logo perusahaan dan foto foto setiap divisi dan di cover  terakhir menggunakan  nama nama cabang perusahaan ', 4500000.00, '10 hari kerja', 10, '', '1788287760_Gambar Desain Kalender Dinding Tahun Baru 2022 Yang Bergaya _ EPS Unduhan Gratis - Pikbest.jpg', 'Berwarna Pink fanta', '2026-09-16', '2026-09-16', 'ambil_sendiri', NULL, 2, 2, 4500000.00, 1, 'menunggu_konfirmasi_pelanggan', NULL, NULL, '2026-09-02 01:36:00', NULL, 0, 0),
+(124, 'ORD-20260902-0022', 6, 6, 'perusahaan', 1, 125, 'Ingin menggunakan logo perusahaan dan foto foto setiap divisi dan di cover  terakhir menggunakan  nama nama cabang perusahaan ', 3125000.00, '10 hari kerja', 10, '', '1788287771_Gambar Desain Kalender Dinding Tahun Baru 2022 Yang Bergaya _ EPS Unduhan Gratis - Pikbest.jpg', 'Berwarna Pink fanta', '2026-09-16', '2026-09-16', 'ambil_sendiri', NULL, 2, 2, 3125000.00, 1, 'menunggu_konfirmasi_pelanggan', NULL, NULL, '2026-09-02 01:36:11', NULL, 0, 0),
+(125, 'ORD-20260902-0023', 6, 7, 'perusahaan', 0, 500, NULL, NULL, NULL, NULL, NULL, NULL, '', '2026-09-07', '2026-09-07', 'ambil_sendiri', NULL, 1, 1, 2000000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 01:40:06', NULL, 0, 0),
+(126, 'ORD-20260902-0024', 6, 7, 'perusahaan', 0, 500, NULL, NULL, NULL, NULL, NULL, NULL, '', '2026-09-07', '2026-09-07', 'ambil_sendiri', NULL, 1, 1, 2000000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 01:40:11', NULL, 0, 0),
+(127, 'ORD-20260902-0025', 6, 7, 'perusahaan', 0, 500, NULL, NULL, NULL, NULL, NULL, NULL, '', '2026-09-07', '2026-09-07', 'ambil_sendiri', NULL, 1, 1, 2000000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 01:40:14', NULL, 0, 0),
+(128, 'ORD-20260902-0026', 6, 12, 'perusahaan', 0, 2, NULL, NULL, NULL, NULL, NULL, NULL, '', '2026-09-08', '2026-09-08', 'ambil_sendiri', NULL, 2, 2, 230000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 01:42:21', NULL, 0, 0),
+(129, 'ORD-20260902-0027', 6, 12, 'perusahaan', 0, 2, NULL, NULL, NULL, NULL, NULL, NULL, '', '2026-09-08', '2026-09-08', 'ambil_sendiri', NULL, 2, 1, 230000.00, 0, 'finishing', NULL, '2026-09-06', '2026-09-02 01:42:25', NULL, 0, 0),
+(130, 'ORD-20260902-0028', 6, 11, 'perusahaan', 0, 100, NULL, NULL, NULL, NULL, NULL, NULL, 'Berwana hitam, menggunakan penanda buku berwarna gold  ', '2026-09-16', '2026-09-16', 'ambil_sendiri', NULL, 3, 3, 3500000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 01:43:55', NULL, 0, 0),
+(131, 'ORD-20260902-0029', 6, 11, 'perusahaan', 0, 100, NULL, NULL, NULL, NULL, NULL, NULL, 'Berwana hitam, menggunakan penanda buku berwarna gold  ', '2026-09-16', '2026-09-16', 'ambil_sendiri', NULL, 3, 3, 3500000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 01:43:58', NULL, 0, 0),
+(132, 'ORD-20260902-0030', 6, 11, 'perusahaan', 0, 100, NULL, NULL, NULL, NULL, NULL, NULL, 'Berwana hitam, menggunakan penanda buku berwarna gold  ', '2026-09-16', '2026-09-16', 'ambil_sendiri', NULL, 3, 3, 3500000.00, 0, 'terverifikasi', NULL, NULL, '2026-09-02 01:44:02', NULL, 0, 0),
+(133, 'ORD-20260902-0031', 6, 14, 'perusahaan', 1, 600, 'ingin menggunakan foto perusaan, foto recap kegiatan  selama setahun pada 7 lembar terakhir   ', 12000000.00, '12 hari kerja', 12, '', '1788288496_Gambar Desain Kalender Dinding Tahun Baru 2022 Yang Bergaya _ EPS Unduhan Gratis - Pikbest.jpg', '', '2026-09-18', '2026-09-18', 'ambil_sendiri', NULL, 3, 3, 12000000.00, 1, 'menunggu_verifikasi_dp', NULL, NULL, '2026-09-02 01:48:16', '2026-09-03 02:07:34', 0, 0),
+(134, 'ORD-20260902-0032', 6, 14, 'perusahaan', 1, 600, 'ingin menggunakan foto perusaan, foto recap kegiatan  selama setahun pada 7 lembar terakhir   ', 12000000.00, '12 hari kerja', 12, '', '1788288507_Gambar Desain Kalender Dinding Tahun Baru 2022 Yang Bergaya _ EPS Unduhan Gratis - Pikbest.jpg', '', '2026-09-18', '2026-09-18', 'ambil_sendiri', NULL, 3, 3, 12000000.00, 1, 'menunggu_konfirmasi_pelanggan', NULL, NULL, '2026-09-02 01:48:27', NULL, 0, 0),
+(135, 'ORD-20260902-0033', 6, 14, 'perusahaan', 1, 600, 'ingin menggunakan foto perusaan, foto recap kegiatan  selama setahun pada 7 lembar terakhir   ', 12000000.00, '12 hari kerja', 12, '', '1788288517_Gambar Desain Kalender Dinding Tahun Baru 2022 Yang Bergaya _ EPS Unduhan Gratis - Pikbest.jpg', '', '2026-09-18', '2026-09-18', 'ambil_sendiri', NULL, 3, 1, 12000000.00, 1, 'finishing', '2026-09-06', '2026-09-06', '2026-09-02 01:48:37', '2026-09-06 18:36:14', 0, 0),
+(136, 'ORD-20260902-0034', 6, 14, 'perusahaan', 1, 600, 'ingin menggunakan foto perusaan, foto recap kegiatan  selama setahun pada 7 lembar terakhir   ', 12000000.00, '12 hari kerja', 12, '', '1788288518_Gambar Desain Kalender Dinding Tahun Baru 2022 Yang Bergaya _ EPS Unduhan Gratis - Pikbest.jpg', '', '2026-09-18', '2026-09-18', 'ambil_sendiri', NULL, 3, 2, 12000000.00, 1, 'finishing', '2026-09-07', '2026-09-07', '2026-09-02 01:48:38', '2026-09-03 02:03:16', 0, 0),
+(137, 'ORD-20260902-0035', 12, 7, 'perseorangan', 0, 500, NULL, NULL, NULL, NULL, NULL, '1788308030_logo_setmpel.jpg', 'Untuk UMKM Prasada jaya. Ingin ada logo juga di nota kwitansinya', '2026-09-07', '2026-09-07', 'ambil_sendiri', NULL, 1, 1, 2000000.00, 1, 'dibatalkan', NULL, NULL, '2026-09-02 07:13:50', '2026-09-03 07:13:50', 1, 0),
+(138, 'ORD-20260902-0036', 3, 21, 'perseorangan', 0, 30, NULL, NULL, NULL, NULL, NULL, '1788308390_draft-lanyard3.jpg', 'Ingin dominan warna pastel', '2026-09-05', '2026-09-05', 'ambil_sendiri', NULL, 2, 2, 570000.00, 1, 'dibatalkan', NULL, NULL, '2026-09-02 07:19:50', '2026-09-06 19:36:12', 1, 0),
+(139, 'ORD-20260905-0001', 3, 7, 'perseorangan', 0, 500, NULL, NULL, NULL, NULL, NULL, NULL, 'PT Kusuma Raharja', '2026-09-10', '2026-09-10', 'kurir', 'Komplek Pondok Hijau No.45', 1, 1, 2000000.00, 1, 'proses_cetak', '2026-09-06', NULL, '2026-09-05 20:37:18', '2026-09-06 20:37:18', 0, 0);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `order_attributes`
+--
+
+CREATE TABLE `order_attributes` (
+  `id_attr` int(11) NOT NULL,
+  `id_order` int(11) NOT NULL,
+  `attribute_key` varchar(50) NOT NULL,
+  `attribute_val` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `order_attributes`
+--
+
+INSERT INTO `order_attributes` (`id_attr`, `id_order`, `attribute_key`, `attribute_val`) VALUES
+(1, 1, 'nama_mempelai_pria', 'John Doe'),
+(2, 1, 'nama_mempelai_wanita', 'Jane Doe'),
+(3, 1, 'nama_keluarga_pria', 'H Dadan & Ibu Saidah'),
+(4, 1, 'nama_keluarga_wanita', 'H Dandi & Ibu Sulastri'),
+(5, 1, 'akad_hari', 'Sabtu'),
+(6, 1, 'akad_tanggal', '2026-06-06'),
+(7, 1, 'akad_waktu', '07:05'),
+(8, 1, 'akad_tempat', 'Gd. Pakuhaji'),
+(9, 1, 'resepsi_hari', 'Sabtu'),
+(10, 1, 'resepsi_tanggal', '2026-06-06'),
+(11, 1, 'resepsi_waktu', '09:31'),
+(12, 1, 'resepsi_tempat', 'Gd. Pakuhaji'),
+(13, 1, 'turut_mengundang', '- Haji Aan\r\n-Lilis '),
+(14, 1, 'hiburan', 'Wayang Golek Giriharja 3'),
+(15, 1, 'keterangan', ''),
+(16, 1, 'lampiran_peta', '1780316828_Screenshot (278).png'),
+(17, 5, 'nama_anak', 'Muhammad Jodan Armani'),
+(18, 5, 'nama_bapak', 'H. Jonathan Malik'),
+(19, 5, 'nama_ibu', 'Xavien Sudrajat'),
+(20, 5, 'resepsi_hari', 'Minggu'),
+(21, 5, 'resepsi_tanggal', '2026-07-05'),
+(22, 5, 'resepsi_waktu', '10:30'),
+(23, 5, 'resepsi_tempat', 'Gedung Arcamanik Kaler'),
+(24, 5, 'turut_mengundang', '- Hj, Maemunah Asharo\r\n- Keluarga Besar Bpk. Hasyim Ashari\r\n- Keluarga Besar Bpk. Adan Sudrajat'),
+(25, 5, 'hiburan', 'Kuda Lumping'),
+(26, 5, 'keterangan', 'Acaranya sampai jam 16.00'),
+(27, 5, 'lampiran_peta', '1780480674_peta_lokasi.jpg'),
+(28, 10, 'nama_mempelai_pria', 'John Doe'),
+(29, 10, 'nama_mempelai_wanita', 'Jane Doe'),
+(30, 10, 'nama_keluarga_pria', 'Bpk. H. Iskandar Mail'),
+(31, 10, 'nama_keluarga_wanita', 'Bpk. H. Isnin bin Kamis'),
+(32, 10, 'akad_hari', 'Sabtu'),
+(33, 10, 'akad_tanggal', '2026-07-11'),
+(34, 10, 'akad_waktu', '08:15'),
+(35, 10, 'akad_tempat', 'Gd. Pemkot Cimahi'),
+(36, 10, 'resepsi_hari', 'Sabtu'),
+(37, 10, 'resepsi_tanggal', '2026-07-11'),
+(38, 10, 'resepsi_waktu', '10:30'),
+(39, 10, 'resepsi_tempat', 'Gd. Pemkot Cimahi'),
+(40, 10, 'turut_mengundang', '- Keluarga Besar Bpk. H. Naimin Mail\r\n- Keluarga Besar Bpk. Sukardi\r\n-Keluarga Besar Bpk. Kamis Rabu'),
+(41, 10, 'hiburan', 'Organ Tunggal, Upacara Adat, Pagelaran Wayang Giriharja 3'),
+(42, 10, 'keterangan', 'Berada d i Jl. Pemkot, Cimahi'),
+(43, 12, 'nama_mempelai_pria', 'Rian Handawa S.'),
+(44, 12, 'nama_mempelai_wanita', 'Yani Isnaeni '),
+(45, 12, 'nama_keluarga_pria', 'Rohman'),
+(46, 12, 'nama_keluarga_wanita', 'Dian Rakhadian'),
+(47, 12, 'akad_hari', 'Senin'),
+(48, 12, 'akad_tanggal', '2026-06-22'),
+(49, 12, 'akad_waktu', '07:20'),
+(50, 12, 'akad_tempat', 'Hotel Holiday, Kota Bandung'),
+(51, 12, 'resepsi_hari', 'Senin - Selasa'),
+(52, 12, 'resepsi_tanggal', '2026-06-22'),
+(53, 12, 'resepsi_waktu', '09:00'),
+(54, 12, 'resepsi_tempat', 'Hotel Holiday, Kota Bandung '),
+(55, 12, 'turut_mengundang', 'Rahma \r\nSinta \r\nAldi \r\nYislam \r\nPuteri '),
+(56, 12, 'hiburan', 'Giri Harja 3, Bajidor Legit Jaya Group, Kahitna, Rossa '),
+(57, 12, 'keterangan', ''),
+(58, 41, 'nama_mempelai_pria', 'Zidan Ahmad Saroni'),
+(59, 41, 'nama_mempelai_wanita', 'Julaeha Admaira'),
+(60, 41, 'nama_keluarga_pria', 'Bpk. H. Iskandar Mail'),
+(61, 41, 'nama_keluarga_wanita', 'Bpk. H. Isnin bin Kamis'),
+(62, 41, 'akad_hari', 'Senin'),
+(63, 41, 'akad_tanggal', '2026-06-22'),
+(64, 41, 'akad_waktu', '09:25'),
+(65, 41, 'akad_tempat', 'Gd. Cakrabirawa '),
+(66, 41, 'resepsi_hari', 'Selasa'),
+(67, 41, 'resepsi_tanggal', '2026-06-09'),
+(68, 41, 'resepsi_waktu', '06:22'),
+(69, 41, 'resepsi_tempat', 'Gd. Cakrabirawa '),
+(70, 41, 'turut_mengundang', '- HJ. Eti\r\n- Hj. Maemunah'),
+(71, 41, 'hiburan', 'Giri Harja 3, Bajidor Legit Jaya Group, Kahitna, Rossa '),
+(72, 41, 'keterangan', 'Lokasinya belum ada di Gmaps, Lokasi acaranya ada di Kp. Bumi Asih Sukasenang, Gd. Cakrabirawa '),
+(73, 42, 'nama_mempelai_pria', 'Dadan Ahmad'),
+(74, 42, 'nama_mempelai_wanita', 'Ropiah'),
+(75, 42, 'nama_keluarga_pria', 'H. Ahmad Tarsih dan Ibu Dedeh Adah'),
+(76, 42, 'nama_keluarga_wanita', 'H. Kosasih dan Hj. Taryati '),
+(77, 42, 'akad_hari', 'Kamis'),
+(78, 42, 'akad_tanggal', '2026-06-18'),
+(79, 42, 'akad_waktu', '09:00'),
+(80, 42, 'akad_tempat', 'Mesjig Nurul HUda'),
+(81, 42, 'resepsi_hari', 'Kamis'),
+(82, 42, 'resepsi_tanggal', '2026-06-18'),
+(83, 42, 'resepsi_waktu', '10:36'),
+(84, 42, 'resepsi_tempat', 'Gedung Gandawijaya, Jl. Jalakharupat No.45'),
+(85, 42, 'turut_mengundang', '- Bapak Adan Saepuloh\r\n-Keluarga Besar Ntis Sutisna\r\n-Keluarga Besar Tatan Sajidin\r\n-Ibu Maemunah \r\n-Keluarga Besar Ibu Hj. Jahro (Beas)'),
+(86, 42, 'hiburan', 'Wayang Golek Giriharja 3'),
+(87, 42, 'keterangan', 'ini link alamatnya: https://maps.app.goo.gl/NKJ94wRHyX91ftHD9'),
+(88, 44, 'nama_mempelai_pria', 'Adiguna Digdjaya'),
+(89, 44, 'nama_mempelai_wanita', 'Kinanti Nur Awliya'),
+(90, 44, 'nama_keluarga_pria', 'H Dadan & Ibu Saidah'),
+(91, 44, 'nama_keluarga_wanita', 'H. Kosasih dan Hj. Taryati '),
+(92, 44, 'akad_hari', 'Sabtu'),
+(93, 44, 'akad_tanggal', '2026-08-08'),
+(94, 44, 'akad_waktu', '09:00'),
+(95, 44, 'akad_tempat', 'Balai Sartika Convention Hall - Jl. Buah Batu Jl. Suryalaya Indah No.1-3, Cijagra, Kec. Lengkong, Kota Bandung, Jawa Barat 40265'),
+(96, 44, 'resepsi_hari', 'Sabtu'),
+(97, 44, 'resepsi_tanggal', '2026-08-08'),
+(98, 44, 'resepsi_waktu', '11:00'),
+(99, 44, 'resepsi_tempat', 'Balai Sartika Convention Hall - Jl. Buah Batu Jl. Suryalaya Indah No.1-3, Cijagra, Kec. Lengkong, Kota Bandung, Jawa Barat 40265'),
+(100, 44, 'turut_mengundang', '- Keluarga Besar Bpk. H. Idan Sukma\r\n- Keluarga Besar Ibu Hj. Masitoh \r\n- Keluarga Besar Bpk. Williem \r\n- Bpk. Ajat Rusdi\r\n- Ibu Hj. Maemunah '),
+(101, 44, 'hiburan', 'Upacara Adat Sunda  & Kacapi Suling'),
+(102, 44, 'keterangan', 'Tolong sesuaikan lampiran peta lokasinya agar lebih detail'),
+(175, 106, 'nama_mempelai_pria', 'Adam Suanto'),
+(176, 106, 'nama_mempelai_wanita', 'Irma Siti '),
+(177, 106, 'nama_keluarga_pria', 'Bpk.H.Siamon'),
+(178, 106, 'nama_keluarga_wanita', ' Bpk.H.Suharjo'),
+(179, 106, 'akad_hari', 'Sabtu'),
+(180, 106, 'akad_tanggal', '2026-12-12'),
+(181, 106, 'akad_waktu', '07:30'),
+(182, 106, 'akad_tempat', 'Hotel HolidayIn, Kota Bandung'),
+(183, 106, 'resepsi_hari', 'Sabtu'),
+(184, 106, 'resepsi_tanggal', '2026-09-12'),
+(185, 106, 'resepsi_waktu', '08:30'),
+(186, 106, 'resepsi_tempat', 'Hotel HolidayIn, Kota Bandung'),
+(187, 106, 'turut_mengundang', '1. Keluarga besar Karang Taruna Rw.10 \r\n2. Kel. Besar Sinar abadi\r\n3. Kel. Bp Ampi\r\n4.Kel. Bp Odong'),
+(188, 106, 'hiburan', 'Filly Kurcaci, Ade Astrid, Rusdy Oyag, Legit Jaya '),
+(189, 106, 'keterangan', ''),
+(190, 116, 'nama_anak', 'Muisa Jayanti '),
+(191, 116, 'nama_bapak', 'H. Didin Suapan Akhir , S.H.  '),
+(192, 116, 'nama_ibu', 'Hj. Awalan Ratu '),
+(193, 116, 'resepsi_hari', 'Rabu'),
+(194, 116, 'resepsi_tanggal', '2026-09-30'),
+(195, 116, 'resepsi_waktu', '08:00'),
+(196, 116, 'resepsi_tempat', 'Hotel ASTON, Kota Bandung '),
+(197, 116, 'turut_mengundang', '1. Adam Susian\r\n2. Asep Platara\r\n3. Dadan Simanjuntak\r\n4.Juanda Budiana '),
+(198, 116, 'hiburan', 'Giri Harja Dua Putu '),
+(199, 116, 'keterangan', ''),
+(200, 116, 'waktu_selesai_resepsi', '02:30'),
+(201, 117, 'nama_anak', 'Muisa Jayanti '),
+(202, 117, 'nama_bapak', 'H. Didin Suapan Akhir , S.H.  '),
+(203, 117, 'nama_ibu', 'Hj. Awalan Ratu '),
+(204, 117, 'resepsi_hari', 'Rabu'),
+(205, 117, 'resepsi_tanggal', '2026-09-30'),
+(206, 117, 'resepsi_waktu', '08:00'),
+(207, 117, 'resepsi_tempat', 'Hotel ASTON, Kota Bandung '),
+(208, 117, 'turut_mengundang', '1. Adam Susian\r\n2. Asep Platara\r\n3. Dadan Simanjuntak\r\n4.Juanda Budiana '),
+(209, 117, 'hiburan', 'Giri Harja Dua Putu '),
+(210, 117, 'keterangan', ''),
+(211, 117, 'waktu_selesai_resepsi', '02:30'),
+(212, 118, 'nama_anak', 'Muisa Jayanti '),
+(213, 118, 'nama_bapak', 'H. Didin Suapan Akhir , S.H.  '),
+(214, 118, 'nama_ibu', 'Hj. Awalan Ratu '),
+(215, 118, 'resepsi_hari', 'Rabu'),
+(216, 118, 'resepsi_tanggal', '2026-09-30'),
+(217, 118, 'resepsi_waktu', '08:00'),
+(218, 118, 'resepsi_tempat', 'Hotel ASTON, Kota Bandung '),
+(219, 118, 'turut_mengundang', '1. Adam Susian\r\n2. Asep Platara\r\n3. Dadan Simanjuntak\r\n4.Juanda Budiana '),
+(220, 118, 'hiburan', 'Giri Harja Dua Putu '),
+(221, 118, 'keterangan', ''),
+(222, 118, 'waktu_selesai_resepsi', '02:30');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `password_resets`
+--
+
+CREATE TABLE `password_resets` (
+  `id` int(11) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `token` varchar(64) NOT NULL COMMENT 'SHA-256 hash dari token plain di URL email',
+  `expired_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `password_resets`
+--
+
+INSERT INTO `password_resets` (`id`, `email`, `token`, `expired_at`, `created_at`) VALUES
+(7, 'yniisn.rakha@gmail.com', 'ca75854ba8fa9db8f0f20703e7f58ef82e44a14af4251737db35e35e005a0eab', '2026-06-26 14:50:47', '2026-06-26 14:20:47'),
+(15, 'oldmoneysuccesswoman@gmail.com', '71861d57178e066223fb85f8201662739da123ab4e69ecd2f0f6e7568dcb34bd', '2026-07-25 21:06:20', '2026-07-25 20:36:20');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `payments`
+--
+
+CREATE TABLE `payments` (
+  `id_payment` int(11) NOT NULL,
+  `kode_payment` varchar(25) NOT NULL,
+  `id_order` int(11) NOT NULL,
+  `jenis` enum('dp','pelunasan') NOT NULL,
+  `nominal` decimal(12,2) NOT NULL,
+  `bukti_tf` varchar(255) DEFAULT NULL,
+  `status` enum('menunggu','terverifikasi','ditolak') DEFAULT 'menunggu',
+  `catatan_tolak` text DEFAULT NULL,
+  `id_verifikator` int(11) DEFAULT NULL,
+  `tgl_upload` datetime DEFAULT current_timestamp(),
+  `tgl_verifikasi` datetime DEFAULT NULL,
+  `reminder_verif_2j_sent` tinyint(1) NOT NULL DEFAULT 0,
+  `reminder_verif_6j_sent` tinyint(1) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `payments`
+--
+
+INSERT INTO `payments` (`id_payment`, `kode_payment`, `id_order`, `jenis`, `nominal`, `bukti_tf`, `status`, `catatan_tolak`, `id_verifikator`, `tgl_upload`, `tgl_verifikasi`, `reminder_verif_2j_sent`, `reminder_verif_6j_sent`) VALUES
+(1, 'PAY-20260603-0001', 4, 'dp', 125000.00, '1780471916_Screenshot (314).png', 'terverifikasi', NULL, 3, '2026-06-03 07:31:56', '2026-06-03 07:32:20', 0, 0),
+(2, 'PAY-20260604-0001', 8, 'dp', 50000000.00, '1780565480_Screenshot (328).png', 'terverifikasi', NULL, 3, '2026-06-04 16:31:20', '2026-06-06 16:07:55', 1, 1),
+(3, 'PAY-20260604-0002', 9, 'dp', 150000.00, '1780567594_Screenshot 2024-08-01 181008.png', 'ditolak', 'gambar kurang jelas', 3, '2026-06-04 17:06:34', '2026-06-04 17:24:25', 0, 0),
+(4, 'PAY-20260606-0001', 10, 'dp', 75000000.00, '1780732912_Screenshot 2026-01-11 232851.png', 'ditolak', 'kurang jelas, tolong kirimkan agar lebih jelas', 3, '2026-06-06 15:01:52', '2026-06-06 16:08:19', 0, 0),
+(5, 'PAY-20260606-0002', 11, 'dp', 20000.00, '1780736825_flash modal.png', 'terverifikasi', NULL, 3, '2026-06-06 16:07:05', '2026-06-06 16:12:13', 0, 0),
+(6, 'PAY-20260606-0003', 12, 'dp', 5000000.00, '1780738534_agenda-girly.jpg', 'terverifikasi', NULL, 3, '2026-06-06 16:35:34', '2026-06-06 16:37:43', 0, 0),
+(7, 'PAY-20260606-0004', 14, 'dp', 300000.00, '1780754114_notebook.jpg', 'terverifikasi', NULL, 3, '2026-06-06 20:55:14', '2026-06-07 20:59:31', 1, 1),
+(8, 'PAY-20260606-0005', 15, 'dp', 3000000.00, '1780755038_ilustrastion.png', 'terverifikasi', NULL, 3, '2026-06-06 21:10:38', '2026-06-06 21:18:59', 0, 0),
+(12, 'PAY-L060701', 20, 'pelunasan', 1250000.00, 'dummy_bukti_test.jpg', 'terverifikasi', NULL, NULL, '2026-05-09 13:53:03', '2026-05-10 13:53:03', 0, 0),
+(13, 'PAY-L060702', 21, 'pelunasan', 900000.00, 'dummy_bukti_test.jpg', 'terverifikasi', NULL, NULL, '2026-05-19 13:53:03', '2026-05-20 13:53:03', 0, 0),
+(14, 'PAY-L060703', 22, 'pelunasan', 1600000.00, 'dummy_bukti_test.jpg', 'terverifikasi', NULL, NULL, '2026-05-29 13:53:03', '2026-05-30 13:53:03', 0, 0),
+(19, 'PAY-20260605-0091', 30, 'dp', 250000.00, 'dummy_bukti_dp.jpg', 'terverifikasi', NULL, NULL, '2026-06-05 14:58:37', '2026-06-06 14:58:37', 0, 0),
+(20, 'PAY-20260606-0092', 31, 'dp', 150000.00, 'dummy_bukti_dp.jpg', 'terverifikasi', NULL, NULL, '2026-06-06 14:58:49', '2026-06-07 14:58:49', 0, 0),
+(21, 'PAY-20260608-0001', 4, 'pelunasan', 125000.00, '1780906929_maroon.jpg', 'terverifikasi', NULL, 3, '2026-06-08 15:22:09', '2026-06-08 15:42:36', 0, 0),
+(22, 'PAY-20260608-0002', 31, 'pelunasan', 150000.00, '1780908610_unik brossr.jpg', 'terverifikasi', NULL, 3, '2026-06-08 15:50:10', '2026-06-10 08:51:16', 0, 0),
+(23, 'PAY-20260608-0003', 30, 'pelunasan', 250000.00, '1780910326_peta_lokasi.jpg', 'terverifikasi', NULL, 3, '2026-06-08 16:18:46', '2026-06-08 16:54:54', 0, 0),
+(24, 'PAY-20260609-0001', 35, 'dp', 1750000.00, '1781011710_brosur.jpg', 'terverifikasi', NULL, 3, '2026-06-09 20:28:30', '2026-06-10 08:51:06', 0, 0),
+(25, 'PAY-20260610-0001', 11, 'pelunasan', 20000.00, '1781231956_brosur.jpg', 'terverifikasi', NULL, 3, '2026-06-12 09:39:16', '2026-06-12 09:40:09', 0, 0),
+(26, 'PAY-20260612-0001', 36, 'dp', 25000.00, '1781232120_brosur.jpg', 'terverifikasi', NULL, 3, '2026-06-12 09:42:00', '2026-06-12 09:43:40', 0, 0),
+(27, 'PAY-20260612-0002', 12, 'pelunasan', 5000000.00, '1781232146_ilustrastion.png', 'terverifikasi', NULL, 3, '2026-06-12 09:42:26', '2026-06-12 09:43:08', 0, 0),
+(28, 'PAY-20260601-0101', 37, 'dp', 1000000.00, 'dummy_bukti_dp.jpg', 'terverifikasi', NULL, 3, '2026-06-01 11:00:00', '2026-06-01 15:00:00', 0, 0),
+(29, 'PAY-20260601-0102', 37, 'pelunasan', 1000000.00, 'dummy_bukti_lunas.jpg', 'terverifikasi', NULL, 3, '2026-06-08 09:00:00', '2026-06-08 11:30:00', 0, 0),
+(30, 'PAY-20260602-0103', 38, 'dp', 800000.00, 'dummy_bukti_dp.jpg', 'terverifikasi', NULL, 3, '2026-06-02 15:00:00', '2026-06-02 16:00:00', 0, 0),
+(31, 'PAY-20260602-0104', 38, 'pelunasan', 800000.00, 'dummy_bukti_lunas.jpg', 'terverifikasi', NULL, 3, '2026-06-09 10:00:00', '2026-06-09 13:00:00', 0, 0),
+(34, 'PAY-20260627-0001', 40, 'dp', 375000.00, '1782562498_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-06-27 19:14:58', '2026-07-05 16:37:58', 1, 1),
+(35, 'PAY-20260705-0001', 49, 'dp', 125000.00, '1783258302_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-07-05 20:31:42', '2026-07-05 20:39:34', 0, 0),
+(36, 'PAY-20260705-0002', 50, 'dp', 50000000.00, '1783258609_sample_unggah bukti_tf.jpg', 'ditolak', 'Kurang jelas, mohon mengirimkan ulang bukti bayar dp', 3, '2026-07-05 20:36:49', '2026-07-05 20:40:03', 0, 0),
+(37, 'PAY-20260705-0003', 51, 'dp', 375000.00, '1783258898_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-07-05 20:41:38', '2026-07-29 05:53:16', 1, 1),
+(38, 'PAY-20260705-0004', 53, 'dp', 250000.00, '1783259148_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-07-05 20:45:48', '2026-07-29 05:53:21', 1, 1),
+(39, 'PAY-20260707-0001', 57, 'dp', 150000.00, '1783395280_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-07-07 10:34:40', '2026-07-29 05:53:45', 1, 1),
+(40, 'PAY-20260707-0002', 59, 'dp', 25000000.00, '1783395875_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-07-07 10:44:35', '2026-07-29 05:53:54', 1, 1),
+(41, 'PAY-20260707-0003', 60, 'dp', 20000000.00, '1783399378_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-07-07 11:42:58', '2026-08-11 09:13:09', 1, 1),
+(42, 'PAY-20260707-0004', 58, 'dp', 375000.00, '1783407504_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-07-07 13:58:24', '2026-08-11 09:13:15', 1, 1),
+(43, 'PAY-20260726-0001', 63, 'dp', 25000.00, '1785030330_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-07-26 08:45:30', '2026-09-02 07:24:09', 1, 1),
+(44, 'PAY-20260729-0001', 15, 'pelunasan', 3000000.00, '1785335785_WhatsApp Image 2026-05-03 at 09.47.40.jpeg', 'terverifikasi', NULL, 3, '2026-07-29 21:36:25', '2026-07-29 21:38:21', 0, 0),
+(45, 'PAY-20260729-0002', 14, 'pelunasan', 300000.00, '1785335826_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-07-29 21:37:06', '2026-07-29 21:38:26', 0, 0),
+(46, 'PAY-20260729-0003', 36, 'pelunasan', 25000.00, '1785336198_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-07-29 21:43:18', '2026-07-29 21:43:56', 0, 0),
+(53, 'PAY-20260811-0001', 97, 'dp', 75000.00, '1786414183_ktp.jpg', 'terverifikasi', NULL, 3, '2026-08-11 09:09:43', '2026-08-11 09:15:05', 0, 0),
+(54, 'PAY-20260812-0001', 97, 'pelunasan', 75000.00, '1786543938_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-08-12 21:12:18', '2026-08-12 21:15:10', 0, 0),
+(55, 'PAY-20260901-0001', 99, 'dp', 14375000.00, '1788281704_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-09-01 23:55:04', '2026-09-02 00:02:35', 0, 0),
+(56, 'PAY-20260902-0001', 99, 'pelunasan', 14375000.00, '1788283587_sample_unggah bukti_tf.jpg', 'menunggu', NULL, NULL, '2026-09-02 00:26:27', NULL, 1, 1),
+(57, 'PAY-20260902-0002', 106, 'dp', 5000000.00, '1788284350_Screenshot (21).png', 'ditolak', 'Kurang jelas bukti bayarnya, tolong unggahl lgi', 3, '2026-09-02 00:39:10', '2026-09-02 07:24:33', 1, 1),
+(58, 'PAY-20260902-0003', 136, 'dp', 6000000.00, '1788289466_WhatsApp Image 2026-08-31 at 14.23.27.jpeg', 'terverifikasi', NULL, 3, '2026-09-02 02:04:26', '2026-09-05 18:40:47', 1, 1),
+(59, 'PAY-20260902-0004', 133, 'dp', 6000000.00, '1788289673_WhatsApp Image 2026-08-31 at 14.23.27.jpeg', 'menunggu', NULL, NULL, '2026-09-02 02:07:53', NULL, 1, 1),
+(60, 'PAY-20260902-0005', 138, 'dp', 285000.00, '1788308417_sample_unggah bukti_tf.jpg', 'ditolak', 'bukti tidak jelas, tolong unggah ulang', 3, '2026-09-02 07:20:17', '2026-09-05 19:36:12', 1, 1),
+(61, 'PAY-20260905-0001', 135, 'dp', 6000000.00, '1788608194_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-09-05 18:36:34', '2026-09-05 18:59:43', 0, 0),
+(62, 'PAY-20260905-0002', 139, 'dp', 1000000.00, '1788615484_sample_unggah bukti_tf.jpg', 'terverifikasi', NULL, 3, '2026-09-05 20:38:04', '2026-09-05 20:39:01', 0, 0);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pelanggan`
+--
+
+CREATE TABLE `pelanggan` (
+  `id_pelanggan` int(11) NOT NULL,
+  `id_user` int(11) NOT NULL,
+  `no_telp` varchar(20) DEFAULT NULL,
+  `alamat` varchar(150) DEFAULT NULL,
+  `jenis` enum('perseorangan','perusahaan') DEFAULT 'perseorangan',
+  `nama_perusahaan` varchar(150) DEFAULT NULL,
+  `is_verified` tinyint(4) DEFAULT 0,
+  `is_suspended` tinyint(4) NOT NULL DEFAULT 0,
+  `kode_pelanggan` varchar(20) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `pelanggan`
+--
+
+INSERT INTO `pelanggan` (`id_pelanggan`, `id_user`, `no_telp`, `alamat`, `jenis`, `nama_perusahaan`, `is_verified`, `is_suspended`, `kode_pelanggan`) VALUES
+(1, 5, '081234567890', 'Jl. Test No. 1, Bandung Barat', 'perseorangan', NULL, 0, 0, 'PLG-00001'),
+(3, 17, '085559063772', 'Komplek Pondok Hijau No.45', 'perusahaan', 'PT Bloom Reverse', 0, 0, 'PLG-00003'),
+(4, 18, '087779023551', NULL, 'perseorangan', 'CV. Maju Bersama', 0, 0, 'PLG-00004'),
+(5, 19, '0877789326611', NULL, 'perseorangan', NULL, 0, 0, 'PLG-00005'),
+(6, 20, '0895805167472', 'Kp. Ciwangun Indah Camp', 'perseorangan', 'Perusahaan Mitra Kasih', 0, 0, 'PLG-00006'),
+(10, 24, '0899956436629', 'Kp. Haji Asgar', 'perusahaan', 'PT Abadi Nan Jaya', 1, 0, 'PLG-00010'),
+(12, 26, '085559063772', 'Kp. Babut Girang', 'perseorangan', NULL, 0, 0, 'PLG-00012'),
+(18, 57, '0895805167474', 'Kp.Citaman Rt.01 Rw.18', 'perseorangan', NULL, 0, 0, 'PLG-00018');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pengiriman`
+--
+
+CREATE TABLE `pengiriman` (
+  `id_kirim` int(11) NOT NULL,
+  `id_order` int(11) NOT NULL,
+  `no_resi` varchar(100) DEFAULT NULL,
+  `nama_ekspedisi` varchar(50) DEFAULT NULL,
+  `status_kirim` enum('siap_kirim','siap_diambil','dikirim','diterima','diambil') DEFAULT 'siap_kirim',
+  `tgl_kirim` datetime DEFAULT NULL,
+  `tgl_diterima` datetime DEFAULT NULL,
+  `kode_kirim` varchar(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `pengiriman`
+--
+
+INSERT INTO `pengiriman` (`id_kirim`, `id_order`, `no_resi`, `nama_ekspedisi`, `status_kirim`, `tgl_kirim`, `tgl_diterima`, `kode_kirim`) VALUES
+(1, 32, 'JNE2026123456', 'JNE', 'dikirim', '2026-06-07 14:59:00', NULL, 'KRM-ORD-20260607-0093'),
+(2, 4, NULL, NULL, 'diterima', '2026-06-08 15:45:44', '2026-06-08 15:45:44', 'KRM-ORD-20260603-0001'),
+(3, 30, '370910002526519', 'JNE', 'diterima', '2026-06-08 17:01:26', '2026-06-08 17:02:46', 'KRM-ORD-20260605-0091'),
+(4, 31, NULL, NULL, 'diterima', '2026-06-10 08:52:11', '2026-06-10 08:52:11', 'KRM-ORD-20260606-0092'),
+(5, 11, '370910002526519', 'JNE', 'dikirim', '2026-06-12 09:40:44', NULL, 'KRM-ORD-20260606-0002'),
+(6, 12, NULL, NULL, 'diterima', '2026-06-12 09:43:18', '2026-06-12 09:43:18', 'KRM-ORD-20260606-0003'),
+(11, 36, 'ABC123456-56784', 'JNE', 'dikirim', '2026-08-12 14:29:44', NULL, 'KRM-ORD-20260611-0001'),
+(12, 97, 'QARESITO123', 'JNT', 'dikirim', '2026-08-12 21:17:41', NULL, 'KRM-ORD-20260811-0001'),
+(13, 14, NULL, NULL, 'diterima', '2026-08-13 20:24:46', '2026-08-13 20:24:46', 'KRM-ORD-20260606-0005'),
+(14, 99, 'JX5509244778', 'JNT', 'diterima', '2026-09-02 00:25:47', '2026-09-02 00:26:01', 'KRM-ORD-20260901-0002');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `revisi_desain`
+--
+
+CREATE TABLE `revisi_desain` (
+  `id_revisi` int(11) NOT NULL,
+  `id_order` int(11) NOT NULL,
+  `id_produksi` int(11) NOT NULL,
+  `versi` int(11) NOT NULL DEFAULT 1,
+  `file_draft` varchar(255) NOT NULL,
+  `mockup_adjust` text DEFAULT NULL,
+  `catatan_prod` text DEFAULT NULL,
+  `catatan_revisi` text DEFAULT NULL,
+  `status` enum('uploaded','diajukan_revisi','acc','ditolak') DEFAULT 'uploaded',
+  `created_at` datetime DEFAULT current_timestamp(),
+  `kode_revisi` varchar(60) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `revisi_desain`
+--
+
+INSERT INTO `revisi_desain` (`id_revisi`, `id_order`, `id_produksi`, `versi`, `file_draft`, `mockup_adjust`, `catatan_prod`, `catatan_revisi`, `status`, `created_at`, `kode_revisi`) VALUES
+(1, 4, 4, 1, '1780581547_cookies.jpg', NULL, NULL, 'Saya ingin menjadi warna HIjau matcha', 'acc', '2026-06-04 20:59:07', 'REV-ORD-20260603-0001-V1'),
+(2, 4, 4, 2, '1780581970_peta_lokasi.jpg', NULL, 'Berikut warnanya sudah diubah menjadi warna hijau matcha', NULL, 'uploaded', '2026-06-04 21:06:10', 'REV-ORD-20260603-0001-V2'),
+(3, 4, 4, 3, '1780582112_bw-brosur.jpg', NULL, NULL, 'Pingin diubah jadi navi', 'diajukan_revisi', '2026-06-04 21:08:32', 'REV-ORD-20260603-0001-V3'),
+(4, 12, 4, 1, '1780738819_maroon.jpg', NULL, 'Ini mbak sudah disesuaikan, silahkan lihat terleh dahulu dan komentar apa kurangnya', 'Typo di nama Mempelai pria', 'diajukan_revisi', '2026-06-06 16:40:19', 'REV-ORD-20260606-0003-V1'),
+(5, 12, 4, 2, '1780738948_logo.jpg', NULL, 'done', 'Hiburannnya nambah fily kurcaci', 'diajukan_revisi', '2026-06-06 16:42:28', 'REV-ORD-20260606-0003-V2'),
+(6, 12, 4, 3, '1780739041_maroon.jpg', NULL, 'oke udah ya mbak, udah ditambah vily kurcaci, soalnya di form gaada fily kurcaci', NULL, 'acc', '2026-06-06 16:44:01', 'REV-ORD-20260606-0003-V3'),
+(7, 15, 4, 1, '1780755821_WhatsApp Image 2026-05-05 at 11.00.29.jpeg', NULL, 'sudah disesuaikan dengan spesifikasi pesanan', NULL, 'acc', '2026-06-06 21:23:41', 'REV-ORD-20260606-0006-V1'),
+(8, 11, 4, 1, '1781057132_softcover b.jpg', NULL, 'ini sudah disesuaikan', 'Itu bunganya mau bunga mawar merah dan juga ada hiasan kayak arabian konsep', 'diajukan_revisi', '2026-06-10 09:05:32', 'REV-ORD-20260606-0002-V1'),
+(9, 11, 4, 2, '1781058027_animate_undangan khitan.jpg', NULL, 'Baik seperti ini ya?', NULL, 'acc', '2026-06-10 09:20:27', 'REV-ORD-20260606-0002-V2'),
+(11, 14, 4, 1, '1783256652_logo_burgundy.jpg', NULL, 'ini sudah sesuai keinginan ya, apakah masih ada yang dirasa kurang?', 'Saya maunya ini tuh lebih hidup', 'diajukan_revisi', '2026-07-05 20:04:12', 'REV-ORD-20260606-0005-V1'),
+(12, 29, 4, 1, '1783257034_nota1.jpg', NULL, 'Sesuai dengan request, apabila masih ada yang kurang mohon untuk dijelaskan', NULL, 'acc', '2026-07-05 20:10:34', 'REV-ORD-20260607-0002-V1'),
+(13, 36, 4, 1, '1783259319_banner_unik.jpg', NULL, 'apakah sudah sesuai?', NULL, 'acc', '2026-07-05 20:48:39', 'REV-ORD-20260611-0001-V1'),
+(14, 55, 4, 1, '1783346299_Poster H?i L?c ??u Xu?n - Nhi T?ng.jpg', NULL, NULL, NULL, 'acc', '2026-07-06 20:58:19', 'REV-ORD-20260706-0002-V1'),
+(15, 14, 4, 2, '1784883421_logo2.jpg', NULL, NULL, NULL, 'acc', '2026-07-24 15:57:01', 'REV-ORD-20260606-0005-V2'),
+(28, 97, 4, 1, '1786414581_Banners design.jpg', NULL, NULL, 'kurang ijo', 'diajukan_revisi', '2026-08-11 09:16:21', 'REV-ORD-20260811-0001-V1'),
+(29, 97, 4, 2, '1786414669_undangan_leaf.jpg', NULL, NULL, 'ingin merah', 'acc', '2026-08-11 09:17:49', 'REV-ORD-20260811-0001-V2'),
+(30, 97, 4, 3, '1786416015_Banners design.jpg', NULL, NULL, NULL, 'uploaded', '2026-08-11 09:40:15', 'REV-ORD-20260811-0001-V3'),
+(31, 98, 4, 1, '1788281944_draft_brosurbw1.jpg', NULL, 'Ini telah disesuaikan', 'Gambarnya terlalu banyak, saya kurang suka terlalu banyak gambar\'', 'diajukan_revisi', '2026-09-01 23:59:04', 'REV-ORD-20260901-0001-V1'),
+(32, 98, 4, 2, '1788282058_draft_brosurbw2.jpg', NULL, 'seperti ini mbak? sudah saya minimalisir', NULL, 'uploaded', '2026-09-02 00:00:58', 'REV-ORD-20260901-0001-V2'),
+(33, 99, 4, 1, '1788283064_draft_brosurbw2.jpg', NULL, 'Apakah sudah sesuai?', 'Boleh ada pilihan lain? saya kurang suka', 'diajukan_revisi', '2026-09-02 00:17:44', 'REV-ORD-20260901-0002-V1'),
+(34, 99, 4, 2, '1788283220_draft_brosurbw3.jpg', NULL, 'Ini lebih minimalist', NULL, 'acc', '2026-09-02 00:20:20', 'REV-ORD-20260901-0002-V2'),
+(35, 129, 4, 1, '1788451327_draft_brosurbw2.jpg', NULL, 'Ini apakah sudah sesuai?', 'Ada pilihan lain?', 'acc', '2026-09-03 23:02:07', 'REV-ORD-20260902-0027-V1'),
+(36, 129, 4, 2, '1788451622_draft_brosurbw3.jpg', NULL, NULL, NULL, 'uploaded', '2026-09-03 23:07:02', 'REV-ORD-20260902-0027-V2'),
+(37, 139, 4, 1, '1788615843_kwitansi1.jpg', NULL, 'berikut adalah hasil desain kwitansinya', NULL, 'acc', '2026-09-05 20:44:03', 'REV-ORD-20260905-0001-V1'),
+(38, 136, 4, 1, '1788653676_kalender1.jpg', NULL, NULL, 'Mau ada opsi lain warna merah', 'acc', '2026-09-06 07:14:36', 'REV-ORD-20260902-0034-V1'),
+(39, 135, 4, 1, '1788690164_contoh1.jpg', NULL, 'Ini ya mbak silahkan periksa', 'Mohon ada opsi lain', 'diajukan_revisi', '2026-09-06 17:22:44', 'REV-ORD-20260902-0033-V1'),
+(40, 135, 4, 2, '1788702687_contoh1.jpg', '{\"depan\":{\"layers\":[{\"id\":\"l1788702604664_87\",\"file\":\"primary\",\"ox\":12.95,\"oy\":-29.1,\"scale\":0.5,\"rotate\":0,\"cx\":0,\"cy\":0,\"cw\":100,\"ch\":44.45},{\"id\":\"l1788702637497_886\",\"file\":\"primary\",\"ox\":12.67,\"oy\":16.88,\"scale\":0.5,\"rotate\":0,\"cx\":0,\"cy\":45.31,\"cw\":100,\"ch\":54.69}]}}', 'Coba tolong cek', 'Saya ingin Hijau', 'acc', '2026-09-06 20:51:27', 'REV-ORD-20260902-0033-V2'),
+(41, 135, 4, 3, '1788703702_contoh2.jpg', '{\"depan\":{\"layers\":[{\"id\":\"l1788703676246_872\",\"file\":\"primary\",\"ox\":12.95,\"oy\":-2.51,\"scale\":0.8,\"rotate\":0,\"cx\":0,\"cy\":0,\"cw\":100,\"ch\":100}]}}', 'Ini sudah hijau', NULL, 'uploaded', '2026-09-06 21:08:22', 'REV-ORD-20260902-0033-V3'),
+(42, 63, 4, 1, '1788705217_Banners design.jpg', '{\"depan\":{\"layers\":[{\"id\":\"l1788705117822_959\",\"file\":\"primary\",\"ox\":22.45,\"oy\":-6.82,\"scale\":0.6,\"rotate\":90,\"cx\":0,\"cy\":0,\"cw\":100,\"ch\":51.08}]}}', 'please kindly check, apakah ada yang dirasa masih kurang?', 'Ada opsi lainnya tidak ya? saya mau si gambar eskrimnya di atas', 'acc', '2026-09-06 21:33:37', 'REV-ORD-20260726-0001-V1'),
+(43, 63, 4, 2, '1788705815_Banners design.jpg', '{\"depan\":{\"layers\":[{\"id\":\"l1788705718523_825\",\"file\":\"primary\",\"ox\":22.17,\"oy\":-6.47,\"scale\":0.6,\"rotate\":90,\"cx\":4.3,\"cy\":54.22,\"cw\":87.44,\"ch\":41.41}]}}', 'ini mbak?', NULL, 'uploaded', '2026-09-06 21:43:35', 'REV-ORD-20260726-0001-V2'),
+(44, 118, 4, 1, '1788708729_contoh1.jpg', '{\"cover\":{\"layers\":[{\"id\":\"l1788708652761_552\",\"file\":\"primary\",\"ox\":6.87,\"oy\":-5.24,\"scale\":0.7,\"rotate\":0,\"cx\":0,\"cy\":0,\"cw\":100,\"ch\":100}],\"slot\":{\"top\":30.07,\"left\":26.21,\"width\":56.39,\"height\":43.34}},\"dalam\":{\"layers\":[{\"id\":\"l1788708652761_774\",\"file\":\"primary\",\"ox\":-23.76,\"oy\":-2.55,\"scale\":0.5,\"rotate\":0,\"cx\":0,\"cy\":0,\"cw\":100,\"ch\":100},{\"id\":\"l1788708714991_632\",\"file\":\"1788708729_contoh2.jpg\",\"ox\":25.61,\"oy\":-0.23,\"scale\":0.5,\"rotate\":0,\"cx\":0,\"cy\":0,\"cw\":100,\"ch\":100}]}}', 'coba cek dahulu', NULL, 'uploaded', '2026-09-06 22:32:09', 'REV-ORD-20260902-0016-V1'),
+(45, 136, 4, 2, '1788760662_contoh1.jpg', '{\"depan\":{\"layers\":[{\"id\":\"l1788760587782_229\",\"file\":\"primary\",\"ox\":11.83,\"oy\":-1.96,\"scale\":0.4,\"rotate\":0,\"cx\":0,\"cy\":0,\"cw\":100,\"ch\":100},{\"id\":\"l1788760628074_582\",\"file\":\"primary\",\"ox\":0,\"oy\":0,\"scale\":0.6,\"rotate\":270,\"cx\":0,\"cy\":0,\"cw\":100,\"ch\":100}]}}', 'ini yabu', NULL, 'uploaded', '2026-09-07 12:57:42', 'REV-ORD-20260902-0034-V2');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id_user` int(11) NOT NULL,
+  `nama` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `google_id` varchar(100) DEFAULT NULL,
+  `password` varchar(255) NOT NULL,
+  `role` enum('pelanggan','admin','keuangan','produksi','owner') NOT NULL,
+  `is_active` tinyint(1) UNSIGNED NOT NULL DEFAULT 1,
+  `wajib_ganti_password` tinyint(1) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `kode_user` varchar(20) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`id_user`, `nama`, `email`, `google_id`, `password`, `role`, `is_active`, `wajib_ganti_password`, `created_at`, `kode_user`) VALUES
+(1, 'Owner Z\'Plack', 'zplack.percetakan@gmail.com', NULL, '$2y$10$ohmthfLx8fKiaIyInYx44uFkMYH.9QG7bS9.9laj4VScLqTxXZbUa', 'owner', 1, 0, '2026-05-28 19:36:55', 'USR-00001'),
+(2, 'Admin Z\'Plack', 'destiandira95@gmail.com', NULL, '$2y$10$pJTmhCQvFAzPlbFv.L7.Kup/zczJvw/yYmlvLM1HTWLKF4TUQXV9W', 'admin', 1, 0, '2026-05-28 19:36:55', 'USR-00002'),
+(3, 'Bagian Keuangan', 'peachywishlist@gmail.com', NULL, '$2y$10$ohmthfLx8fKiaIyInYx44uFkMYH.9QG7bS9.9laj4VScLqTxXZbUa', 'keuangan', 1, 0, '2026-05-28 19:36:55', 'USR-00003'),
+(4, 'Bagian Produksi', 'destiandira.10522088@mahasiswa.unikom.ac.id', NULL, '$2y$10$ohmthfLx8fKiaIyInYx44uFkMYH.9QG7bS9.9laj4VScLqTxXZbUa', 'produksi', 1, 0, '2026-05-28 19:36:55', 'USR-00004'),
+(5, 'Pelanggan Test', 'pelanggan@test.com', NULL, '$2y$10$ohmthfLx8fKiaIyInYx44uFkMYH.9QG7bS9.9laj4VScLqTxXZbUa', 'pelanggan', 1, 0, '2026-05-28 19:36:55', 'USR-00005'),
+(17, 'Suryaningrat', 'oldmoneysuccesswoman@gmail.com', '108496204161837519766', '$2y$10$ohmthfLx8fKiaIyInYx44uFkMYH.9QG7bS9.9laj4VScLqTxXZbUa', 'pelanggan', 1, 0, '2026-05-29 12:56:52', 'USR-00017'),
+(18, 'John Doe', 'john@gmail.com', NULL, '$2y$10$vUliejWmu233vtx7cbVCR.lXmRSaTJ2iQ1Ly6vUWhR8uo1/3srkBi', 'pelanggan', 1, 0, '2026-05-30 14:21:26', 'USR-00018'),
+(19, 'Jane Doe', 'Jane@gmail.com', NULL, '$2y$10$zpKVMY4OuPvmRzSh4Z4p6Oo4hvRCZCv3QrCfFZO9mTeCyDza54.yK', 'pelanggan', 1, 0, '2026-06-03 07:36:43', 'USR-00019'),
+(20, 'Yani Isnaeni', 'yniisn.rakha@gmail.com', '115581566093784685679', '$2y$10$gDu7rGNQNZuRtCvIRPEuauxId8exl2jSSqSvTKAVTWJ/vAznCgJoq', 'pelanggan', 1, 0, '2026-06-06 16:21:30', 'USR-00020'),
+(24, 'Diandra Alawiyah', 'destiandira233@gmail.com', NULL, '$2y$10$6xQU2WLYZ5ZfZyDOEZBAk.vlgSGyVG6UhouhDE58D1lA/s6yPqRYG', 'pelanggan', 1, 0, '2026-06-25 09:57:03', 'USR-00024'),
+(26, 'Adan Anapa', 'percetakanmitramandiri36@gmail.com', '108362445646173351758', '$2y$10$pS6JImmp7RIzZhaAmPNpoez/W4Uu5eQL350kPhMjUINdfNh4/lxi.', 'pelanggan', 1, 0, '2026-07-07 13:49:59', 'USR-00026'),
+(56, 'Elzatta', 'elzatta@gmail.com', NULL, '$2y$10$Y9DuSXOseT3AdcgF3guLH.aszGBA5uy9jjbbHxBB2cVD4uwBBuGO6', 'admin', 1, 1, '2026-08-07 20:52:01', 'USR-00056'),
+(57, 'Isnaeni Rakha', 'isnaeni.acha@gmail.com', NULL, '$2y$10$RkC8RIHbEffYu9DsDoZ17O9g7I41Bo5WSJqANC3m/aCiDPUh5.jRK', 'pelanggan', 1, 0, '2026-09-01 23:45:05', 'USR-00057');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `verifikasi_perusahaan`
+--
+
+CREATE TABLE `verifikasi_perusahaan` (
+  `id_verify` int(11) NOT NULL,
+  `id_pelanggan` int(11) NOT NULL,
+  `nama_perusahaan` varchar(150) NOT NULL,
+  `no_npwp` varchar(30) DEFAULT NULL,
+  `jabatan_pic` varchar(100) DEFAULT NULL,
+  `wa_perusahaan` varchar(20) DEFAULT NULL,
+  `alamat_kantor` varchar(255) DEFAULT NULL,
+  `dokumen_npwp` varchar(255) DEFAULT NULL,
+  `dokumen_ktp_pic` varchar(255) DEFAULT NULL,
+  `dokumen_mou` varchar(255) DEFAULT NULL,
+  `status` enum('verified','rejected') NOT NULL DEFAULT 'verified',
+  `catatan_admin` text DEFAULT NULL,
+  `tgl_pengajuan` datetime DEFAULT current_timestamp(),
+  `tgl_verifikasi` datetime DEFAULT NULL,
+  `id_admin` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `verifikasi_perusahaan`
+--
+
+INSERT INTO `verifikasi_perusahaan` (`id_verify`, `id_pelanggan`, `nama_perusahaan`, `no_npwp`, `jabatan_pic`, `wa_perusahaan`, `alamat_kantor`, `dokumen_npwp`, `dokumen_ktp_pic`, `dokumen_mou`, `status`, `catatan_admin`, `tgl_pengajuan`, `tgl_verifikasi`, `id_admin`) VALUES
+(1, 3, 'PT Bloom Reverse', '9090yt6tnds', NULL, NULL, NULL, '1780804517_npwp_flash modal.png', '1780804517_ktp_kalnder 1.jpg', NULL, 'rejected', 'NPWPNya gabener yg diinputkan, tolong betulkan', '2026-06-07 10:55:17', '2026-06-07 11:01:20', 2),
+(2, 3, 'PT Bloom Reverse', '13.346.641.1-235.454', NULL, NULL, NULL, '1780805607_npwp_notebook1.jpg', '1780805607_ktp_bw-brosur.jpg', NULL, 'rejected', 'NPWPNya gabener yg diinputkan, tolong betulkan', '2026-06-07 11:13:27', '2026-06-07 20:50:26', 2),
+(5, 4, 'CV. Maju Bersama', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'rejected', 'Kerja sama perusahaan dicabut oleh admin.', '2026-06-27 22:01:09', '2026-06-27 22:01:09', 1),
+(6, 10, 'PT Abadi Nan Jaya', '13.546.709.8-473.848', 'Manager', '085559063772', 'Kp. Haji Asgar', NULL, '1783340735_ktp_ktp.jpg', NULL, 'verified', NULL, '2026-07-06 19:25:35', '2026-07-06 19:25:35', 2),
+(13, 6, 'Perusahaan Mitra Kasih', '73.456.789.0-428.001', 'Manager', '0895805167474', 'Kp. Ciwangun Indah Camp', '1788279736_npwp_dummy_npwp.jpg', '1788279736_ktp_dummy_ktp_pic.jpg', '1788279736_mou_dummy_mou_kerjasama.pdf', 'verified', 'Kerja sama disetujui berdasarkan hasil verifikasi dokumen dan komunikasi awal dengan PIC perusahaan', '2026-09-01 23:22:16', '2026-09-01 23:22:16', 2),
+(14, 6, 'Perusahaan Mitra Kasih', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'rejected', 'Kerja sama perusahaan dicabut oleh admin.', '2026-09-02 07:00:28', '2026-09-02 07:00:28', 2);
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `activity_logs`
+--
+ALTER TABLE `activity_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `created_at` (`created_at`),
+  ADD KEY `modul` (`modul`);
+
+--
+-- Indexes for table `form_templates`
+--
+ALTER TABLE `form_templates`
+  ADD PRIMARY KEY (`id_template`),
+  ADD KEY `id_katalog` (`id_katalog`);
+
+--
+-- Indexes for table `katalog`
+--
+ALTER TABLE `katalog`
+  ADD PRIMARY KEY (`id_katalog`),
+  ADD UNIQUE KEY `uq_katalog_kode_katalog` (`kode_katalog`);
+
+--
+-- Indexes for table `migrations`
+--
+ALTER TABLE `migrations`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD PRIMARY KEY (`id_notif`),
+  ADD KEY `id_user` (`id_user`),
+  ADD KEY `id_order` (`id_order`);
+
+--
+-- Indexes for table `orders`
+--
+ALTER TABLE `orders`
+  ADD PRIMARY KEY (`id_order`),
+  ADD UNIQUE KEY `kode_order` (`kode_order`),
+  ADD KEY `id_pelanggan` (`id_pelanggan`),
+  ADD KEY `id_katalog` (`id_katalog`);
+
+--
+-- Indexes for table `order_attributes`
+--
+ALTER TABLE `order_attributes`
+  ADD PRIMARY KEY (`id_attr`),
+  ADD UNIQUE KEY `uq_order_attr` (`id_order`,`attribute_key`);
+
+--
+-- Indexes for table `password_resets`
+--
+ALTER TABLE `password_resets`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_password_resets_email` (`email`),
+  ADD KEY `idx_password_resets_token` (`token`),
+  ADD KEY `idx_password_resets_expired_at` (`expired_at`);
+
+--
+-- Indexes for table `payments`
+--
+ALTER TABLE `payments`
+  ADD PRIMARY KEY (`id_payment`),
+  ADD UNIQUE KEY `kode_payment` (`kode_payment`),
+  ADD KEY `id_order` (`id_order`),
+  ADD KEY `id_verifikator` (`id_verifikator`);
+
+--
+-- Indexes for table `pelanggan`
+--
+ALTER TABLE `pelanggan`
+  ADD PRIMARY KEY (`id_pelanggan`),
+  ADD UNIQUE KEY `uq_pelanggan_kode_pelanggan` (`kode_pelanggan`),
+  ADD KEY `id_user` (`id_user`);
+
+--
+-- Indexes for table `pengiriman`
+--
+ALTER TABLE `pengiriman`
+  ADD PRIMARY KEY (`id_kirim`),
+  ADD UNIQUE KEY `id_order` (`id_order`),
+  ADD UNIQUE KEY `uq_pengiriman_kode_kirim` (`kode_kirim`);
+
+--
+-- Indexes for table `revisi_desain`
+--
+ALTER TABLE `revisi_desain`
+  ADD PRIMARY KEY (`id_revisi`),
+  ADD UNIQUE KEY `uq_revisi_desain_kode_revisi` (`kode_revisi`),
+  ADD KEY `id_order` (`id_order`),
+  ADD KEY `id_produksi` (`id_produksi`);
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id_user`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `google_id` (`google_id`),
+  ADD UNIQUE KEY `uq_users_kode_user` (`kode_user`);
+
+--
+-- Indexes for table `verifikasi_perusahaan`
+--
+ALTER TABLE `verifikasi_perusahaan`
+  ADD PRIMARY KEY (`id_verify`),
+  ADD KEY `id_pelanggan` (`id_pelanggan`),
+  ADD KEY `id_admin` (`id_admin`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `activity_logs`
+--
+ALTER TABLE `activity_logs`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
+
+--
+-- AUTO_INCREMENT for table `form_templates`
+--
+ALTER TABLE `form_templates`
+  MODIFY `id_template` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
+
+--
+-- AUTO_INCREMENT for table `katalog`
+--
+ALTER TABLE `katalog`
+  MODIFY `id_katalog` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
+-- AUTO_INCREMENT for table `migrations`
+--
+ALTER TABLE `migrations`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT for table `notifications`
+--
+ALTER TABLE `notifications`
+  MODIFY `id_notif` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=460;
+
+--
+-- AUTO_INCREMENT for table `orders`
+--
+ALTER TABLE `orders`
+  MODIFY `id_order` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=140;
+
+--
+-- AUTO_INCREMENT for table `order_attributes`
+--
+ALTER TABLE `order_attributes`
+  MODIFY `id_attr` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=223;
+
+--
+-- AUTO_INCREMENT for table `password_resets`
+--
+ALTER TABLE `password_resets`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+
+--
+-- AUTO_INCREMENT for table `payments`
+--
+ALTER TABLE `payments`
+  MODIFY `id_payment` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+
+--
+-- AUTO_INCREMENT for table `pelanggan`
+--
+ALTER TABLE `pelanggan`
+  MODIFY `id_pelanggan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+
+--
+-- AUTO_INCREMENT for table `pengiriman`
+--
+ALTER TABLE `pengiriman`
+  MODIFY `id_kirim` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT for table `revisi_desain`
+--
+ALTER TABLE `revisi_desain`
+  MODIFY `id_revisi` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
+
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+
+--
+-- AUTO_INCREMENT for table `verifikasi_perusahaan`
+--
+ALTER TABLE `verifikasi_perusahaan`
+  MODIFY `id_verify` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `form_templates`
+--
+ALTER TABLE `form_templates`
+  ADD CONSTRAINT `form_templates_ibfk_1` FOREIGN KEY (`id_katalog`) REFERENCES `katalog` (`id_katalog`);
+
+--
+-- Constraints for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`id_user`) REFERENCES `users` (`id_user`),
+  ADD CONSTRAINT `notifications_ibfk_2` FOREIGN KEY (`id_order`) REFERENCES `orders` (`id_order`);
+
+--
+-- Constraints for table `orders`
+--
+ALTER TABLE `orders`
+  ADD CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`id_pelanggan`) REFERENCES `pelanggan` (`id_pelanggan`),
+  ADD CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`id_katalog`) REFERENCES `katalog` (`id_katalog`);
+
+--
+-- Constraints for table `order_attributes`
+--
+ALTER TABLE `order_attributes`
+  ADD CONSTRAINT `order_attributes_ibfk_1` FOREIGN KEY (`id_order`) REFERENCES `orders` (`id_order`);
+
+--
+-- Constraints for table `payments`
+--
+ALTER TABLE `payments`
+  ADD CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`id_order`) REFERENCES `orders` (`id_order`),
+  ADD CONSTRAINT `payments_ibfk_2` FOREIGN KEY (`id_verifikator`) REFERENCES `users` (`id_user`);
+
+--
+-- Constraints for table `pelanggan`
+--
+ALTER TABLE `pelanggan`
+  ADD CONSTRAINT `pelanggan_ibfk_1` FOREIGN KEY (`id_user`) REFERENCES `users` (`id_user`);
+
+--
+-- Constraints for table `pengiriman`
+--
+ALTER TABLE `pengiriman`
+  ADD CONSTRAINT `pengiriman_ibfk_1` FOREIGN KEY (`id_order`) REFERENCES `orders` (`id_order`);
+
+--
+-- Constraints for table `revisi_desain`
+--
+ALTER TABLE `revisi_desain`
+  ADD CONSTRAINT `revisi_desain_ibfk_1` FOREIGN KEY (`id_order`) REFERENCES `orders` (`id_order`),
+  ADD CONSTRAINT `revisi_desain_ibfk_2` FOREIGN KEY (`id_produksi`) REFERENCES `users` (`id_user`);
+
+--
+-- Constraints for table `verifikasi_perusahaan`
+--
+ALTER TABLE `verifikasi_perusahaan`
+  ADD CONSTRAINT `verifikasi_perusahaan_ibfk_1` FOREIGN KEY (`id_pelanggan`) REFERENCES `pelanggan` (`id_pelanggan`),
+  ADD CONSTRAINT `verifikasi_perusahaan_ibfk_2` FOREIGN KEY (`id_admin`) REFERENCES `users` (`id_user`);
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
